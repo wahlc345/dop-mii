@@ -54,6 +54,8 @@ distribution.
 
 #define round_up(x,n)	(-(-(x) & -(n)))
 
+#define PAD_CHAN_0 0
+
 struct ios{
 	u32 major;
 	u32 minor;
@@ -380,6 +382,8 @@ return 0;
 int main(int argc, char **argv) {
 
     basicInit();
+	
+	PAD_Init();
 	WPAD_Init();
 
     //Basic scam warning, brick warning, and credits by Arikado
@@ -398,8 +402,10 @@ int main(int argc, char **argv) {
 	for(;;){
 	
 	WPAD_ScanPads();
+	PAD_ScanPads();
 	
-	if(WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A)
+	if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) \
+	|| (PAD_ButtonsDown(0)&PAD_BUTTON_A))
 	break;
 	
 	if(WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME)
@@ -443,12 +449,14 @@ int main(int argc, char **argv) {
 		}
 		
 		WPAD_Init();
+		//PAD_Init();
  
        for(;;){
  
 		for (;;) {
 		
 		WPAD_ScanPads();
+		PAD_ScanPads();
 		
 		printf("\x1b[2J");
 		printf("\x1b[2;0H");
@@ -458,21 +466,25 @@ int main(int argc, char **argv) {
 		VIDEO_WaitVSync();
  
 		/* LEFT/RIGHT buttons */
-		if (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_LEFT) {
+		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_LEFT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_LEFT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_LEFT)){
 		if ((--selectedios) <= -1)
 		selectedios = (iosCnt - 1);
 		}
-		if (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_RIGHT) {
+		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_RIGHT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_RIGHT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_RIGHT)) {
 		if ((++selectedios) >= iosCnt)
 		selectedios = 0;
 		}
  
 		/* HOME button */
-		if (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME)
+		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+		   (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
 		exit(0);
  
 		/* A button */
-		if (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A)
+		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+		(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A))
 		break;
 		}
 
@@ -484,16 +496,19 @@ int main(int argc, char **argv) {
 	WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.
 
     int ret = IOS_ReloadIOS(iosVersion[selectedios]);
-
+	
 	WPAD_Init(); // Okay to start video up again.
 	
 	if(ret >= 0){
 	printf("\n\n\nIOS successfully loaded! Press A to continue.");
 	while(true){
 	WPAD_ScanPads();
-	if(WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A)
+	PAD_ScanPads();
+	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+	(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A))
 	break;
-	if(WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME)
+	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
 	exit(0);
 	}
 	break;
@@ -503,9 +518,11 @@ int main(int argc, char **argv) {
 	printf("\n\n\nERROR! Choose an IOS that accepts fakesigning! Press A to continue.");
 	while(true){
 	WPAD_ScanPads();
-	if(WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A)
+	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+	(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A))
 	break;
-	if(WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME)
+	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
 	exit(0);
 	}
 	}
@@ -564,32 +581,40 @@ int main(int argc, char **argv) {
 	        	printf("\n");
 
 	        if(type!=LATEST)
-	        	printf("[-]            Install old v%d of IOS%d\n",minor,major);
+	        	printf("[-]/[B]        Install old v%d of IOS%d\n",minor,major);
 	        else
 	        	printf("\n");
 	        	
         }else{
 	        printf("\n\n");
         }
-        printf("[HOME]         Exit\n\n\n\n\n\n\n\n\n");
+        printf("[HOME]/[Y]         Exit\n\n\n\n\n\n\n\n\n");
         printf("                                                 -- Dop-IOS by Marc");
 
-		u32 pressed = wait_anyKey();
-		if (pressed & WPAD_BUTTON_HOME){
+		u32 pressed = WPAD_ButtonsDown(WPAD_CHAN_0);
+		PAD_ScanPads();
+		WPAD_ScanPads();
+		
+		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	       (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y)){
 			break;
-		}else if (pressed & WPAD_BUTTON_RIGHT){
+		}else if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_RIGHT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_RIGHT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_RIGHT)) {
 			selected++;
 			if(selected==MAX_IOS)
 				selected=MAX_IOS-1;
-		}else if (pressed & WPAD_BUTTON_LEFT){
+		}else if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_LEFT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_LEFT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_LEFT)){
 			selected--;
 			if(selected==-1)
 				selected=0;
-		}else if (pressed & WPAD_BUTTON_A && (type==NORMAL || type==LATEST)){
+		}else if ((pressed & WPAD_BUTTON_A || pressed & WPAD_CLASSIC_BUTTON_A || (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A)) && (type==NORMAL || type==LATEST)){
 			doparIos(major,newest,true);
-		}else if (pressed & WPAD_BUTTON_MINUS && (type==NORMAL || type==STUB_NOW)){
+		}else if ((pressed & WPAD_BUTTON_MINUS || pressed & WPAD_CLASSIC_BUTTON_MINUS || (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_B)) && (type==NORMAL || type==STUB_NOW)){
 			doparIos(major,minor,false);
 		}
+		
+		VIDEO_WaitVSync();
 	}
 
 
