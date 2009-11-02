@@ -39,7 +39,7 @@ distribution.
 #define NORMAL		1
 #define STUB_NOW	2
 #define LATEST		3
-#define MAX_IOS		31
+#define MAX_IOS		36
 
 #define BLACK	0
 #define RED		1
@@ -87,16 +87,21 @@ const struct ios ioses[]={
 	{35,1040,3092,NORMAL,"Used by: Super Mario Galaxy."},
 	{36,1042,3094,NORMAL,"Used by: Smash Bros. Brawl, Mario Kart Wii. Can be ES_Identify patched."},
 	{37,2070,3612,NORMAL,"Used mostly by music games (Guitar Hero)."},
-	{38,3610,3610,LATEST,"Used by some modern titles (Animal Crossing)."},
+	{38,3610,3867,NORMAL,"Used by some modern titles (Animal Crossing)."},
 	{50,4889,5120,STUB_NOW,"Used only by System Menu 3.4."},
 	{51,4633,4864,STUB_NOW,"Used only by Shop Channel 3.4."},
 	{53,4113,5149,NORMAL,"Used by some modern games and channels."},
 	{55,4633,5149,NORMAL,"Used by some modern games and channels."},
-	{56,4890,4890,NORMAL,"Used only by Wii Speak Channel 2.0."},
-	{57,5404,5404,LATEST,"Unknown yet."},
-	{60,6174,6174,LATEST,"Used by System Menu 4.0."},
-	{61,4890,4890,LATEST,"Used by Shop Channel 4.0."},
-	{254,2,3,PROTECTED,"PatchMii prevention stub, useless."}
+	{56,4890,5405,NORMAL,"Used only by Wii Speak Channel 2.0."},
+	{57,5404,5661,NORMAL,"Unknown yet."},
+	{60,6174,6400,STUB_NOW,"Used by System Menu 4.0 and 4.1."},
+	{61,4890,5405,NORMAL,"Used by Shop Channel 4.x."},
+	{70,6687,6687,LATEST,"Used by System Menu 4.2."},
+	{222,65280,65280,PROTECTED,"Piracy prevention stub, useless."},
+	{223,65280,65280,PROTECTED,"Piracy prevention stub, useless."},
+	{249,65280,65280,PROTECTED,"Piracy prevention stub, useless."},
+	{250,65280,65280,PROTECTED,"Piracy prevention stub, useless."},
+	{254,2,260,PROTECTED,"PatchMii prevention stub, useless."}
 };
 	
 	
@@ -122,7 +127,7 @@ void printMyTitle(){
 	setConsoleBgColor(BLUE,0);
 	setConsoleFgColor(WHITE,1);
 	printf("                                                                        ");
-	printf("                             Dop-IOS MOD v4                             ");
+	printf("                             Dop-IOS MOD v5                             ");
 	printf("                                                                        ");
 	setConsoleBgColor(BLACK,0);
 	setConsoleFgColor(WHITE,0);
@@ -529,7 +534,7 @@ int main(int argc, char **argv) {
 	
 	}
 
-    /*This definines he max number of IOSs we can have tro select from*/
+    /*This definines he max number of IOSs we can have to select from*/
 	int selected=19;
 	
 	getMyIOS();
