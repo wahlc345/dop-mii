@@ -122,7 +122,7 @@ void printMyTitle(){
 	setConsoleBgColor(BLUE,0);
 	setConsoleFgColor(WHITE,1);
 	printf("                                                                        ");
-	printf("                  Dop-IOS (download-patch-install)  v7                  ");
+	printf("                             Dop-IOS MOD v4                             ");
 	printf("                                                                        ");
 	setConsoleBgColor(BLACK,0);
 	setConsoleFgColor(WHITE,0);
@@ -201,11 +201,11 @@ void doparIos(u32 major, u32 minor,bool newest){
 		int ret = patchmii_install(1, major, minor, 1, major, minor, sig_check_patch,es_identify_patch);
 		if (ret < 0) {
 			printf("ERROR: Something failed. (ret: %d)\n",ret);
-			printf("Press any key to continue.\n");
-			wait_anyKey();
+			printf("Continue?\n");
+			if(yes_or_no() == 0)
+			exit(0);
 		}
-		printf("Press any key to continue...");
-		wait_anyKey();
+		
 		getMyIOS();
 	}
 }
@@ -588,8 +588,8 @@ int main(int argc, char **argv) {
         }else{
 	        printf("\n\n");
         }
-        printf("[HOME]/[Y]         Exit\n\n\n\n\n\n\n\n\n");
-        printf("                                                 -- Dop-IOS by Marc");
+                printf("[HOME]/[Y]     Exit\n\n\n\n\n\n\n\n\n");
+        printf("                        -- Dop-IOS MOD by Arikado, SifJar, PhoenixTank");
 
 		u32 pressed = WPAD_ButtonsDown(WPAD_CHAN_0);
 		PAD_ScanPads();
@@ -614,6 +614,7 @@ int main(int argc, char **argv) {
 			doparIos(major,minor,false);
 		}
 		
+		VIDEO_WaitVSync();
 		VIDEO_WaitVSync();
 	}
 

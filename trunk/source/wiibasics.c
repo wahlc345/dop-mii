@@ -244,37 +244,55 @@ void hex_print_array16(const u8 *array, u32 size){
 			printf(line);
 		
 		if (!(offset % page_size) && offset < size){
-			u32 pressed;
-			printf("\n\tPress a key for next page or B for finish\n");
-			pressed = wait_anyKey();
-			if (pressed & WPAD_BUTTON_HOME)
-				exit(1);
-			else if (pressed & WPAD_BUTTON_B)
-				return;
+			
+			printf("\n\tPress A for next page or B for finish\n");
+			
+			while(true){
+			PAD_ScanPads();
+			WPAD_ScanPads();
+			
+			if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+			(PAD_ButtonsDown(0)&PAD_BUTTON_Y))
+			exit(1);
+			if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
+	        (PAD_ButtonsDown(0)&PAD_BUTTON_B))
+			return;
+			if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+	        (PAD_ButtonsDown(0)&PAD_BUTTON_A))
+			break;
+				
+			}
 		}
 	}
 }
 
 bool yes_or_no(void){
 	bool yes = 0;
-	u32 pressed;
 	
-	printf("      [A] Yes        [Any other button] Cancel\n");
-	pressed = wait_anyKey();
-	if (pressed & WPAD_BUTTON_A)
-		yes = 1;
+	printf("      [A] Yes        [B] Cancel    [HOME]/[Y] Exit\n");
+	
+	while(true){
+	PAD_ScanPads();
+	WPAD_ScanPads();
+	
+	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+	(PAD_ButtonsDown(0)&PAD_BUTTON_A)){
+	yes = 1;
+	break;
+	}
+	
+	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
+	(PAD_ButtonsDown(0)&PAD_BUTTON_B))
+	break;
+	
+	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	(PAD_ButtonsDown(0)&PAD_BUTTON_Y)){
+	exit(0);
+	break;
+	}
+	
+	}
 
-	//u32 buttons = 0;
-	
-	/*do {
-		yes = buttons & WPAD_BUTTON_LEFT;
-		if(yes)
-			printf("\r\x1b[K  <\x1b[30m\x1b[47;1m Yes \x1b[37;1m\x1b[40m>    No    ");
-		else 
-			printf("\r\x1b[K    Yes    <\x1b[30m\x1b[47;1m No \x1b[37;1m\x1b[40m>   ");		
-	} while ((buttons = wait_key(WPAD_BUTTON_A | WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT))
-		&& (!(buttons & WPAD_BUTTON_A)));
-	printf("\n");*/
 	return yes;	
 }
 
