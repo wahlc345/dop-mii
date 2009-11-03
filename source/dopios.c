@@ -29,17 +29,25 @@ distribution.
 #include <unistd.h>
 #include <string.h>
 #include <gccore.h>
+#include <fat.h>
 
 #include <wiiuse/wpad.h>
 
 #include "wiibasics.h"
 #include "patchmii_core.h"
 
+#include "title.h"
+#include "title_install.h"
+
 #define PROTECTED	0
 #define NORMAL		1
 #define STUB_NOW	2
 #define LATEST		3
+#define MAX_REGION  3
 #define MAX_IOS		36
+#define MAX_SYSTEMMENU 6
+#define MAX_CHANNEL 6
+
 
 #define BLACK	0
 #define RED		1
@@ -55,6 +63,54 @@ distribution.
 #define round_up(x,n)	(-(-(x) & -(n)))
 
 #define PAD_CHAN_0 0
+
+struct region{
+u32 idnumber;
+char * name;
+};
+
+const struct region regions[] = {
+{0, "North America (U)"},
+{1, "Europe (E)"},
+{2, "Japan (J)"},
+{3, "Korea (K)"}
+};
+
+
+struct systemmenu{
+u32 versionmain;
+u32 versionsub;
+u32 versionsubsub;
+char* name;
+};
+
+const struct systemmenu systemmenus[] = {
+//VERSION#1, VERSION#2, VERSION#3 NAME
+{3, 2, 0, "System Menu 3.2"},
+{3, 3, 0, "System Menu 3.3"},
+{3, 4, 0, "System Menu 3.4"},
+{3, 5, 0, "System Menu 3.5 (Korea Only)"},
+{4, 0, 0, "System Menu 4.0"},
+{4, 1, 0, "System Menu 4.1"},
+{4, 2, 0, "System Menu 4.2"}
+};  
+
+struct channel{
+
+char* name;
+};
+
+const struct channel channels[] ={
+{"Shop Channel"},
+{"Photo Channel"},
+{"Mii Channel"},
+{"Nintendo Channel"},
+{"Internet Channel"},
+{"News Channel"},
+{"Weather Channel"}
+
+};
+
 
 struct ios{
 	u32 major;
@@ -123,10 +179,10 @@ void clearConsole(){
 
 void printMyTitle(){
     clearConsole();
-	setConsoleBgColor(BLUE,0);
-	setConsoleFgColor(WHITE,1);
+	setConsoleBgColor(RED,0);
+	setConsoleFgColor(WHITE,0);
 	printf("                                                                        ");
-	printf("                             Dop-IOS MOD v6                             ");
+	printf("                           Dop-IOS MOD v7                               ");
 	printf("                                                                        ");
 	setConsoleBgColor(BLACK,0);
 	setConsoleFgColor(WHITE,0);
@@ -191,195 +247,367 @@ void doparIos(u32 major, u32 minor,bool newest){
 	printf("?\n");
 
 	if(yes_or_no()){
-		bool sig_check_patch=false;
-		bool es_identify_patch=false;
-		if(major>36 || newest){
+		bool sig_check_patch = false;
+		bool es_identify_patch = false;
+		if(major > 36 || newest){
 			printf("\nApply Sig Hash Check patch in IOS%d?\n",major);
-			sig_check_patch=yes_or_no();
-			if(major==36){
+			sig_check_patch = yes_or_no();
+			if(major == 36){
 				printf("\nApply ES_Identify patch in IOS%d?\n",major);
-				es_identify_patch=yes_or_no();
+				es_identify_patch = yes_or_no();
 			}
 		}
 
-		int ret = patchmii_install(1, major, minor, 1, major, minor, sig_check_patch,es_identify_patch);
+		int ret = patchmii_install(1, major, minor, 1, major, minor, sig_check_patch, es_identify_patch);
 		if (ret < 0) {
 			printf("ERROR: Something failed. (ret: %d)\n",ret);
 			printf("Continue?\n");
-			if(yes_or_no() == 0)
+			if(yes_or_no() == false)
 			exit(0);
 		}
 		
-		getMyIOS();
+		getMyIOS();//Comment out for possible fix (fix 1)
 	}
 }
 
 
 
-s32 __Menu_IsGreater(const void *p1, const void *p2)
-{
-u32 n1 = *(u32 *)p1;
-u32 n2 = *(u32 *)p2;
+s32 __Menu_IsGreater(const void *p1, const void *p2){
+
+	u32 n1 = *(u32 *)p1;
+	u32 n2 = *(u32 *)p2;
  
-/* Equal */
-if (n1 == n2)
-return 0;
+	/* Equal */
+	if (n1 == n2)
+	return 0;
  
-return (n1 > n2) ? 1 : -1;
+	return (n1 > n2) ? 1 : -1;
+  }
+
+s32 Title_GetIOSVersions(u8 **outbuf, u32 *outlen){
+
+	u8 *buffer = NULL;
+	u64 *list = NULL;
+ 
+	u32 count, cnt, idx;
+	s32 ret;
+ 
+	/* Get title list */
+	ret = Title_GetList(&list, &count);
+	if (ret < 0)
+	return ret;
+ 
+	/* Count IOS */
+	for (cnt = idx = 0; idx < count; idx++) {
+	u32 tidh = (list[idx] >> 32);
+	u32 tidl = (list[idx] & 0xFFFFFFFF);
+ 
+	/* Title is IOS */
+	if ((tidh == 0x1) && (tidl >= 3) && (tidl <= 255))
+	cnt++;
+	}
+ 
+	/* Allocate memory */
+	buffer = (u8 *)memalign(32, cnt);
+	if (!buffer) {
+	ret = -1;
+	goto out;
+	}
+ 
+	/* Copy IOS */
+	for (cnt = idx = 0; idx < count; idx++) {
+	u32 tidh = (list[idx] >> 32);
+	u32 tidl = (list[idx] & 0xFFFFFFFF);
+ 
+	/* Title is IOS */
+	if ((tidh == 0x1) && (tidl >= 3) && (tidl <= 255))
+	buffer[cnt++] = (u8)(tidl & 0xFF);
+	}
+ 
+	/* Set values */
+	*outbuf = buffer;
+	*outlen = cnt;
+ 
+	goto out;
+ 
+	out:
+	/* Free memory */
+	if (list)
+	free(list);
+ 
+	return ret;
+  }
+
+
+void InstallTheChosenSystemMenu(int region, int menu){
+
+ s32 ret = 0;
+ 
+ u64 sysTid = 0x100000002ULL;
+ u16 sysVersion = NULL;
+ static signed_blob *sysTik = NULL, *sysTmd = NULL;
+
+	//North America
+	if(region == 0){
+		
+		//3.2
+		if(menu == 0)
+		sysVersion = 289;
+	
+		//3.3
+		if(menu == 1)
+		sysVersion = 353;
+		
+		//3.4
+		if(menu == 2)
+		sysVersion = 385;
+		
+		//4.0
+		if(menu == 4)
+		sysVersion = 417;
+		
+		//4.1
+		if(menu == 5)
+		sysVersion = 449;
+		
+		//4.2
+		if(menu == 6)
+		sysVersion = 481;
+
+	}
+
+	//Europe
+	if(region == 1){
+	
+		//3.2
+		if(menu == 0)
+		sysVersion = 290;
+		
+		//3.3
+		if(menu == 1)
+		sysVersion = 354;
+		
+		//3.4
+		if(menu == 2)
+		sysVersion = 386;
+		
+		//4.0
+		if(menu == 4)
+		sysVersion = 418;
+		
+		//4.1
+		if(menu == 5)
+		sysVersion = 450;
+		
+		//4.2
+		if(menu == 6)
+		sysVersion = 482;
+
+	}
+
+	//Japan
+	if(region == 2){
+	
+		//3.2
+		if(menu == 0)
+		sysVersion = 288;
+		
+		//3.3
+		if(menu == 1)
+		sysVersion = 352;
+		
+		//3.4
+		if(menu == 2)
+		sysVersion = 384;
+		
+		//4.0
+		if(menu == 4)
+		sysVersion = 416;
+		
+		//4.1
+		if(menu == 5)
+		sysVersion = 448;
+		
+		//4.2
+		if(menu == 6)
+		sysVersion = 480;
+
+	}
+
+	//Korea
+	if(region == 3){
+	//Incorrect Version Numbers
+		
+		//3.3V
+		if(menu == 1)
+		sysVersion = 326;
+		
+		//3,5
+		if(menu == 3)
+		sysVersion = 390;
+		
+		//4.1
+		if(menu == 5)
+		sysVersion = 454;
+		
+		//4.2
+		if(menu == 6)
+		sysVersion = 486;
+
+	}
+	
+	//Download the System Menu
+	 printf("Downloading System Menu. This may take awhile...\n");
+     ret = Title_Download(sysTid, sysVersion, &sysTik, &sysTmd);
+	 if(ret < 0){
+	 printf("Error Downloading System Menu. Ret: %d\n", ret);
+	 printf("Exiting...");
+	 VIDEO_WaitVSync();
+	 VIDEO_WaitVSync();
+	 VIDEO_WaitVSync();
+	 exit(0);
+	 }
+	 
+	 //Install the System Menu
+	 printf("Installing System Menu. Do NOT turn the power off. This may take awhile...\n");
+	 ret = Title_Install(sysTik, sysTmd);
+	 if(ret < 0){
+	 printf("Error Installing System Menu. Ret: %d\n", ret);
+	 printf("Exiting...");
+	 VIDEO_WaitVSync();
+	 VIDEO_WaitVSync();
+	 VIDEO_WaitVSync();
+	 exit(0);
+	 }
+
 }
 
-s32 Title_GetList(u64 **outbuf, u32 *outlen)
-{
-u64 *titles = NULL;
- 
-u32 len, nb_titles;
-s32 ret;
- 
-/* Get number of titles */
-ret = ES_GetNumTitles(&nb_titles);
-if (ret < 0)
-return ret;
- 
-/* Calculate buffer lenght */
-len = round_up(sizeof(u64) * nb_titles, 32);
- 
-/* Allocate memory */
-titles = memalign(32, len);
-if (!titles)
-return -1;
- 
-/* Get titles */
-ret = ES_GetTitles(titles, nb_titles);
-if (ret < 0)
-goto err;
- 
-/* Set values */
-*outbuf = titles;
-*outlen = nb_titles;
- 
-return 0;
- 
-err:
-/* Free memory */
-if (titles)
-free(titles);
- 
-return ret;
-}
+void InstallTheChosenChannel(int region, int channel){
 
-s32 Title_GetIOSVersions(u8 **outbuf, u32 *outlen)
-{
-u8 *buffer = NULL;
-u64 *list = NULL;
+ s32 ret = 0;
  
-u32 count, cnt, idx;
-s32 ret;
+ //Shop Channel
+  if(channel == 0){
+  printf("\n\nInstalling the Shop Channel...");
+  ret = patchmii_install(0x10002, 0x48414241, 17, 0x10002, 0x48414241, 17, false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nShop Channel successfully installed!");
+  }
+  
+ //Photo Channel
+  if(channel == 1){
+  printf("\n\nInstalling the Photo Channel...");
+  ret = patchmii_install(0x10002, 0x48415941, 0, 0x10002, 0x48415941, 0, false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nPhoto Channel successfully installed!");
+  }
+  
+ //Mii Channel
+  if(channel == 2){
+  printf("\n\nInstalling the Mii Channel...");
+  ret = patchmii_install(0x10002, 0x48414341, 0, 0x10002, 0x48414341, 0, false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nMii Channel successfully installed!");
+  }
+  
+ //Nintendo Channel
+  if(channel == 3){
+  printf("\n\nInstalling the Nintendo Channel...");
+  //ret = patchmii_install(0x10001, 0x48415441, 0, 0x10001, 0x48415441, 0, 0);
+  if(region == 0)
+  ret = patchmii_install(0x10001, 0x48415445, 0, 0x10001, 0x48415445, 0, false, false);
+  if(region == 1)
+  ret = patchmii_install(0x10001, 0x48415450, 0, 0x10001, 0x48415450, 0, false, false);
+  if(region == 2)
+  ret = patchmii_install(0x10001, 0x4841544a, 0, 0x10001, 0x4841544a, 0, false, false);
+  if(region == 3)
+  ret = patchmii_install(0x10001, 0x4841544b, 0, 0x10001, 0x4841544b, 0, false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nNintendo Channel successfully installed!");
+  }
  
-/* Get title list */
-ret = Title_GetList(&list, &count);
-if (ret < 0)
-return ret;
+ //Internet Channel
+  if(channel == 4){
+  printf("\n\nInstalling the Internet Channel...");
+  //ret = patchmii_install(0x10001, 0x48414441, 0, 0x10001, 0x48414441, 0, 0);
+  if(region == 0)
+  ret = patchmii_install(0x10001, 0x48414445, 0, 0x10001, 0x48414445, 0, false, false);
+  if(region == 1)
+  ret = patchmii_install(0x10001, 0x48414450, 0, 0x10001, 0x48414450, 0, false, false);
+  if(region == 2)
+  ret = patchmii_install(0x10001, 0x4841444a, 0, 0x10001, 0x4841444a, 0, false, false);
+  if(region == 3)
+  ret = patchmii_install(0x10001, 0x4841444b, 0, 0x10001, 0x4841444b, 0, false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nInternet Channel successfully installed!");
+  }
  
-/* Count IOS */
-for (cnt = idx = 0; idx < count; idx++) {
-u32 tidh = (list[idx] >> 32);
-u32 tidl = (list[idx] & 0xFFFFFFFF);
+ //News Channel
+  if(channel == 5){
+  //printf("\n\nInstalling the News Channel...");
+  ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
+  if(region == 0)
+  ret = patchmii_install(0x10002,0x48414745,0,0x10002,0x48414745,0,false, false);
+  if(region == 1)
+  ret = patchmii_install(0x10002,0x48414750,0,0x10002,0x48414750,0,false, false);
+  if(region == 2)
+  ret = patchmii_install(0x10002,0x4841474a,0,0x10002,0x4841474a,0,false, false);
+  if(region == 3)
+  ret = patchmii_install(0x10002,0x4841474b,0,0x10002,0x4841474b,0,false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nNews Channel successfully installed!");
+  }
  
-/* Title is IOS */
-if ((tidh == 0x1) && (tidl >= 3) && (tidl <= 255))
-cnt++;
-}
+ //Weather Channel
+  if(channel == 6){
+  printf("\n\nInstalling the Weather Channel...");
+  //ret = patchmii_install(0x10002, 0x48414641, 0, 0x10002, 0x48414641, 0, 0);
+  if(region == 0)
+  ret = patchmii_install(0x10002,0x48414645,0,0x10002,0x48414645,0,false, false);
+  if(region == 1)
+  ret = patchmii_install(0x10002,0x48414650,0,0x10002,0x48414650,0,false, false);
+  if(region == 2)
+  ret = patchmii_install(0x10002,0x4841464a,0,0x10002,0x4841464a,0,false, false);
+  if(region == 3)
+  ret = patchmii_install(0x10002,0x4841464b,0,0x10002,0x4841464b,0,false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nWeather Channel successfully installed!");
+  }
+  
+  
+ //After Installations are done:
+ printf("\n\nPress A to continue!");
  
-/* Allocate memory */
-buffer = (u8 *)memalign(32, cnt);
-if (!buffer) {
-ret = -1;
-goto out;
-}
- 
-/* Copy IOS */
-for (cnt = idx = 0; idx < count; idx++) {
-u32 tidh = (list[idx] >> 32);
-u32 tidl = (list[idx] & 0xFFFFFFFF);
- 
-/* Title is IOS */
-if ((tidh == 0x1) && (tidl >= 3) && (tidl <= 255))
-buffer[cnt++] = (u8)(tidl & 0xFF);
-}
- 
-/* Set values */
-*outbuf = buffer;
-*outlen = cnt;
- 
-goto out;
- 
-out:
-/* Free memory */
-if (list)
-free(list);
- 
-return ret;
-}
+ while(true){
+ PAD_ScanPads();
+ WPAD_ScanPads();
+ if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) \
+ || (PAD_ButtonsDown(0)&PAD_BUTTON_A))
+ break;
+ }
 
-s32 Title_GetTMD(u64 tid, signed_blob **outbuf, u32 *outlen)
-{
-void *p_tmd = NULL;
- 
-u32 len;
-s32 ret;
- 
-/* Get TMD size */
-ret = ES_GetStoredTMDSize(tid, &len);
-if (ret < 0)
-return ret;
- 
-/* Allocate memory */
-p_tmd = memalign(32, round_up(len, 32));
-if (!p_tmd)
-return -1;
- 
-/* Read TMD */
-ret = ES_GetStoredTMD(tid, p_tmd, len);
-if (ret < 0)
-goto err;
- 
-/* Set values */
-*outbuf = p_tmd;
-*outlen = len;
- 
-return 0;
- 
-err:
-/* Free memory */
-if (p_tmd)
-free(p_tmd);
- 
-return ret;
-}
 
-s32 Title_GetVersion(u64 tid, u16 *outbuf)
-{
-signed_blob *p_tmd = NULL;
-tmd *tmd_data = NULL;
- 
-u32 len;
-s32 ret;
- 
-/* Get title TMD */
-ret = Title_GetTMD(tid, &p_tmd, &len);
-if (ret < 0)
-return ret;
- 
-/* Retrieve TMD info */
-tmd_data = (tmd *)SIGNATURE_PAYLOAD(p_tmd);
- 
-/* Set values */
-*outbuf = tmd_data->title_version;
- 
-/* Free memory */
-free(p_tmd);
- 
-return 0;
 }
 
 
@@ -387,13 +615,16 @@ int main(int argc, char **argv) {
 
     basicInit();
 	
+	fatInitDefault();
+	
 	PAD_Init();
 	WPAD_Init();
 
     //Basic scam warning, brick warning, and credits by Arikado
 	printf("\x1b[2J");
+	printMyTitle();
 	printf("\x1b[2;0H");
-	printf("Welcome to Dop-IOS MOD - a modification of Dop-IOS!\n\n");
+	printf("\n\nWelcome to Dop-IOS MOD - a modification of Dop-IOS!\n\n");
 	printf("If you have paid for this software, you have been scammed.\n\n");
 	printf("If misused, this software WILL brick your Wii.\n");
 	printf("The authors of DOP-IOS MOD are not responsible if this occurs.\n\n");
@@ -462,9 +693,10 @@ int main(int argc, char **argv) {
 		WPAD_ScanPads();
 		PAD_ScanPads();
 		
-		printf("\x1b[2J");
+		//printf("\x1b[2J");
+		printMyTitle();
 		printf("\x1b[2;0H");
-		printf("Which IOS would you like to use to install other IOSs?\n");
+		printf("\n\n\nWhich IOS would you like to use to install other IOSs?\n");
 		printf("IOS: %d\n\n", iosVersion[selectedios]);
 
 		VIDEO_WaitVSync();
@@ -493,9 +725,10 @@ int main(int argc, char **argv) {
 		}
 
 	// Issue corrected by PhoenixTank (changes made by Arikado in v2)
-    printf("\x1b[2J");
+    //printf("\x1b[2J");
+	printMyTitle();
 	printf("\x1b[2;0H");
-    printf("Loading selected IOS...\n");
+    printf("\n\nLoading selected IOS...\n");
 	
 	WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.
 
@@ -536,10 +769,72 @@ int main(int argc, char **argv) {
     /*This definines he max number of IOSs we can have to select from*/
 	int selected=19;
 	
+	bool dontcheck = false;//Small fix for a small bug
+	
+	int screen = 0;//Checks what screen we're on
+	int selection = 0;//IOSs or Channels?
+	int orregion = 0;//Region or...?
+	int systemselection = 0;//Which system menu?
+	int regionselection = 0;//Which region?
+	int channelselection = 0;//Which channel?
+	
 	getMyIOS();
 
 	for(;;){
 		printMyTitle();
+		
+		PAD_ScanPads();
+		WPAD_ScanPads();
+		
+		//Screen 0 -- Update Selection Screen
+		if(screen == 0){
+		if(selection == 0){
+		printf("--> IOSs\n");
+		printf("    Channels\n");
+		printf("    System Menu");
+		}
+		if(selection == 1){
+		printf("    IOSs\n");
+		printf("--> Channels\n");
+		printf("    System Menu");
+		}
+		if(selection == 2){
+		printf("    IOSs\n");
+		printf("    Channels\n");
+		printf("--> System Menu");
+		}
+		printf("\n\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
+		printf("[A]               Select\n");
+		printf("[HOME]/GC:[Y]     Exit\n\n\n");
+		if(dontcheck){
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	    (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
+		break;//Exit
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A)){
+		if(selection == 0)
+		screen = 1;
+		if(selection == 1)
+		screen = 2;
+		if(selection == 2)
+		screen = 3;
+		dontcheck = false;
+		}
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_DOWN))
+		selection++;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_UP) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_UP) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_UP))
+		selection--;
+		}
+		if(selection < 0)
+		selection = 2;
+		if(selection > 2)
+		selection = 0;
+		}//End Screen 0
+		
+		//Screen1 IOS Selection Screen
+		if(screen == 1){
 
 		// Show menu
 		printf("Select the IOS you want to dop.             Currently installed:\n\n        ");
@@ -577,28 +872,31 @@ int main(int argc, char **argv) {
 
 
 		//Show options                
-        printf("[LEFT/RIGHT]   Select IOS\n");
+        printf("[LEFT/RIGHT]      Select IOS\n");
         if(type!=PROTECTED){
 	        if(type!=STUB_NOW)
-	        	printf("[A]            Install latest v%d of IOS%d\n",newest,major);
+	        	printf("[A]               Install latest v%d of IOS%d\n",newest,major);
 	        else
 	        	printf("\n");
 
 	        if(type!=LATEST)
-	        	printf("[-]/[B]        Install old v%d of IOS%d\n",minor,major);
+	        	printf("[-]/GC:[X]        Install old v%d of IOS%d\n",minor,major);
 	        else
 	        	printf("\n");
 	        	
         }else{
 	        printf("\n\n");
         }
-                printf("[HOME]/[Y]     Exit\n\n\n\n\n\n\n\n\n");
+		        printf("[B]               Back\n");
+                printf("[HOME]/GC:[Y]     Exit\n\n\n\n\n\n\n\n");
         printf("                        -- Dop-IOS MOD by Arikado, SifJar, PhoenixTank");
 
 		u32 pressed = WPAD_ButtonsDown(WPAD_CHAN_0);
-		PAD_ScanPads();
-		WPAD_ScanPads();
 		
+		if(dontcheck){
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_B))
+		screen = 0;
 		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
 	       (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y)){
 			break;
@@ -614,12 +912,155 @@ int main(int argc, char **argv) {
 				selected=0;
 		}else if ((pressed & WPAD_BUTTON_A || pressed & WPAD_CLASSIC_BUTTON_A || (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A)) && (type==NORMAL || type==LATEST)){
 			doparIos(major,newest,true);
-		}else if ((pressed & WPAD_BUTTON_MINUS || pressed & WPAD_CLASSIC_BUTTON_MINUS || (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_B)) && (type==NORMAL || type==STUB_NOW)){
+		}else if ((pressed & WPAD_BUTTON_MINUS || pressed & WPAD_CLASSIC_BUTTON_MINUS || (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_X)) && (type==NORMAL || type==STUB_NOW)){
 			doparIos(major,minor,false);
 		}
+		}
+		
+		}//End screen1
+		
+		//Screen 2 = Channel Choice
+		if(screen == 2){
+		if(orregion == 0){
+		printf("--> Install Channel: %s\n", channels[channelselection].name);
+		printf("    Region:          %s\n\n\n", regions[regionselection].name);
+		}
+		if(orregion == 1){
+		printf("    Install Channel: %s\n", channels[channelselection].name);
+		printf("--> Region:          %s\n\n\n", regions[regionselection].name);
+		}
+		if(dontcheck){
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A)){
+		if(yes_or_no())
+		InstallTheChosenChannel(regionselection, channelselection);
+		}
+		}
+		printf("[UP]/[DOWN] [LEFT]/[RIGHT]       Change Selection\n");
+		printf("[A]                              Select\n");
+		printf("[B]                              Back\n");
+		printf("[HOME]/GC:[Y]                    Exit\n\n\n");
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_DOWN))
+		orregion++;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_UP) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_UP) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_UP))
+		orregion--;
+		if(orregion > 1)
+		orregion = 0;
+		if(orregion < 0)
+		orregion = 1;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_LEFT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_LEFT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_LEFT)){
+		if(orregion == 0)
+		channelselection--;
+		if(orregion == 1)
+		regionselection--;
+		}
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_RIGHT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_RIGHT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_RIGHT)){
+		if(orregion == 0)
+		channelselection++;
+		if(orregion == 1)
+		regionselection++;
+		}
+		if(channelselection < 0)
+		channelselection = MAX_CHANNEL;
+		if(channelselection > MAX_CHANNEL)
+		channelselection = 0;
+		if(regionselection < 0)
+		regionselection = MAX_REGION;
+		if(regionselection > MAX_REGION)
+		regionselection = 0;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_B))
+		screen = 0;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	      (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
+		break;
+		}
+		
+		//Screen 3 = System Menu Choice
+		if(screen == 3){
+		//Quick Fix
+		if(regionselection == MAX_REGION && systemselection == 0)
+		systemselection = 1;
+		if(orregion == 0){
+		printf("--> Install System Menu: %s\n", systemmenus[systemselection].name);
+		printf("    Region:              %s\n\n\n", regions[regionselection].name);
+		}
+		if(orregion == 1){
+		printf("    Install System Menu: %s\n", systemmenus[systemselection].name);
+		printf("--> Region:              %s\n\n\n", regions[regionselection].name);
+		}
+		if(dontcheck){
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A)){
+		if(yes_or_no())
+		InstallTheChosenSystemMenu(regionselection, systemselection);
+		}
+		}
+		printf("[UP]/[DOWN] [LEFT]/[RIGHT]       Change Selection\n");
+		printf("[A]                              Select\n");
+		printf("[B]                              Back\n");
+		printf("[HOME]/GC:[Y]                    Exit\n\n\n");
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_DOWN))
+		orregion++;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_UP) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_UP) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_UP))
+		orregion--;
+		if(orregion > 1)
+		orregion = 0;
+		if(orregion < 0)
+		orregion = 1;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_LEFT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_LEFT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_LEFT)){
+		if(orregion == 0)
+		systemselection--;
+		if(orregion == 1)
+		regionselection--;
+		//Only let 3.5 appear if Korea is the selected region
+		if(systemselection == 3 && regionselection != MAX_REGION)
+		systemselection--;
+		//Get rid of certain menus from Korea selection
+		if(regionselection == MAX_REGION && (systemselection == 0 || systemselection == 2 || systemselection == 4))
+		systemselection--;
+		}
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_RIGHT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_RIGHT) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_RIGHT)){
+		if(orregion == 0)
+		systemselection++;
+		if(orregion == 1)
+		regionselection++;
+		//Only let 3.5 appear if Korea is the selected region
+		if(systemselection == 3 && regionselection != MAX_REGION)
+		systemselection++;
+		//Get rid of certain menus from Korea selection
+		if(regionselection == MAX_REGION && (systemselection == 0 || systemselection == 2 || systemselection == 4))
+		systemselection++;
+		}
+		if(systemselection < 0)
+		systemselection = MAX_SYSTEMMENU;
+		if(systemselection > MAX_SYSTEMMENU)
+		systemselection = 0;
+		if(regionselection < 0)
+		regionselection = MAX_REGION;
+		if(regionselection > MAX_REGION)
+		regionselection = 0;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_B))
+		screen = 0;
+		if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	      (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
+		break;
+		}//End Screen 3
 		
 		VIDEO_WaitVSync();
 		VIDEO_WaitVSync();
+		
+		if(!dontcheck)
+		dontcheck = true;
 	}
 
 

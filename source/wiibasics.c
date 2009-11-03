@@ -267,29 +267,41 @@ void hex_print_array16(const u8 *array, u32 size){
 }
 
 bool yes_or_no(void){
-	bool yes = 0;
+
+	bool yes = false;
 	
+	/*This clears the data from the Wiimote and GC controller so we don't have the program assuming A was pressed when it wasn't*/
+	bool dontcheckrightnow = true;
+	
+	printf("Are you sure you want to continue?\n");
 	printf("      [A] Yes        [B] Cancel    [HOME]/[Y] Exit\n");
 	
 	while(true){
+	
 	PAD_ScanPads();
 	WPAD_ScanPads();
 	
-	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
+	if(!dontcheckrightnow){
+	if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
 	(PAD_ButtonsDown(0)&PAD_BUTTON_A)){
-	yes = 1;
+	yes = true;
 	break;
 	}
 	
-	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
+	if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
 	(PAD_ButtonsDown(0)&PAD_BUTTON_B))
 	break;
 	
-	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
+	if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
 	(PAD_ButtonsDown(0)&PAD_BUTTON_Y)){
 	exit(0);
 	break;
 	}
+	
+	}
+	
+	if(dontcheckrightnow)
+	dontcheckrightnow = false;
 	
 	}
 
