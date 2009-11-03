@@ -80,21 +80,18 @@ const struct region regions[] = {
 
 
 struct systemmenu{
-u32 versionmain;
-u32 versionsub;
-u32 versionsubsub;
 char* name;
 };
 
 const struct systemmenu systemmenus[] = {
 //VERSION#1, VERSION#2, VERSION#3 NAME
-{3, 2, 0, "System Menu 3.2"},
-{3, 3, 0, "System Menu 3.3"},
-{3, 4, 0, "System Menu 3.4"},
-{3, 5, 0, "System Menu 3.5 (Korea Only)"},
-{4, 0, 0, "System Menu 4.0"},
-{4, 1, 0, "System Menu 4.1"},
-{4, 2, 0, "System Menu 4.2"}
+{"System Menu 3.2"},
+{"System Menu 3.3"},
+{"System Menu 3.4"},
+{"System Menu 3.5 (Korea Only)"},
+{"System Menu 4.0"},
+{"System Menu 4.1"},
+{"System Menu 4.2"}
 };  
 
 struct channel{
@@ -620,11 +617,6 @@ int main(int argc, char **argv) {
 	PAD_Init();
 	WPAD_Init();
 	
-	fflush(stdout);
-	s32 nandret;
-	
-	nandret = Nand_Init();
-	
 	fatInitDefault();
 
     //Basic scam warning, brick warning, and credits by Arikado
@@ -656,11 +648,8 @@ int main(int argc, char **argv) {
 	VIDEO_WaitVSync();
 	
 	}
-
-
-	// This code below also created by Arikado
 	
-		WPAD_Shutdown();
+		WPAD_Shutdown();//Phoenix's bugfix
 
 		u8 *iosVersion = NULL;
 		u32 iosCnt;
@@ -691,7 +680,6 @@ int main(int argc, char **argv) {
 		}
 		
 		WPAD_Init();
-		//PAD_Init();
  
        for(;;){
  
@@ -699,8 +687,7 @@ int main(int argc, char **argv) {
 		
 		WPAD_ScanPads();
 		PAD_ScanPads();
-		
-		//printf("\x1b[2J");
+	
 		printMyTitle();
 		printf("\x1b[2;0H");
 		printf("\n\n\nWhich IOS would you like to use to install other IOSs?\n");
@@ -731,17 +718,16 @@ int main(int argc, char **argv) {
 		break;
 		}
 
-	// Issue corrected by PhoenixTank (changes made by Arikado in v2)
-    //printf("\x1b[2J");
+	// Issue corrected by PhoenixTank
 	printMyTitle();
 	printf("\x1b[2;0H");
     printf("\n\nLoading selected IOS...\n");
 	
-	WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.
+	WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.--PhoenixTank
 
     int ret = IOS_ReloadIOS(iosVersion[selectedios]);
 	
-	WPAD_Init(); // Okay to start video up again.
+	WPAD_Init(); // Okay to start video up again.--PhoenixTank
 	
 	if(ret >= 0){
 	printf("\n\n\nIOS successfully loaded! Press A to continue.");
@@ -786,6 +772,11 @@ int main(int argc, char **argv) {
 	int channelselection = 0;//Which channel?
 	
 	getMyIOS();
+	
+	//Initialize NAND now instead of earlier -- Thanks WiiPower
+	fflush(stdout);
+	s32 nandret;
+	nandret = Nand_Init();
 
 	for(;;){
 		printMyTitle();
