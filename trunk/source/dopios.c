@@ -39,6 +39,8 @@ distribution.
 #include "title.h"
 #include "title_install.h"
 
+#include "nand.h"
+
 #define PROTECTED	0
 #define NORMAL		1
 #define STUB_NOW	2
@@ -559,8 +561,8 @@ void InstallTheChosenChannel(int region, int channel){
  
  //News Channel
   if(channel == 5){
-  //printf("\n\nInstalling the News Channel...");
-  ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
+  printf("\n\nInstalling the News Channel...");
+  //ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
   if(region == 0)
   ret = patchmii_install(0x10002,0x48414745,0,0x10002,0x48414745,0,false, false);
   if(region == 1)
@@ -615,10 +617,15 @@ int main(int argc, char **argv) {
 
     basicInit();
 	
-	fatInitDefault();
-	
 	PAD_Init();
 	WPAD_Init();
+	
+	fflush(stdout);
+	s32 nandret;
+	
+	nandret = Nand_Init();
+	
+	fatInitDefault();
 
     //Basic scam warning, brick warning, and credits by Arikado
 	printf("\x1b[2J");
@@ -627,7 +634,7 @@ int main(int argc, char **argv) {
 	printf("\n\nWelcome to Dop-IOS MOD - a modification of Dop-IOS!\n\n");
 	printf("If you have paid for this software, you have been scammed.\n\n");
 	printf("If misused, this software WILL brick your Wii.\n");
-	printf("The authors of DOP-IOS MOD are not responsible if this occurs.\n\n");
+	printf("The authors of DOP-IOS MOD are not responsible if your Wii is bricked.\n\n");
 	printf("Created by:\n");
 	printf("SifJar\n");
 	printf("PheonixTank\n");

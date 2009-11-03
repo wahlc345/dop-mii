@@ -267,7 +267,7 @@ void hex_print_array16(const u8 *array, u32 size){
 }
 
 bool yes_or_no(void){
-
+	
 	bool yes = false;
 	
 	/*This clears the data from the Wiimote and GC controller so we don't have the program assuming A was pressed when it wasn't*/
