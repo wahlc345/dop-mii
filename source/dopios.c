@@ -265,7 +265,7 @@ void doparIos(u32 major, u32 minor,bool newest){
 			exit(0);
 		}
 		
-		getMyIOS();//Comment out for possible fix (fix 1)
+		//getMyIOS(); Causes crashes
 	}
 }
 
@@ -345,6 +345,11 @@ void InstallTheChosenSystemMenu(int region, int menu){
  u64 sysTid = 0x100000002ULL;
  u16 sysVersion = NULL;
  static signed_blob *sysTik = NULL, *sysTmd = NULL;
+ 
+ //Initialize NAND now instead of earlier -- Thanks WiiPower
+ fflush(stdout);
+ s32 nandret;
+ nandret = Nand_Init();
 
 	//North America
 	if(region == 0){
@@ -478,6 +483,10 @@ void InstallTheChosenSystemMenu(int region, int menu){
 	 VIDEO_WaitVSync();
 	 exit(0);
 	 }
+	 
+	 //Close the NAND
+	 fflush(stdout);
+	 ISFS_Deinitialize();
 
 }
 
@@ -521,7 +530,7 @@ void InstallTheChosenChannel(int region, int channel){
  //Nintendo Channel
   if(channel == 3){
   printf("\n\nInstalling the Nintendo Channel...");
-  //ret = patchmii_install(0x10001, 0x48415441, 0, 0x10001, 0x48415441, 0, 0);
+  ret = patchmii_install(0x10001, 0x48415441, 0, 0x10001, 0x48415441, 0, false, false);
   if(region == 0)
   ret = patchmii_install(0x10001, 0x48415445, 0, 0x10001, 0x48415445, 0, false, false);
   if(region == 1)
@@ -540,7 +549,7 @@ void InstallTheChosenChannel(int region, int channel){
  //Internet Channel
   if(channel == 4){
   printf("\n\nInstalling the Internet Channel...");
-  //ret = patchmii_install(0x10001, 0x48414441, 0, 0x10001, 0x48414441, 0, 0);
+  ret = patchmii_install(0x10001, 0x48414441, 0, 0x10001, 0x48414441, 0, false, false);
   if(region == 0)
   ret = patchmii_install(0x10001, 0x48414445, 0, 0x10001, 0x48414445, 0, false, false);
   if(region == 1)
@@ -559,7 +568,7 @@ void InstallTheChosenChannel(int region, int channel){
  //News Channel
   if(channel == 5){
   printf("\n\nInstalling the News Channel...");
-  //ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
+  ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
   if(region == 0)
   ret = patchmii_install(0x10002,0x48414745,0,0x10002,0x48414745,0,false, false);
   if(region == 1)
@@ -578,7 +587,7 @@ void InstallTheChosenChannel(int region, int channel){
  //Weather Channel
   if(channel == 6){
   printf("\n\nInstalling the Weather Channel...");
-  //ret = patchmii_install(0x10002, 0x48414641, 0, 0x10002, 0x48414641, 0, 0);
+  ret = patchmii_install(0x10002, 0x48414641, 0, 0x10002, 0x48414641, 0, false, false);
   if(region == 0)
   ret = patchmii_install(0x10002,0x48414645,0,0x10002,0x48414645,0,false, false);
   if(region == 1)
@@ -772,11 +781,6 @@ int main(int argc, char **argv) {
 	int channelselection = 0;//Which channel?
 	
 	getMyIOS();
-	
-	//Initialize NAND now instead of earlier -- Thanks WiiPower
-	fflush(stdout);
-	s32 nandret;
-	nandret = Nand_Init();
 
 	for(;;){
 		printMyTitle();

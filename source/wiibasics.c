@@ -281,7 +281,8 @@ bool yes_or_no(void){
 	PAD_ScanPads();
 	WPAD_ScanPads();
 	
-	if(!dontcheckrightnow){
+	if(dontcheckrightnow == false){
+	
 	if((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
 	(PAD_ButtonsDown(0)&PAD_BUTTON_A)){
 	yes = true;
@@ -300,7 +301,7 @@ bool yes_or_no(void){
 	
 	}
 	
-	if(dontcheckrightnow)
+	if(dontcheckrightnow == true)
 	dontcheckrightnow = false;
 	
 	}
