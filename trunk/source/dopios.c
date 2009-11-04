@@ -502,7 +502,7 @@ void InstallTheChosenChannel(int region, int channel){
  //Shop Channel
   if(channel == 0){
   printf("\n\nInstalling the Shop Channel...");
-  ret = patchmii_install(0x10002, 0x48414241, 17, 0x10002, 0x48414241, 17, false, false);
+  ret = patchmii_install(0x10002, 0x48414241, 18, 0x10002, 0x48414241, 18, false, false);
   if(ret < 0){
   printf("\nError: %d", ret);
   }
