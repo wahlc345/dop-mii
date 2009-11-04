@@ -1,6 +1,10 @@
 /*-------------------------------------------------------------
 
-dopios.c - Dop-IOS v5 - install and patch any IOS
+dopios.c 
+
+Dop-IOS MOD - A modification of Dop-IOS by Arikad, SifJar, and PhoenixTank
+
+Dop-IOS - install and patch any IOS by marc
  
 Based on tona's shop installer (C) 2008 tona
  
@@ -48,7 +52,7 @@ distribution.
 #define MAX_REGION  3
 #define MAX_IOS		36
 #define MAX_SYSTEMMENU 6
-#define MAX_CHANNEL 6
+#define MAX_CHANNEL 7
 
 
 #define BLACK	0
@@ -101,7 +105,8 @@ char* name;
 
 const struct channel channels[] ={
 {"Shop Channel"},
-{"Photo Channel"},
+{"Photo Channel 1.0"},
+{"Photo Channel 1.1"},
 {"Mii Channel"},
 {"Nintendo Channel"},
 {"Internet Channel"},
@@ -181,7 +186,7 @@ void printMyTitle(){
 	setConsoleBgColor(RED,0);
 	setConsoleFgColor(WHITE,0);
 	printf("                                                                        ");
-	printf("                           Dop-IOS MOD v7                               ");
+	printf("                           Dop-IOS MOD v8                               ");
 	printf("                                                                        ");
 	setConsoleBgColor(BLACK,0);
 	setConsoleFgColor(WHITE,0);
@@ -505,19 +510,30 @@ void InstallTheChosenChannel(int region, int channel){
   printf("\nShop Channel successfully installed!");
   }
   
- //Photo Channel
-  if(channel == 1){
-  printf("\n\nInstalling the Photo Channel...");
+ //Photo Channel 1.0
+  if(channel == 2){
+  printf("\n\nInstalling the Photo Channel 1.0...");
+  ret = patchmii_install(0x10002, 0x48414141 , 0, 0x10002, 0x48414141 , 0, false, false);
+  if(ret < 0){
+  printf("\nError: %d", ret);
+  }
+  else
+  printf("\nPhoto Channel 1.0 successfully installed!");
+  }
+  
+ //Photo Channel 1.1
+  if(channel == 2){
+  printf("\n\nInstalling the Photo Channel 1.1...");
   ret = patchmii_install(0x10002, 0x48415941, 0, 0x10002, 0x48415941, 0, false, false);
   if(ret < 0){
   printf("\nError: %d", ret);
   }
   else
-  printf("\nPhoto Channel successfully installed!");
+  printf("\nPhoto Channel 1.1 successfully installed!");
   }
   
  //Mii Channel
-  if(channel == 2){
+  if(channel == 3){
   printf("\n\nInstalling the Mii Channel...");
   ret = patchmii_install(0x10002, 0x48414341, 0, 0x10002, 0x48414341, 0, false, false);
   if(ret < 0){
