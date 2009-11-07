@@ -351,6 +351,9 @@ void InstallTheChosenSystemMenu(int region, int menu){
  u16 sysVersion = NULL;
  static signed_blob *sysTik = NULL, *sysTmd = NULL;
  
+ //Initialize Network
+ Network_Init();
+ 
  //Initialize NAND now instead of earlier -- Thanks WiiPower
  fflush(stdout);
  s32 nandret;
