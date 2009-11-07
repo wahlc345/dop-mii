@@ -45,6 +45,8 @@ distribution.
 
 #include "nand.h"
 
+#include "network.h"
+
 #define PROTECTED	0
 #define NORMAL		1
 #define STUB_NOW	2
@@ -514,7 +516,7 @@ void InstallTheChosenChannel(int region, int channel){
   }
   
  //Photo Channel 1.0
-  if(channel == 2){
+  if(channel == 1){
   printf("\n\nInstalling the Photo Channel 1.0...");
   ret = patchmii_install(0x10002, 0x48414141 , 0, 0x10002, 0x48414141 , 0, false, false);
   if(ret < 0){
@@ -547,7 +549,7 @@ void InstallTheChosenChannel(int region, int channel){
   }
   
  //Nintendo Channel
-  if(channel == 3){
+  if(channel == 4){
   printf("\n\nInstalling the Nintendo Channel...");
   ret = patchmii_install(0x10001, 0x48415441, 0, 0x10001, 0x48415441, 0, false, false);
   if(region == 0)
@@ -566,7 +568,7 @@ void InstallTheChosenChannel(int region, int channel){
   }
  
  //Internet Channel
-  if(channel == 4){
+  if(channel == 5){
   printf("\n\nInstalling the Internet Channel...");
   ret = patchmii_install(0x10001, 0x48414441, 0, 0x10001, 0x48414441, 0, false, false);
   if(region == 0)
@@ -585,7 +587,7 @@ void InstallTheChosenChannel(int region, int channel){
   }
  
  //News Channel
-  if(channel == 5){
+  if(channel == 6){
   printf("\n\nInstalling the News Channel...");
   ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
   if(region == 0)
@@ -604,7 +606,7 @@ void InstallTheChosenChannel(int region, int channel){
   }
  
  //Weather Channel
-  if(channel == 6){
+  if(channel == 7){
   printf("\n\nInstalling the Weather Channel...");
   ret = patchmii_install(0x10002, 0x48414641, 0, 0x10002, 0x48414641, 0, false, false);
   if(region == 0)
@@ -708,6 +710,8 @@ int main(int argc, char **argv) {
 		}
 		
 		WPAD_Init();
+		
+		int iosreloadcount = 0;//Forces the Wii to exit(0); if IOS_ReloadIOS() is called 11 times
  
        for(;;){
  
@@ -752,7 +756,13 @@ int main(int argc, char **argv) {
     printf("\n\nLoading selected IOS...\n");
 	
 	WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.--PhoenixTank
-
+	
+    iosreloadcount++;
+	if(iosreloadcount == 11){
+	printf("\nERROR! Too many attempts to load IOS. Please restart the program. Exiting...");
+	VIDEO_WaitVSync();
+	exit(0);
+	}
     int ret = IOS_ReloadIOS(iosVersion[selectedios]);
 	
 	WPAD_Init(); // Okay to start video up again.--PhoenixTank
