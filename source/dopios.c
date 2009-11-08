@@ -2,7 +2,7 @@
 
 dopios.c 
 
-Dop-IOS MOD - A modification of Dop-IOS by Arikad, SifJar, and PhoenixTank
+Dop-IOS MOD - A modification of Dop-IOS by Arikado, SifJar, and PhoenixTank
 
 Dop-IOS - install and patch any IOS by marc
  
@@ -272,7 +272,7 @@ void doparIos(u32 major, u32 minor,bool newest){
 			exit(0);
 		}
 		
-		//getMyIOS(); Causes crashes
+		getMyIOS();
 	}
 }
 
@@ -786,6 +786,7 @@ int main(int argc, char **argv) {
 	printf("\n\n\nERROR! Choose an IOS that accepts fakesigning! Press A to continue.");
 	while(true){
 	WPAD_ScanPads();
+	PAD_ScanPads();
 	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
 	(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A))
 	break;
