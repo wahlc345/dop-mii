@@ -811,6 +811,31 @@ int main(int argc, char **argv) {
 	int channelselection = 0;//Which channel?
 	
 	getMyIOS();
+	
+	regionselection = CONF_GetRegion();
+ 
+    switch(regionselection){
+	
+      case CONF_REGION_JP:
+      regionselection = 2;
+	  break;
+	  
+      case CONF_REGION_EU:
+      regionselection = 1;
+	  break;
+	  
+      case CONF_REGION_US:
+      regionselection = 0;
+	  break;
+	  
+      case CONF_REGION_KR:
+      regionselection = 3;
+      break;
+	  
+	  default:
+	  regionselection = 0;
+	  break;
+   }
 
 	for(;;){
 		printMyTitle();
