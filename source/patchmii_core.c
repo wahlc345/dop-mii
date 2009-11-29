@@ -40,7 +40,6 @@
 #include "debug.h"
 #include "http.h"
 #include "haxx_certs.h"
-#include "patches.h"
 #ifdef TEMP_IOS
 #include "uninstall.h"
 #endif
@@ -546,13 +545,13 @@ void brute_tik(tik *p_tik) {
   exit(5);
 }
     
-void forge_tmd(signed_blob *s_tmd) {
+static void forge_tmd(signed_blob *s_tmd) {
 //  debug_printf("forging tmd sig");
   zero_sig(s_tmd);
   brute_tmd(SIGNATURE_PAYLOAD(s_tmd));
 }
 
-void forge_tik(signed_blob *s_tik) {
+static void forge_tik(signed_blob *s_tik) {
 //  debug_printf("forging tik sig");
   zero_sig(s_tik);
   brute_tik(SIGNATURE_PAYLOAD(s_tik));

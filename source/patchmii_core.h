@@ -12,8 +12,8 @@ s32 load_temporary_ios(void);
 s32 cleanup_temporary_ios(void);
 
 //Tools
-void forge_tmd(signed_blob *s_tmd);
-void forge_tik(signed_blob *s_tik);
+static void forge_tmd(signed_blob *s_tmd);
+static void forge_tik(signed_blob *s_tik);
 
 void spinner(void);
 

@@ -132,6 +132,10 @@ $(OUTPUT).elf: $(OFILES)
 	@echo $(notdir $<)
 	$(bin2o)
 	
+%.sys.o : %.sys
+	@echo $(notdir $<)
+	$(bin2o)
+	
 %.dat.o : %.dat
 	@echo $(notdir $<)
 	$(bin2o)
