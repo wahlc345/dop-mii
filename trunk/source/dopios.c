@@ -47,6 +47,8 @@ distribution.
 
 #include "network.h"
 
+#include "IOSPatcher.h"
+
 #define PROTECTED	0
 #define NORMAL		1
 #define STUB_NOW	2
@@ -188,7 +190,7 @@ void printMyTitle(){
 	setConsoleBgColor(RED,0);
 	setConsoleFgColor(WHITE,0);
 	printf("                                                                        ");
-	printf("                           Dop-IOS MOD v8                               ");
+	printf("                           Dop-IOS MOD v9                               ");
 	printf("                                                                        ");
 	setConsoleBgColor(BLACK,0);
 	setConsoleFgColor(WHITE,0);
@@ -648,6 +650,8 @@ int main(int argc, char **argv) {
 	WPAD_Init();
 	
 	fatInitDefault();
+	
+	int ret = 0;
 
     //Basic scam warning, brick warning, and credits by Arikado
 	printf("\x1b[2J");
@@ -712,6 +716,7 @@ int main(int argc, char **argv) {
 		WPAD_Init();
 		
 		int iosreloadcount = 0;//Forces the Wii to exit(0); if IOS_ReloadIOS() is called 11 times
+		int firstselection = 0;
  
        for(;;){
  
@@ -723,9 +728,29 @@ int main(int argc, char **argv) {
 		printMyTitle();
 		printf("\x1b[2;0H");
 		printf("\n\n\nWhich IOS would you like to use to install other IOSs?\n");
-		printf("IOS: %d\n\n", iosVersion[selectedios]);
-
-		VIDEO_WaitVSync();
+		
+		if(firstselection == 0){
+		printf("--> IOS: %d\n", iosVersion[selectedios]);
+		printf("    Install an IOS that accepts fakesigning\n\n");
+		}
+		
+		if(firstselection == 1){
+		printf("    IOS: %d\n", iosVersion[selectedios]);
+		printf("--> Install an IOS that accepts fakesigning\n\n");
+		}
+		
+		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_UP) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_UP) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_UP))
+		firstselection--;
+		
+		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
+        (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_DOWN))
+		firstselection++;
+		
+		if(firstselection > 1)
+		firstselection = 0;
+		if(firstselection < 0)
+		firstselection = 1;
  
 		/* LEFT/RIGHT buttons */
 		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_LEFT) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_LEFT) || \
@@ -748,27 +773,77 @@ int main(int argc, char **argv) {
 		if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
 		(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A))
 		break;
+		
+		VIDEO_WaitVSync();
 		}
-
-	// Issue corrected by PhoenixTank
+	
+    //Install an IOS that accepts fakesigning	
+	if(firstselection == 1){
+	printf("Installing an IOS that accepts fakesigning...\n");
+	if(!yes_or_no())
+	exit(0);
+	printf("Downgrading IOS 15...\n");
+	ret = Downgrade_IOS(15, 523, 257);
+	if(ret < 0){
+	printf("Downgrade failed. Exiting...");
+	exit(0);
+	}
+	WPAD_Shutdown();
+	iosreloadcount++;
+	IOS_ReloadIOS(15);
+	WPAD_Init();
+	printf("IOS 15 successfully downgraded!\n");
+    printf("Continue to install your fakesign accepting IOS 36?\n");
+	if(!yes_or_no())
+	exit(0);
+	ret = Install_patched_IOS(36, 3351, true, true, false, 36, 3351);
+	if(ret < 0){
+	printf("Installing fakesign accepting IOS failed. Exiting...");
+	exit(0);
+	}
+	printf("IOS 36 installed as an IOS that can accept fakesigning!\n");
+    printf("Now restore IOS 15 back to normal?\n");
+    if(!yes_or_no())
+	exit(0);
+    WPAD_Shutdown();
+	iosreloadcount++;
+    IOS_ReloadIOS(36);
+    WPAD_Init(); 
+	ret = install_unpatched_IOS(15, 523);
+	if(ret < 0){
+	printf("Error restoring IOS 15! Exiting...");
+	exit(0);
+	}
+	printf("You now have IOS 36 successfully installed as an IOS that can accept fakesigning!\n");
+	printf("Continue to Dop-IOS MOD?");
+	if(!yes_or_no())
+	exit(0);
+	
+	}
+	
+    iosreloadcount++;
+	if(iosreloadcount == 10){
+	printf("\nERROR! Too many attempts to load IOS. Please restart the program. Exiting...");
+	VIDEO_WaitVSync();
+	exit(0);
+	}
+	
+	if(firstselection != 1){
+	
 	printMyTitle();
 	printf("\x1b[2;0H");
     printf("\n\nLoading selected IOS...\n");
 	
 	WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.--PhoenixTank
-	
-    iosreloadcount++;
-	if(iosreloadcount == 11){
-	printf("\nERROR! Too many attempts to load IOS. Please restart the program. Exiting...");
-	VIDEO_WaitVSync();
-	exit(0);
-	}
-    int ret = IOS_ReloadIOS(iosVersion[selectedios]);
-	
-	WPAD_Init(); // Okay to start video up again.--PhoenixTank
+    ret = IOS_ReloadIOS(iosVersion[selectedios]);
+	WPAD_Init(); // Okay to start wiimote up again.--PhoenixTank
 	
 	if(ret >= 0){
 	printf("\n\n\nIOS successfully loaded! Press A to continue.");
+	}
+	
+	 }
+	
 	while(true){
 	WPAD_ScanPads();
 	PAD_ScanPads();
@@ -778,8 +853,6 @@ int main(int argc, char **argv) {
 	if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
 	(PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
 	exit(0);
-	}
-	break;
 	}
 	
 	if((ret < 0) && (ret != -1017)){
@@ -795,7 +868,7 @@ int main(int argc, char **argv) {
 	exit(0);
 	}
 	}
-	
+	break;
 	}
 
     /*This definines he max number of IOSs we can have to select from*/
@@ -811,6 +884,7 @@ int main(int argc, char **argv) {
 	int channelselection = 0;//Which channel?
 	
 	getMyIOS();
+	
 	
 	regionselection = CONF_GetRegion();
  

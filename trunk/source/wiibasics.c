@@ -274,7 +274,7 @@ bool yes_or_no(void){
 	bool dontcheckrightnow = true;
 	
 	printf("Are you sure you want to continue?\n");
-	printf("      [A] Yes        [B] Cancel    [HOME]/[Y] Exit\n");
+	printf("      [A] Yes        [B] NO    [HOME]/[Y] Exit\n");
 	
 	while(true){
 	

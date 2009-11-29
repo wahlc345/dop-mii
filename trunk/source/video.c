@@ -22,7 +22,7 @@ printf("\x1b[2J");
 fflush(stdout);
 }
  
-void Con_ClearLine(void)
+static void Con_ClearLine(void)
 {
 s32 cols, rows;
 u32 cnt;
