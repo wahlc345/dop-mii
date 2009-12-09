@@ -11,4 +11,5 @@ s32 Init_SD();
 s32 Init_USB();
 void Close_SD();
 void Close_USB();
+bool subfoldercreate(const char * fullpath);
 
