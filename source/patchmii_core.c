@@ -994,7 +994,7 @@ int main(int argc, char **argv) {
     if (fatInitDefault()) {
         gprintf("\nfatinitdefault ok");
 
-        chdir ("fat0:/");
+        chdir ("sd:/");
         useSd=1;
     } else {
         useSd=0;

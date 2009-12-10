@@ -592,7 +592,7 @@ void InstallTheChosenChannel(int region, int channel) {
 //Nintendo Channel
     if (channel == 4) {
         printf("\n\nInstalling the Nintendo Channel...");
-        ret = patchmii_install(0x10001, 0x48415441, 0, 0x10001, 0x48415441, 0, false, false);
+        //ret = patchmii_install(0x10001, 0x48415441, 0, 0x10001, 0x48415441, 0, false, false); <-- Supposedly causes failure
         if (region == 0)
             ret = patchmii_install(0x10001, 0x48415445, 0, 0x10001, 0x48415445, 0, false, false);
         if (region == 1)
@@ -610,7 +610,7 @@ void InstallTheChosenChannel(int region, int channel) {
 //Internet Channel
     if (channel == 5) {
         printf("\n\nInstalling the Internet Channel...");
-        ret = patchmii_install(0x10001, 0x48414441, 0, 0x10001, 0x48414441, 0, false, false);
+        //ret = patchmii_install(0x10001, 0x48414441, 0, 0x10001, 0x48414441, 0, false, false); <-- Supposedly causes failure
         if (region == 0)
             ret = patchmii_install(0x10001, 0x48414445, 0, 0x10001, 0x48414445, 0, false, false);
         if (region == 1)
