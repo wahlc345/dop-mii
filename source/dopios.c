@@ -2,7 +2,7 @@
 
 dopios.c
 
-Dop-IOS MOD - A modification of Dop-IOS by Arikado, SifJar, and PhoenixTank
+Dop-IOS MOD - A modification of Dop-IOS by Arikado, giantpune, SifJar, and PhoenixTank
 
 Dop-IOS - install and patch any IOS by marc
 
@@ -170,6 +170,7 @@ const struct ios ioses[]={
     {250,65280,65280,NORMAL,"Piracy prevention stub, useless."},
     {254,2,260,NORMAL,"PatchMii prevention stub, useless."}
 };*/
+
 const struct ios ioses[]={
 // IOS# OLDVERSION# NEWVERSION#, ???, Description -- Arikado
     {4,65280,65280,PROTECTED,"Stub, useless now."},
@@ -229,10 +230,10 @@ void clearConsole() {
 
 void printMyTitle() {
     clearConsole();
-    setConsoleBgColor(GREEN,0);
+    setConsoleBgColor(RED,0);
     setConsoleFgColor(WHITE,0);
     printf("                                                                        ");
-    printf("                           Dop-IOS MOD v9.gp                            ");
+    printf("                           Dop-IOS MOD v10                              ");
     printf("                                                                        ");
     setConsoleBgColor(BLACK,0);
     setConsoleFgColor(WHITE,0);
@@ -676,11 +677,8 @@ void InstallTheChosenChannel(int region, int channel) {
 }
 
 
-//#define GIANTPUNE filthyslut
-
-
 extern int useSd;
-u8 fatIsInit =0;
+u8 fatIsInit = 0;
 int checkAndRemoveStubs()// this can be made a whole lot smaller by using different functions with args.  but i never meant to release it so i was ok with having it be big.
 {
 	int ret=0;
@@ -871,33 +869,17 @@ int checkAndRemoveStubs()// this can be made a whole lot smaller by using differ
 }
 
 int main(int argc, char **argv) {
-#ifdef GIANTPUNE
-    IOS_ReloadIOS(249);
-    if (!fatIsInit) {
-        if (fatInitDefault()) {
-            //gprintf("\nfatinitdefault ok");
-
-            //chdir ("fat0:/");
-            useSd=1;
-            fatIsInit =1;
-        } else {
-            useSd=0;
-            //gprintf("\ncant init FAT :(");
-
-        }
-    }
-#endif
 
     basicInit();
 
     PAD_Init();
     WPAD_Init();
 
-    //fatInitDefault();
+    fatInitDefault();
 
 
     int ret = 0;
-#ifndef GIANTPUNE
+
     //Basic scam warning, brick warning, and credits by Arikado
     printf("\x1b[2J");
     printMyTitle();
@@ -909,6 +891,7 @@ int main(int argc, char **argv) {
     printf("Created by:\n");
     printf("SifJar\n");
     printf("PheonixTank\n");
+	printf("giantpune\n");
     printf("Arikado - http://arikadosblog.blogspot.com\n\n");
     printf("Press A to continue. Press HOME to exit.");
 
@@ -964,7 +947,7 @@ int main(int argc, char **argv) {
     int firstselection = 0;
 
     for (;;) {
-MAINMENU:
+
         for (;;) {
 
             WPAD_ScanPads();
@@ -1025,8 +1008,8 @@ MAINMENU:
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
             printf("Installing an IOS that accepts fakesigning...\n");
-            //if (!yes_or_no())
-            //    exit(0);
+            if (!yes_or_no())
+               exit(0);
             printf("Downgrading IOS 15...\n");
             ret = Downgrade_IOS(15, 523, 257);
             if (ret < 0) {
@@ -1059,8 +1042,8 @@ MAINMENU:
 			}*/
             printf("IOS 15 successfully downgraded!\n");
             printf("Continue to install your fakesign accepting IOS 36?\n");
-            //if (!yes_or_no())
-            //    exit(0);
+            if (!yes_or_no())
+                exit(0);
             ret = Install_patched_IOS(36, 3351, true, true, true, 36, 3351);//had to add true for fspermissions to delete stubs.  since we are patching a IOS anyways, i didnt think one more would hurt.
            /* ff = fopen("sd:/42.dol","r");
 			if (ff)
@@ -1076,8 +1059,8 @@ MAINMENU:
             }
             printf("IOS 36 installed as an IOS that can accept fakesigning!\n");
             printf("Now restore IOS 15 back to normal...\n");
-            //if (!yes_or_no())
-            //    exit(0);
+            if (!yes_or_no())
+                exit(0);
             Close_SD();
 			Close_USB();
             WPAD_Shutdown();
@@ -1110,7 +1093,6 @@ MAINMENU:
 			
 			}*/
 			
-			goto MAINMENU;
         }
 
         iosreloadcount++;
@@ -1166,14 +1148,6 @@ MAINMENU:
         }
         break;
     }
-#endif
-	printf("\n\nDo you want to check for stub IOSes and delete them to\nfree up the 2 precious blocks they take up on that little nand?\n\n");
-	if (yes_or_no())
-		if (!checkAndRemoveStubs())
-		{
-			printf("\n\nNo stubs found");
-			sleep(3);
-		}
 
     /*This definines he max number of IOSs we can have to select from*/
     int selected=19;
@@ -1226,18 +1200,27 @@ MAINMENU:
             if (selection == 0) {
                 printf("--> IOSs\n");
                 printf("    Channels\n");
-                printf("    System Menu");
+                printf("    System Menu\n");
+				printf("    Remove stubbed IOSs");
             }
             if (selection == 1) {
                 printf("    IOSs\n");
                 printf("--> Channels\n");
-                printf("    System Menu");
+                printf("    System Menu\n");
+				printf("    Remove stubbed IOSs");
             }
             if (selection == 2) {
                 printf("    IOSs\n");
                 printf("    Channels\n");
-                printf("--> System Menu");
+                printf("--> System Menu\n");
+				printf("    Remove stubbed IOSs");
             }
+			if (selection == 3) {
+			    printf("    IOSs\n");
+				printf("    Channels\n");
+				printf("    System Menu\n");
+				printf("--> Remove stubbed IOSs");
+			}
             printf("\n\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
             printf("[A]               Select\n");
             printf("[HOME]/GC:[Y]     Exit\n\n\n");
@@ -1253,6 +1236,8 @@ MAINMENU:
                         screen = 2;
                     if (selection == 2)
                         screen = 3;
+					if (selection == 3)
+					    screen = 4;
                     dontcheck = false;
                 }
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
@@ -1263,8 +1248,8 @@ MAINMENU:
                     selection--;
             }
             if (selection < 0)
-                selection = 2;
-            if (selection > 2)
+                selection = 3;
+            if (selection > 3)
                 selection = 0;
         }//End Screen 0
 
@@ -1490,6 +1475,16 @@ MAINMENU:
                     (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
                 break;
         }//End Screen 3
+		
+		if(screen == 4){
+			printf("\n\nAre you sure you want to check for stub IOSs and delete them to\nfree up the 2 precious blocks they take up on that little nand?\n\n");
+	       if (yes_or_no()) {
+		       if (!checkAndRemoveStubs()) {
+			printf("\n\nNo stubs found!");
+			sleep(3);
+		}
+		 }
+		  }
 
         VIDEO_WaitVSync();
         VIDEO_WaitVSync();
