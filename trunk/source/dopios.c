@@ -1484,7 +1484,8 @@ int main(int argc, char **argv) {
 			sleep(3);
 		}
 		 }
-		  }
+		 screen = 0;
+	    }
 
         VIDEO_WaitVSync();
         VIDEO_WaitVSync();
