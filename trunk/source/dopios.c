@@ -58,7 +58,7 @@ distribution.
 #define MAX_REGION  3
 #define MAX_IOS		36
 #define MAX_SYSTEMMENU 6
-#define MAX_CHANNEL 7
+#define MAX_CHANNEL 6
 
 
 #define BLACK	0
@@ -114,7 +114,6 @@ const struct channel channels[] ={
     {"Photo Channel 1.0"},
     {"Photo Channel 1.1"},
     {"Mii Channel"},
-    {"Nintendo Channel"},
     {"Internet Channel"},
     {"News Channel"},
     {"Weather Channel"}
@@ -589,26 +588,8 @@ void InstallTheChosenChannel(int region, int channel) {
             printf("\nMii Channel successfully installed!");
     }
 
-//Nintendo Channel
-    if (channel == 4) {
-        printf("\n\nInstalling the Nintendo Channel...");
-        //ret = patchmii_install(0x10001, 0x48415441, 0, 0x10001, 0x48415441, 0, false, false); <-- Supposedly causes failure
-        if (region == 0)
-            ret = patchmii_install(0x10001, 0x48415445, 0, 0x10001, 0x48415445, 0, false, false);
-        if (region == 1)
-            ret = patchmii_install(0x10001, 0x48415450, 0, 0x10001, 0x48415450, 0, false, false);
-        if (region == 2)
-            ret = patchmii_install(0x10001, 0x4841544a, 0, 0x10001, 0x4841544a, 0, false, false);
-        if (region == 3)
-            ret = patchmii_install(0x10001, 0x4841544b, 0, 0x10001, 0x4841544b, 0, false, false);
-        if (ret < 0) {
-            printf("\nError: %d", ret);
-        } else
-            printf("\nNintendo Channel successfully installed!");
-    }
-
 //Internet Channel
-    if (channel == 5) {
+    if (channel == 4) {
         printf("\n\nInstalling the Internet Channel...");
         //ret = patchmii_install(0x10001, 0x48414441, 0, 0x10001, 0x48414441, 0, false, false); <-- Supposedly causes failure
         if (region == 0)
@@ -626,7 +607,7 @@ void InstallTheChosenChannel(int region, int channel) {
     }
 
 //News Channel
-    if (channel == 6) {
+    if (channel == 5) {
         printf("\n\nInstalling the News Channel...");
         ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
         if (region == 0)
@@ -644,7 +625,7 @@ void InstallTheChosenChannel(int region, int channel) {
     }
 
 //Weather Channel
-    if (channel == 7) {
+    if (channel == 6) {
         printf("\n\nInstalling the Weather Channel...");
         ret = patchmii_install(0x10002, 0x48414641, 0, 0x10002, 0x48414641, 0, false, false);
         if (region == 0)
@@ -1102,20 +1083,17 @@ int main(int argc, char **argv) {
             exit(0);
         }
 
-        else if (firstselection != 1) {
+        if (firstselection != 1) {
 
             printMyTitle();
             printf("\x1b[2;0H");
             printf("\n\nLoading selected IOS...\n");
 			
-			Close_SD();
-			Close_USB();
-            
             WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.--PhoenixTank
             ret = IOS_ReloadIOS(iosVersion[selectedios]);
             WPAD_Init(); // Okay to start wiimote up again.--PhoenixTank
-			fatInitDefault();
-			gprintf("\n\tios = %d",IOS_GetVersion());
+			
+			//gprintf("\n\tios = %d",IOS_GetVersion());
             if (ret >= 0) {
                 printf("\n\n\nIOS successfully loaded! Press A to continue.");
             }
