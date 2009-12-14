@@ -264,41 +264,24 @@ bool yes_or_no(void) {
 
     bool yes = false;
 
-    /*This clears the data from the Wiimote and GC controller so we don't have the program assuming A was pressed when it wasn't*/
-    bool dontcheckrightnow = true;
-
     printf("Are you sure you want to continue?\n");
     printf("      [A] Yes        [B] NO    [HOME]/[Y] Exit\n");
 
-    while (true) {
-
-        PAD_ScanPads();
-        WPAD_ScanPads();
-
-        if (dontcheckrightnow == false) {
+        wait_anyKey();
 
             if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
                     (PAD_ButtonsDown(0)&PAD_BUTTON_A)) {
                 yes = true;
-                break;
             }
 
             if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
                     (PAD_ButtonsDown(0)&PAD_BUTTON_B))
-                break;
+                yes = false;
 
             if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
                     (PAD_ButtonsDown(0)&PAD_BUTTON_Y)) {
                 exit(0);
-                break;
             }
-
-        }
-
-        if (dontcheckrightnow == true)
-            dontcheckrightnow = false;
-
-    }
 
     return yes;
 }
