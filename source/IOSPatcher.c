@@ -686,7 +686,7 @@ s32 get_IOS(IOS **ios, u32 iosnr, u32 revision) {
 
         waitforbuttonpress(&pressed, &pressedGC);
 
-        if (pressed == WPAD_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT) {
+        if (pressed == WPAD_BUTTON_LEFT || pressed == WPAD_CLASSIC_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT) {
             if (selection > 0) {
                 selection--;
             } else {
@@ -694,7 +694,7 @@ s32 get_IOS(IOS **ios, u32 iosnr, u32 revision) {
             }
         }
 
-        if (pressed == WPAD_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT) {
+        if (pressed == WPAD_BUTTON_RIGHT || pressed == WPAD_CLASSIC_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT) {
             if (selection < 3) {
                 selection++;
             } else {
@@ -702,7 +702,7 @@ s32 get_IOS(IOS **ios, u32 iosnr, u32 revision) {
             }
         }
 
-        if (pressed == WPAD_BUTTON_A || pressedGC == PAD_BUTTON_A) {
+        if (pressed == WPAD_BUTTON_A || pressed == WPAD_CLASSIC_BUTTON_A || pressedGC == PAD_BUTTON_A) {
             printf("\n");
             if (selection == 0) {
                 /*ret = Init_SD();
