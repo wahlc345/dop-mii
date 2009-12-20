@@ -991,6 +991,11 @@ int main(int argc, char **argv) {
             printf("Are you sure you want to install an IOS that accepts fakesigning?\n");
             if (!yes_or_no())
                exit(0);
+			   
+			WPAD_Shutdown();
+            iosreloadcount++;
+            IOS_ReloadIOS(36);
+            WPAD_Init();
 			
             printf("Downgrading IOS 15...\n");
             ret = Downgrade_IOS(15, 523, 257);
