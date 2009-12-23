@@ -988,67 +988,63 @@ int main(int argc, char **argv) {
 
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
-            printf("Are you sure you want to install an IOS that accepts fakesigning?\n");
+            printf("Are you sure you would like to install an IOS that accepts fakesigning?...\n");
             if (!yes_or_no())
                exit(0);
 			   
 			WPAD_Shutdown();
-            iosreloadcount++;
-            IOS_ReloadIOS(36);
-            WPAD_Init();
-			
+			iosreloadcount++;
+			IOS_ReloadIOS(36);
+			WPAD_Init();
+   
             printf("Downgrading IOS 15...\n");
             ret = Downgrade_IOS(15, 523, 257);
             if (ret < 0) {
                 printf("Downgrade failed. Exiting...");
                 exit(0);
             }
-			
+                       
+            Close_SD();
+            Close_USB();
             WPAD_Shutdown();
             iosreloadcount++;
             IOS_ReloadIOS(15);
             WPAD_Init();
-			
+                       
+            fatInitDefault();
+
             printf("IOS 15 successfully downgraded!\n");
             printf("Continue to install your fakesign accepting IOS 36?\n");
             if (!yes_or_no())
                 exit(0);
             ret = Install_patched_IOS(36, 3351, true, true, true, 36, 3351);//had to add true for fspermissions to delete stubs.  since we are patching a IOS anyways, i didnt think one more would hurt.
-			
-			if (ret < 0) {
+                       
+                        if (ret < 0) {
                 printf("Installing fakesign accepting IOS failed. Exiting...");
                 exit(0);
             }
             printf("IOS 36 installed as an IOS that can accept fakesigning!\n");
-			
-            printf("Would you like to restore IOS 15 back to normal?\n");
+            printf("Now restore IOS 15 back to normal...\n");
             if (!yes_or_no())
                 exit(0);
-				
+            Close_SD();
+                        Close_USB();
             WPAD_Shutdown();
             iosreloadcount++;
             IOS_ReloadIOS(36);
             WPAD_Init();
-			
-            install_unpatched_IOS(15, 523);
-			
+            fatInitDefault();
+
+            ret = install_unpatched_IOS(15, 523);
             if (ret < 0) {
                 printf("Error restoring IOS 15! Exiting...");
                 exit(0);
             }
-			
             printf("You now have IOS 36 successfully installed as an IOS that can accept fakesigning!\n");
             printf("Continue to Dop-IOS MOD?");
             if (!yes_or_no())
                 exit(0);
-				
-        }
-
-        iosreloadcount++;
-        if (iosreloadcount == 10) {
-            printf("\nERROR! Too many attempts to load IOS. Please restart the program. Exiting...");
-            VIDEO_WaitVSync();
-            exit(0);
+                       
         }
 
         if (firstselection != 1) {
@@ -1057,6 +1053,13 @@ int main(int argc, char **argv) {
             printf("\x1b[2;0H");
             printf("\n\nLoading selected IOS...\n");
 			
+			iosreloadcount++;
+			
+            if (iosreloadcount == 10) {
+            printf("\nERROR! Too many attempts to load IOS. Please restart the program. Exiting...");
+            VIDEO_WaitVSync();
+            exit(0);
+        }
             WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.--PhoenixTank
             ret = IOS_ReloadIOS(iosVersion[selectedios]);
             WPAD_Init(); // Okay to start wiimote up again.--PhoenixTank
