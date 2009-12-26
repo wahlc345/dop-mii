@@ -988,15 +988,9 @@ int main(int argc, char **argv) {
 
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
-            printf("Are you sure you would like to install an IOS that accepts fakesigning?...\n");
+            printf("Installing an IOS that accepts fakesigning...\n");
             if (!yes_or_no())
                exit(0);
-			   
-			WPAD_Shutdown();
-			iosreloadcount++;
-			IOS_ReloadIOS(36);
-			WPAD_Init();
-   
             printf("Downgrading IOS 15...\n");
             ret = Downgrade_IOS(15, 523, 257);
             if (ret < 0) {
@@ -1004,20 +998,41 @@ int main(int argc, char **argv) {
                 exit(0);
             }
                        
+                        /*FILE* ff = fopen("sd:/42.dol","r");
+                        if (ff)
+                        {
+                                gprintf("\n\tfat works here1");
+                                fclose(ff);
+                       
+                        }*/
+                       
             Close_SD();
-            Close_USB();
+                        Close_USB();
             WPAD_Shutdown();
             iosreloadcount++;
             IOS_ReloadIOS(15);
             WPAD_Init();
                        
-            fatInitDefault();
-
+                        fatInitDefault();
+                        /*ff = fopen("sd:/42.dol","r");
+                        if (ff)
+                        {
+                                gprintf("\n\tfat works here2");
+                                fclose(ff);
+                       
+                        }*/
             printf("IOS 15 successfully downgraded!\n");
             printf("Continue to install your fakesign accepting IOS 36?\n");
             if (!yes_or_no())
                 exit(0);
             ret = Install_patched_IOS(36, 3351, true, true, true, 36, 3351);//had to add true for fspermissions to delete stubs.  since we are patching a IOS anyways, i didnt think one more would hurt.
+           /* ff = fopen("sd:/42.dol","r");
+                        if (ff)
+                        {
+                                gprintf("\n\tfat works here3");
+                                fclose(ff);
+                       
+                        }*/
                        
                         if (ret < 0) {
                 printf("Installing fakesign accepting IOS failed. Exiting...");
@@ -1033,8 +1048,14 @@ int main(int argc, char **argv) {
             iosreloadcount++;
             IOS_ReloadIOS(36);
             WPAD_Init();
-            fatInitDefault();
-
+                        fatInitDefault();
+                        /*ff = fopen("sd:/42.dol","r");
+                        if (ff)
+                        {
+                                gprintf("\n\tfat works here4");
+                                fclose(ff);
+                       
+                        }*/
             ret = install_unpatched_IOS(15, 523);
             if (ret < 0) {
                 printf("Error restoring IOS 15! Exiting...");
@@ -1044,6 +1065,14 @@ int main(int argc, char **argv) {
             printf("Continue to Dop-IOS MOD?");
             if (!yes_or_no())
                 exit(0);
+                               
+                        /*ff = fopen("sd:/42.dol","r");
+                        if (ff)
+                        {
+                                gprintf("\n\tfat works here5");
+                                fclose(ff);
+                       
+                        }*/
                        
         }
 
