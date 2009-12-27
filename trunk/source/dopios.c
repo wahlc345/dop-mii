@@ -76,6 +76,10 @@ distribution.
 
 #define PAD_CHAN_0 0
 
+#define IOS15version 523
+#define IOS36version 3351
+#define IOS37version 3869
+
 struct region {
     u32 idnumber;
     char * name;
@@ -849,6 +853,276 @@ int checkAndRemoveStubs()// this can be made a whole lot smaller by using differ
 	
 }
 
+void show_boot2_info()
+{
+	int ret;
+        printf("\x1b[2J");
+        printMyTitle();
+        printf("\x1b[2;0H");
+		printf("\n\n");
+
+	printf("Retrieving boot2 version...\n");
+	u32 boot2version = 0;
+	ret = ES_GetBoot2Version(&boot2version);
+	if (ret < 0)
+	{
+		printf("Could not get boot2 version. It's possible your Wii is\n");
+		printf("a boot2v4+ Wii, maybe not.\n");
+	} else
+	{
+		printf("Your boot2 version is: %u\n", boot2version);
+		if (boot2version < 4)
+		{
+			printf("This means you should not have problems.\n");
+		}
+	}	
+	
+	printf("\n");
+	printf("Boot2v4 is an indicator for the 'new' Wii hardware revision that prevents\n");
+	printf("the execution of some old IOS. These Wiis are often called LU64+ Wiis or\n");
+	printf("'unsoftmoddable' Wiis. You MUST NOT downgrade one of these Wiis and be\n");
+	printf("EXTRA careful when messing with ANYTHING on them.\n");
+	printf("The downgraded IOS15 you get with the Trucha Bug Restorer should work\n");
+	printf("on these Wiis and not harm Wiis in general.\n");
+	printf("\n");
+	printf("If you updated your Wii via wifi to 4.2 or higher, your boot2 got\n");
+	printf("updated by this and you can't use it as indicator for this.\n");
+	printf("\n");
+	printf("Press any button to return to the menu\n");
+	waitforbuttonpress(NULL, NULL);
+}
+
+int iosinstallmenu(u32 ios, u32 revision)
+{
+	u32 pressed;
+	u32 pressedGC;
+	int selection = 0;
+	int destselect = 0;
+	int ret;
+	int i;
+	bool options[3] = { true, true, false };
+
+	char *optionsstring[3] = {"Patch hash check (trucha): ", "Patch ES_Identify:         ", "Patch nand permissions:    "};
+	u32 destination[3] = { ios, 200+ios, 249 };
+	
+	while (true)
+	{
+        printf("\x1b[2J");
+        printMyTitle();
+        printf("\x1b[2;0H");
+		printf("\n\n");
+		
+		set_highlight(selection == 0);
+		if (options[0] || options[1] || options[2] || ios != destination[destselect])
+		{
+			printf("Install patched IOS%u\n", ios);
+		} else
+		{
+			printf("Install IOS%u\n", ios);
+		}
+		set_highlight(false);
+
+		printf("Install IOS to slot:       ");
+		set_highlight(selection == 1);
+		printf("%u\n", destination[destselect]);
+		set_highlight(false);
+		
+		for (i=0;i < 3;i++)
+		{
+			printf(optionsstring[i]);
+			set_highlight(selection == i+2);
+			printf("%s\n", options[i] ? "yes" : "no");
+			set_highlight(false);
+		}
+		printf("\n");
+		
+		waitforbuttonpress(&pressed, &pressedGC);
+		
+		if (pressed == WPAD_BUTTON_LEFT || pressed == WPAD_CLASSIC_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT)
+		{	
+			if (selection == 1)
+			{
+				if (destselect > 0)
+				{
+					destselect--;
+				} else
+				{
+					destselect = 2;
+				}
+			}
+			if (selection > 1)
+			{
+				options[selection-2] = !options[selection-2];
+			}
+		}
+
+		if (pressed == WPAD_BUTTON_RIGHT || pressed == WPAD_CLASSIC_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT)
+		{	
+			if (selection == 1)
+			{
+				if (destselect < 2)
+				{
+					destselect++;
+				} else
+				{
+					destselect = 0;
+				}
+			}
+			if (selection > 1)
+			{
+				options[selection-2] = !options[selection-2];
+			}
+		}
+		
+		if (pressed == WPAD_BUTTON_UP || pressed == WPAD_CLASSIC_BUTTON_UP || pressedGC == PAD_BUTTON_UP)
+		{
+			if (selection > 0)
+			{
+				selection--;
+			} else
+			{
+				selection = 4;
+			}
+		}
+
+		if (pressed == WPAD_BUTTON_DOWN || pressed == WPAD_CLASSIC_BUTTON_DOWN || pressedGC == PAD_BUTTON_DOWN)
+		{
+			if (selection < 4)
+			{
+				selection++;
+			} else
+			{
+				selection = 0;
+			}
+		}
+
+		if ((pressed == WPAD_BUTTON_A || pressed == WPAD_CLASSIC_BUTTON_A || pressedGC == PAD_BUTTON_A) && selection == 0)
+		{
+			if (destination[destselect] == 36)
+			{
+				ret = Install_patched_IOS(ios, revision, options[0], options[1], options[2], destination[destselect], revision);
+			} else
+			{
+				ret = Install_patched_IOS(ios, revision, options[0], options[1], options[2], destination[destselect], 1);
+			}
+			if (ret < 0)
+			{
+				printf("IOS%u installation failed.\n", ios);
+				return -1;
+			}
+			return 0;
+		}
+		
+		if (pressed == WPAD_BUTTON_B || pressed == WPAD_CLASSIC_BUTTON_B || pressedGC == PAD_BUTTON_B)
+		{
+			printf("Installation cancelled\n");
+			return 0;
+		}		
+	}	
+
+}
+
+int mainmenu()
+{
+	u32 pressed;
+	u32 pressedGC;
+	int selection = 0;
+	int ret;
+	int i;
+	char *optionsstring[6] = { "IOS36 menu", "IOS37 menu", "Downgrade IOS15", "Restore IOS15", "Show boot2 info", "Exit" };
+	
+	while (true)
+	{
+        printf("\x1b[2J");
+        printMyTitle();
+        printf("\x1b[2;0H");
+		printf("\n\n");
+		
+		for (i=0;i < 6;i++)
+		{
+			set_highlight(selection == i);
+			printf("%s\n", optionsstring[i]);
+			set_highlight(false);
+		}
+		printf("\n");
+		
+		waitforbuttonpress(&pressed, &pressedGC);
+		
+		if (pressed == WPAD_BUTTON_UP || pressed == WPAD_CLASSIC_BUTTON_UP || pressedGC == PAD_BUTTON_UP)
+		{
+			if (selection > 0)
+			{
+				selection--;
+			} else
+			{
+				selection = 5;
+			}
+		}
+
+		if (pressed == WPAD_BUTTON_DOWN || pressed == WPAD_CLASSIC_BUTTON_DOWN || pressedGC == PAD_BUTTON_DOWN)
+		{
+			if (selection < 5)
+			{
+				selection++;
+			} else
+			{
+				selection = 0;
+			}
+		}
+
+		if (pressed == WPAD_BUTTON_A || pressed == WPAD_CLASSIC_BUTTON_A || pressedGC == PAD_BUTTON_A)
+		{
+			if (selection == 0)
+			{
+				return iosinstallmenu(36, IOS36version);
+			}
+			
+			if (selection == 1)
+			{
+				return iosinstallmenu(37, IOS37version);
+			}
+
+			if (selection == 2)
+			{
+				ret = Downgrade_IOS(15, IOS15version, 257);
+				if (ret < 0)
+				{
+					printf("Downgrade failed\n");
+					return -1;
+				}
+				return 0;
+			}
+			
+			if (selection == 3)
+			{
+				ret = install_unpatched_IOS(15, IOS15version);
+				if (ret < 0)
+				{
+					printf("IOS15 Restore failed\n");
+					return -1;
+				}
+				printf("IOS15 restored.\n");
+				return 0;
+			}
+			
+			if (selection == 4)
+			{
+				show_boot2_info();
+			}
+
+			if (selection == 5)
+			{
+				return 0;
+			}
+		}
+		
+		if (pressed == WPAD_BUTTON_B || pressed == WPAD_CLASSIC_BUTTON_B || pressedGC == PAD_BUTTON_B)
+		{
+			return 0;
+		}		
+	}	
+}
+
 int main(int argc, char **argv) {
 
     basicInit();
@@ -988,93 +1262,22 @@ int main(int argc, char **argv) {
 
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
-            printf("Installing an IOS that accepts fakesigning...\n");
-            if (!yes_or_no())
-               exit(0);
-            printf("Downgrading IOS 15...\n");
-            ret = Downgrade_IOS(15, 523, 257);
-            if (ret < 0) {
-                printf("Downgrade failed. Exiting...");
-                exit(0);
-            }
-                       
-                        /*FILE* ff = fopen("sd:/42.dol","r");
-                        if (ff)
-                        {
-                                gprintf("\n\tfat works here1");
-                                fclose(ff);
-                       
-                        }*/
-                       
-            Close_SD();
-                        Close_USB();
-            WPAD_Shutdown();
-            iosreloadcount++;
-            IOS_ReloadIOS(15);
-            WPAD_Init();
-                       
-                        fatInitDefault();
-                        /*ff = fopen("sd:/42.dol","r");
-                        if (ff)
-                        {
-                                gprintf("\n\tfat works here2");
-                                fclose(ff);
-                       
-                        }*/
-            printf("IOS 15 successfully downgraded!\n");
-            printf("Continue to install your fakesign accepting IOS 36?\n");
-            if (!yes_or_no())
-                exit(0);
-            ret = Install_patched_IOS(36, 3351, true, true, true, 36, 3351);//had to add true for fspermissions to delete stubs.  since we are patching a IOS anyways, i didnt think one more would hurt.
-           /* ff = fopen("sd:/42.dol","r");
-                        if (ff)
-                        {
-                                gprintf("\n\tfat works here3");
-                                fclose(ff);
-                       
-                        }*/
-                       
-                        if (ret < 0) {
-                printf("Installing fakesign accepting IOS failed. Exiting...");
-                exit(0);
-            }
-            printf("IOS 36 installed as an IOS that can accept fakesigning!\n");
-            printf("Now restore IOS 15 back to normal...\n");
-            if (!yes_or_no())
-                exit(0);
-            Close_SD();
-                        Close_USB();
-            WPAD_Shutdown();
-            iosreloadcount++;
-            IOS_ReloadIOS(36);
-            WPAD_Init();
-                        fatInitDefault();
-                        /*ff = fopen("sd:/42.dol","r");
-                        if (ff)
-                        {
-                                gprintf("\n\tfat works here4");
-                                fclose(ff);
-                       
-                        }*/
-            ret = install_unpatched_IOS(15, 523);
-            if (ret < 0) {
-                printf("Error restoring IOS 15! Exiting...");
-                exit(0);
-            }
-            printf("You now have IOS 36 successfully installed as an IOS that can accept fakesigning!\n");
-            printf("Continue to Dop-IOS MOD?");
-            if (!yes_or_no())
-                exit(0);
-                               
-                        /*ff = fopen("sd:/42.dol","r");
-                        if (ff)
-                        {
-                                gprintf("\n\tfat works here5");
-                                fclose(ff);
-                       
-                        }*/
-                       
+        mainmenu();
+        printf("\x1b[2J");
+        printMyTitle();
+        printf("\x1b[2;0H");
+		printf("\n\n");
+        printf("We are now returning you to your loader. If you\n");
+        printf("successfully installed a fakesign accepting IOS\n");
+        printf("select IOS 36 as your IOS to load when you return to Dop-IOS MOD\n");
+        printf("\nPress A to exit.");
+        for(;;){
+        PAD_ScanPads();
+        WPAD_ScanPads();
+        if(WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
+        exit(0);          
         }
+	   }
 
         if (firstselection != 1) {
 
