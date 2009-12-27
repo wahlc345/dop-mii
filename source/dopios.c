@@ -80,6 +80,11 @@ distribution.
 #define IOS36version 3351
 #define IOS37version 3869
 
+s32 __u8Cmp(const void *a, const void *b)
+{
+	return *(u8 *)a-*(u8 *)b;
+}
+
 struct region {
     u32 idnumber;
     char * name;
@@ -853,6 +858,58 @@ int checkAndRemoveStubs()// this can be made a whole lot smaller by using differ
 	
 }
 
+u8 *get_ioslist(u32 *cnt)
+{
+	u64 *buf = 0;
+	s32 i, res;
+	u32 tcnt = 0, icnt;
+	u8 *ioses = NULL;
+	
+	//Get stored IOS versions.
+	res = ES_GetNumTitles(&tcnt);
+	if(res < 0)
+	{
+		printf("ES_GetNumTitles: Error! (result = %d)\n", res);
+		return 0;
+	}
+	buf = memalign(32, sizeof(u64) * tcnt);
+	res = ES_GetTitles(buf, tcnt);
+	if(res < 0)
+	{
+		printf("ES_GetTitles: Error! (result = %d)\n", res);
+		if (buf) free(buf);
+		return 0;
+	}
+
+	icnt = 0;
+	for(i = 0; i < tcnt; i++)
+	{
+		if(*((u32 *)(&(buf[i]))) == 1 && (u32)buf[i] > 2 && (u32)buf[i] < 0x100)
+		{
+			icnt++;
+			ioses = (u8 *)realloc(ioses, sizeof(u8) * icnt);
+			ioses[icnt - 1] = (u8)buf[i];
+		}
+	}
+
+	ioses = (u8 *)malloc(sizeof(u8) * icnt);
+	icnt = 0;
+	
+	for(i = 0; i < tcnt; i++)
+	{
+		if(*((u32 *)(&(buf[i]))) == 1 && (u32)buf[i] > 2 && (u32)buf[i] < 0x100)
+		{
+			icnt++;
+			ioses[icnt - 1] = (u8)buf[i];
+		}
+	}
+	free(buf);
+	qsort(ioses, icnt, 1, __u8Cmp);
+
+	*cnt = icnt;
+	return ioses;
+}
+
 void show_boot2_info()
 {
 	int ret;
@@ -890,6 +947,72 @@ void show_boot2_info()
 	printf("\n");
 	printf("Press any button to return to the menu\n");
 	waitforbuttonpress(NULL, NULL);
+}
+
+int ios_selectionmenu(int default_ios)
+{
+	u32 pressed;
+	u32 pressedGC;
+	int selection = 0;
+	u32 ioscount;
+	u8 *list = get_ioslist(&ioscount);
+	
+	int i;
+	for (i=0;i<ioscount;i++)
+	{
+		// Default to default_ios if found, else the loaded IOS
+		if (list[i] == default_ios)
+		{
+			selection = i;
+			break;
+		}
+		if (list[i] == IOS_GetVersion())
+		{
+			selection = i;
+		}
+	}	
+	
+	while (true)
+	{
+		printf("\x1B[%d;%dH",2,0);	// move console cursor to y/x
+		printf("Select which IOS to load:       \b\b\b\b\b\b");
+		
+		set_highlight(true);
+		printf("IOS%u\n", list[selection]);
+		set_highlight(false);
+		
+		printf("Press B to continue without IOS Reload\n");
+		
+		waitforbuttonpress(&pressed, &pressedGC);
+		
+		if (pressed == WPAD_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT)
+		{	
+			if (selection > 0)
+			{
+				selection--;
+			} else
+			{
+				selection = ioscount - 1;
+			}
+		}
+		if (pressed == WPAD_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT)
+		{
+			if (selection < ioscount -1	)
+			{
+				selection++;
+			} else
+			{
+				selection = 0;
+			}
+		}
+		if (pressed == WPAD_BUTTON_A || pressedGC == PAD_BUTTON_A) break;
+		if (pressed == WPAD_BUTTON_B || pressedGC == PAD_BUTTON_B)
+		{
+			return 0;
+		}
+		
+	}
+	return list[selection];
 }
 
 int iosinstallmenu(u32 ios, u32 revision)
@@ -1262,7 +1385,12 @@ int main(int argc, char **argv) {
 
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
-        mainmenu();
+        	ret = ios_selectionmenu(36);
+	    if (ret != 0) {
+		WPAD_Shutdown();
+		IOS_ReloadIOS(ret);
+		WPAD_Init();				
+	    }
         printf("\x1b[2J");
         printMyTitle();
         printf("\x1b[2;0H");
