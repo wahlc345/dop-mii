@@ -1,0 +1,17 @@
+On the IOS selection screen press DOWN and press A to select the option to install an IOS that accepts fakesigning.
+
+You are now launched into what is essentially an exact copy of Trucha Bug Restorer by WiiPower ( http://wiibrew.org/wiki/Trucha_Bug_Restorer )
+
+Select IOS36, downgrade IOS15.
+
+Select IOS15, go to the IOS36 menu, install patched IOS36 (trucha + identify) to IOS36.
+
+Select IOS36, restore IOS15
+
+You will now have successfully installed IOS 36 as an IOS that has accepted fakesigning.
+
+You will now be returned to your loader. 
+
+Reenter Dop-IOS MOD and select IOS 36 on the load IOS screen.
+
+You can use the rest of Dop-IOS MOD!!!
