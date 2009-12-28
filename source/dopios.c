@@ -1397,26 +1397,28 @@ int main(int argc, char **argv) {
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
         	ret = ios_selectionmenu(36);
-	    if (ret != 0) {
-		WPAD_Shutdown();
-		IOS_ReloadIOS(ret);
-		WPAD_Init();				
-	    }
-		mainmenu();
-        printf("\x1b[2J");
-        printMyTitle();
-        printf("\x1b[2;0H");
-		printf("\n\n");
-        printf("We are now returning you to your loader. If you\n");
-        printf("successfully installed a fakesign accepting IOS\n");
-        printf("select IOS 36 as your IOS to load when you return to Dop-IOS MOD\n");
-        printf("\nPress A to exit.");
-        for(;;){
-        PAD_ScanPads();
-        WPAD_ScanPads();
-        if(WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
-        exit(0);          
-        }
+			if (ret != 0) {
+				WPAD_Shutdown();
+				IOS_ReloadIOS(ret);
+				WPAD_Init();				
+			}
+			
+			if (mainmenu() != 0) sleep(5); // If an error has Wait a few seconds to allow the user to see the error message.
+
+			printf("\x1b[2J");
+			printMyTitle();
+			printf("\x1b[2;0H");
+			printf("\n\n");
+			printf("We are now returning you to your loader. If you\n");
+			printf("successfully installed a fakesign accepting IOS\n");
+			printf("select IOS 36 as your IOS to load when you return to Dop-IOS MOD\n");
+			printf("\nPress A to exit.");
+			for(;;) {
+				PAD_ScanPads();
+				WPAD_ScanPads();
+				if(WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
+				exit(0);          
+			}
 	   }
 
         if (firstselection != 1) {
