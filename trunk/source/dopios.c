@@ -80,6 +80,12 @@ distribution.
 #define IOS36version 3351
 #define IOS37version 3869
 
+// Prevent IOS36 loading at startup
+s32 __IOS_LoadStartupIOS()
+{
+	return 0;
+}
+
 s32 __u8Cmp(const void *a, const void *b)
 {
 	return *(u8 *)a-*(u8 *)b;
@@ -974,7 +980,12 @@ int ios_selectionmenu(int default_ios)
 	
 	while (true)
 	{
-		printf("\x1B[%d;%dH",2,0);	// move console cursor to y/x
+		//printf("\x1B[%d;%dH",2,0);	// move console cursor to y/x
+		
+	    printf("\x1b[2J");
+        printMyTitle();
+        printf("\x1b[2;0H");
+		printf("\n\n");
 		printf("Select which IOS to load:       \b\b\b\b\b\b");
 		
 		set_highlight(true);
@@ -1391,6 +1402,7 @@ int main(int argc, char **argv) {
 		IOS_ReloadIOS(ret);
 		WPAD_Init();				
 	    }
+		mainmenu();
         printf("\x1b[2J");
         printMyTitle();
         printf("\x1b[2;0H");
