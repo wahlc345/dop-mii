@@ -1412,8 +1412,17 @@ int main(int argc, char **argv) {
 				WPAD_Init();				
 			}
 			
-			if (mainmenu() != 0) sleep(5); // If an error has Wait a few seconds to allow the user to see the error message.
-
+			ret = mainmenu();
+			if (ret != 0) {
+				printf("\nPress A to return to loader.");
+				while (true) {
+					PAD_ScanPads();
+					WPAD_ScanPads();
+					if (WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
+						exit(ret);          					
+				}
+			};
+			
 			printf("\x1b[2J");
 			printMyTitle();
 			printf("\x1b[2;0H");
@@ -1422,6 +1431,7 @@ int main(int argc, char **argv) {
 			printf("successfully installed a fakesign accepting IOS\n");
 			printf("select IOS 36 as your IOS to load when you return to Dop-IOS MOD\n");
 			printf("\nPress A to exit.");
+
 			for(;;) {
 				PAD_ScanPads();
 				WPAD_ScanPads();
