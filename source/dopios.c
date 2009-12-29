@@ -1524,25 +1524,36 @@ int main(int argc, char **argv) {
                 printf("--> IOSs\n");
                 printf("    Channels\n");
                 printf("    System Menu\n");
-				printf("    Remove stubbed IOSs");
+				printf("    Remove stubbed IOSs\n");
+				printf("    Display boot2 information");
             }
             if (selection == 1) {
                 printf("    IOSs\n");
                 printf("--> Channels\n");
                 printf("    System Menu\n");
-				printf("    Remove stubbed IOSs");
+				printf("    Remove stubbed IOSs\n");
+				printf("    Display boot2 information");
             }
             if (selection == 2) {
                 printf("    IOSs\n");
                 printf("    Channels\n");
                 printf("--> System Menu\n");
-				printf("    Remove stubbed IOSs");
+				printf("    Remove stubbed IOSs\n");
+				printf("    Display boot2 information");
             }
 			if (selection == 3) {
 			    printf("    IOSs\n");
 				printf("    Channels\n");
 				printf("    System Menu\n");
-				printf("--> Remove stubbed IOSs");
+				printf("--> Remove stubbed IOSs\n");
+				printf("    Display boot2 information");
+			}
+			if (selection == 4) {
+			    printf("    IOSs\n");
+				printf("    Channels\n");
+				printf("    System Menu\n");
+				printf("    Remove stubbed IOSs\n");
+				printf("--> Display boot2 information");
 			}
             printf("\n\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
             printf("[A]               Select\n");
@@ -1561,6 +1572,8 @@ int main(int argc, char **argv) {
                         screen = 3;
 					if (selection == 3)
 					    screen = 4;
+					if(selection == 4)
+						show_boot2_info();
                     dontcheck = false;
                 }
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
@@ -1571,8 +1584,8 @@ int main(int argc, char **argv) {
                     selection--;
             }
             if (selection < 0)
-                selection = 3;
-            if (selection > 3)
+                selection = 4;
+            if (selection > 4)
                 selection = 0;
         }//End Screen 0
 
