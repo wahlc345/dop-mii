@@ -1542,7 +1542,7 @@ int main(int argc, char **argv) {
 			printf("%3s IOSs\n", (selection == 0 ? "-->" : " "));
 			printf("%3s Channels\n", (selection == 1 ? "-->" : " "));
 			printf("%3s System Menu\n", (selection == 2 ? "-->" : " "));
-			printf("%3s Remote stubbed IOSs\n", (selection == 3 ? "-->" : " "));
+			printf("%3s Remove stubbed IOSs\n", (selection == 3 ? "-->" : " "));
 			printf("%3s Display boot2 information", (selection == 4 ? "-->" : " "));
 
             printf("\n\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
