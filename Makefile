@@ -95,7 +95,17 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
+#lets see what OS we are on and then create svnref file
+UNAME := $(shell uname)
+#and now make the build list
 $(BUILD):
+ifeq ($(UNAME),Linux)
+	chmod 555 ./shared/makesvnrev.sh
+	chmod +x ./shared/makesvnrev.sh
+	./shared/makesvnrev.sh
+else
+	./shared/SubWCRev.exe "." "./shared/svnrev_template.h" "./shared/svnrev.h"
+endif
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 

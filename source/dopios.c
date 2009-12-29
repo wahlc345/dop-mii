@@ -50,6 +50,7 @@ distribution.
 #include "network.h"
 
 #include "IOSPatcher.h"
+#include "../shared/svnrev.h"
 
 #define PROTECTED	0
 #define NORMAL		1
@@ -246,9 +247,10 @@ void printMyTitle() {
     clearConsole();
     setConsoleBgColor(RED,0);
     setConsoleFgColor(WHITE,0);
-    printf("                                                                        ");
-    printf("                           Dop-IOS MOD v10                              ");
-    printf("                                                                        ");
+	int lineLength = 72;
+    printf("%*s", lineLength, " ");	
+	printf("%27s Dop-IOS MOD v10 (r%s)%*s", " ", SVN_REV_STR, 25-strlen(SVN_REV_STR), " "); 
+    printf("%*s", lineLength, " ");
     setConsoleBgColor(BLACK,0);
     setConsoleFgColor(WHITE,0);
     fflush(stdout);
@@ -1346,15 +1348,8 @@ int main(int argc, char **argv) {
             printf("\x1b[2;0H");
             printf("\n\n\nWhich IOS would you like to use to install other IOSs?\n");
 
-            if (firstselection == 0) {
-                printf("--> IOS: %d\n", iosVersion[selectedios]);
-                printf("    Install an IOS that accepts fakesigning\n\n");
-            }
-
-            if (firstselection == 1) {
-                printf("    IOS: %d\n", iosVersion[selectedios]);
-                printf("--> Install an IOS that accepts fakesigning\n\n");
-            }
+			printf("%s IOS: %d\n", (firstselection == 0 ? "-->" : "   "), iosVersion[selectedios]);
+			printf("%s Install an IOS that accepts fakesigning\n\n", (firstselection == 1 ? "-->" : "   "));
 
             if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_UP) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_UP) || \
                     (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_UP))
@@ -1490,26 +1485,25 @@ int main(int argc, char **argv) {
     regionselection = CONF_GetRegion();
 
     switch (regionselection) {
+		case CONF_REGION_JP:
+			regionselection = 2;
+			break;
 
-    case CONF_REGION_JP:
-        regionselection = 2;
-        break;
+		case CONF_REGION_EU:
+			regionselection = 1;
+			break;
 
-    case CONF_REGION_EU:
-        regionselection = 1;
-        break;
+		case CONF_REGION_US:
+			regionselection = 0;
+			break;
 
-    case CONF_REGION_US:
-        regionselection = 0;
-        break;
+		case CONF_REGION_KR:
+			regionselection = 3;
+			break;
 
-    case CONF_REGION_KR:
-        regionselection = 3;
-        break;
-
-    default:
-        regionselection = 0;
-        break;
+		default:
+			regionselection = 0;
+			break;
     }
 
     for (;;) {
@@ -1519,42 +1513,14 @@ int main(int argc, char **argv) {
         WPAD_ScanPads();
 
         //Screen 0 -- Update Selection Screen
-        if (screen == 0) {
-            if (selection == 0) {
-                printf("--> IOSs\n");
-                printf("    Channels\n");
-                printf("    System Menu\n");
-				printf("    Remove stubbed IOSs\n");
-				printf("    Display boot2 information");
-            }
-            if (selection == 1) {
-                printf("    IOSs\n");
-                printf("--> Channels\n");
-                printf("    System Menu\n");
-				printf("    Remove stubbed IOSs\n");
-				printf("    Display boot2 information");
-            }
-            if (selection == 2) {
-                printf("    IOSs\n");
-                printf("    Channels\n");
-                printf("--> System Menu\n");
-				printf("    Remove stubbed IOSs\n");
-				printf("    Display boot2 information");
-            }
-			if (selection == 3) {
-			    printf("    IOSs\n");
-				printf("    Channels\n");
-				printf("    System Menu\n");
-				printf("--> Remove stubbed IOSs\n");
-				printf("    Display boot2 information");
-			}
-			if (selection == 4) {
-			    printf("    IOSs\n");
-				printf("    Channels\n");
-				printf("    System Menu\n");
-				printf("    Remove stubbed IOSs\n");
-				printf("--> Display boot2 information");
-			}
+		if (screen == 0) {
+
+			printf("%s IOSs\n", (selection == 0 ? "-->" : "   "));
+			printf("%s Channels\n", (selection == 1 ? "-->" : "   "));
+			printf("%s System Menu\n", (selection == 2 ? "-->" : "   "));
+			printf("%s Remote stubbed IOSs\n", (selection == 3 ? "-->" : "   "));
+			printf("%s Display boot2 information", (selection == 4 ? "-->" : "   "));
+
             printf("\n\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
             printf("[A]               Select\n");
             printf("[HOME]/GC:[Y]     Exit\n\n\n");
@@ -1677,14 +1643,9 @@ int main(int argc, char **argv) {
 
         //Screen 2 = Channel Choice
         if (screen == 2) {
-            if (orregion == 0) {
-                printf("--> Install Channel: %s\n", channels[channelselection].name);
-                printf("    Region:          %s\n\n\n", regions[regionselection].name);
-            }
-            if (orregion == 1) {
-                printf("    Install Channel: %s\n", channels[channelselection].name);
-                printf("--> Region:          %s\n\n\n", regions[regionselection].name);
-            }
+			printf("%s Install Channel: %s\n", (orregion == 0 ? "-->" : "   "), channels[channelselection].name);
+			printf("%s Region:          %s\n\n\n", (orregion == 1 ? "-->" : "   "), regions[regionselection].name);
+
             if (dontcheck) {
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
                         (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A)) {
@@ -1739,16 +1700,11 @@ int main(int argc, char **argv) {
         //Screen 3 = System Menu Choice
         if (screen == 3) {
             //Quick Fix
-            if (regionselection == MAX_REGION && systemselection == 0)
-                systemselection = 1;
-            if (orregion == 0) {
-                printf("--> Install System Menu: %s\n", systemmenus[systemselection].name);
-                printf("    Region:              %s\n\n\n", regions[regionselection].name);
-            }
-            if (orregion == 1) {
-                printf("    Install System Menu: %s\n", systemmenus[systemselection].name);
-                printf("--> Region:              %s\n\n\n", regions[regionselection].name);
-            }
+            if (regionselection == MAX_REGION && systemselection == 0) systemselection = 1;
+
+			printf("%s Install System Menu: %s\n", (orregion == 0 ? "-->" : "   "), systemmenus[systemselection].name);
+			printf("%s Region:              %s\n\n\n", (orregion == 1 ? "-->" : "   "), regions[regionselection].name);
+
             if (dontcheck) {
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
                         (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_A)) {
