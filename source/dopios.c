@@ -2,7 +2,7 @@
 
 dopios.c
 
-Dop-IOS MOD - A modification of Dop-IOS by Arikado, giantpune, SifJar, and PhoenixTank
+Dop-IOS MOD - A modification of Dop-IOS by Arikado, giantpune, Lunatik, SifJar, and PhoenixTank
 
 Dop-IOS - install and patch any IOS by marc
 
@@ -261,7 +261,7 @@ void printMyTitle() {
     printf("%*s", lineLength, " ");	
 
 	char text[lineLength];
-	sprintf(text, "Dop-IOS MOD v10 (r%s)", SVN_REV_STR);
+	sprintf(text, "Dop-IOS MOD v10 (SVN r%s)", SVN_REV_STR);
 	printCenter(text, lineLength);
 
     printf("%*s", lineLength, " ");
@@ -1296,6 +1296,7 @@ int main(int argc, char **argv) {
     printf("SifJar\n");
     printf("PheonixTank\n");
 	printf("giantpune\n");
+	printf("Lunatik\n");
     printf("Arikado - http://arikadosblog.blogspot.com\n\n");
     printf("Press A to continue. Press HOME to exit.");
 
