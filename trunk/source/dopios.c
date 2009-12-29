@@ -229,6 +229,14 @@ const struct ios ioses[]={
 
 u32 ios_found[256];
 
+void printCenter(char *text, int width)
+{
+	int textLen = strlen(text);
+	int leftPad = (width - textLen) / 2;
+	int rightPad = (width - textLen) - leftPad;
+	printf("%*s%s%*s", leftPad, " ", text, rightPad, " ");
+}
+
 void setConsoleFgColor(u8 color,u8 bold) {
     printf("\x1b[%u;%um", color+30,bold);
     fflush(stdout);
@@ -244,19 +252,24 @@ void clearConsole() {
 }
 
 void printMyTitle() {
-    clearConsole();
+	int lineLength = 72;
+	
+	clearConsole();
     setConsoleBgColor(RED,0);
     setConsoleFgColor(WHITE,0);
-	int lineLength = 72;
+	
     printf("%*s", lineLength, " ");	
-	printf("%27s Dop-IOS MOD v10 (r%s)%*s", " ", SVN_REV_STR, 25-strlen(SVN_REV_STR), " "); 
+
+	char text[lineLength];
+	sprintf(text, "Dop-IOS MOD v10 (r%s)", SVN_REV_STR);
+	printCenter(text, lineLength);
+
     printf("%*s", lineLength, " ");
     setConsoleBgColor(BLACK,0);
     setConsoleFgColor(WHITE,0);
     fflush(stdout);
     printf("\n\n");
 }
-
 
 bool getMyIOS() {
     s32 ret;
