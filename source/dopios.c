@@ -261,7 +261,7 @@ void printMyTitle() {
     printf("%*s", lineLength, " ");	
 
 	char text[lineLength];
-	sprintf(text, "Dop-IOS MOD v10 (SVN r%s)", SVN_REV_STR);
+	sprintf(text, "Dop-IOS MOD v10.1 (SVN r%s)", SVN_REV_STR);
 	printCenter(text, lineLength);
 
     printf("%*s", lineLength, " ");
@@ -1419,9 +1419,9 @@ int main(int argc, char **argv) {
 					PAD_ScanPads();
 					WPAD_ScanPads();
 					if (WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
-						exit(ret);          					
+						exit(0);          					
 				}
-			};
+			}
 			
 			printf("\x1b[2J");
 			printMyTitle();
