@@ -1348,8 +1348,8 @@ int main(int argc, char **argv) {
             printf("\x1b[2;0H");
             printf("\n\n\nWhich IOS would you like to use to install other IOSs?\n");
 
-			printf("%s IOS: %d\n", (firstselection == 0 ? "-->" : "   "), iosVersion[selectedios]);
-			printf("%s Install an IOS that accepts fakesigning\n\n", (firstselection == 1 ? "-->" : "   "));
+			printf("%3s IOS: %d\n", (firstselection == 0 ? "-->" : " "), iosVersion[selectedios]);
+			printf("%3s Install an IOS that accepts fakesigning\n\n", (firstselection == 1 ? "-->" : " "));
 
             if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_UP) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_UP) || \
                     (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_UP))
@@ -1515,11 +1515,11 @@ int main(int argc, char **argv) {
         //Screen 0 -- Update Selection Screen
 		if (screen == 0) {
 
-			printf("%s IOSs\n", (selection == 0 ? "-->" : "   "));
-			printf("%s Channels\n", (selection == 1 ? "-->" : "   "));
-			printf("%s System Menu\n", (selection == 2 ? "-->" : "   "));
-			printf("%s Remote stubbed IOSs\n", (selection == 3 ? "-->" : "   "));
-			printf("%s Display boot2 information", (selection == 4 ? "-->" : "   "));
+			printf("%3s IOSs\n", (selection == 0 ? "-->" : " "));
+			printf("%3s Channels\n", (selection == 1 ? "-->" : " "));
+			printf("%3s System Menu\n", (selection == 2 ? "-->" : " "));
+			printf("%3s Remote stubbed IOSs\n", (selection == 3 ? "-->" : " "));
+			printf("%3s Display boot2 information", (selection == 4 ? "-->" : " "));
 
             printf("\n\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
             printf("[A]               Select\n");
@@ -1643,8 +1643,8 @@ int main(int argc, char **argv) {
 
         //Screen 2 = Channel Choice
         if (screen == 2) {
-			printf("%s Install Channel: %s\n", (orregion == 0 ? "-->" : "   "), channels[channelselection].name);
-			printf("%s Region:          %s\n\n\n", (orregion == 1 ? "-->" : "   "), regions[regionselection].name);
+			printf("%3s Install Channel: %s\n", (orregion == 0 ? "-->" : " "), channels[channelselection].name);
+			printf("%3s Region:          %s\n\n\n", (orregion == 1 ? "-->" : " "), regions[regionselection].name);
 
             if (dontcheck) {
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
@@ -1702,8 +1702,8 @@ int main(int argc, char **argv) {
             //Quick Fix
             if (regionselection == MAX_REGION && systemselection == 0) systemselection = 1;
 
-			printf("%s Install System Menu: %s\n", (orregion == 0 ? "-->" : "   "), systemmenus[systemselection].name);
-			printf("%s Region:              %s\n\n\n", (orregion == 1 ? "-->" : "   "), regions[regionselection].name);
+			printf("%3s Install System Menu: %s\n", (orregion == 0 ? "-->" : " "), systemmenus[systemselection].name);
+			printf("%3s Region:              %s\n\n\n", (orregion == 1 ? "-->" : " "), regions[regionselection].name);
 
             if (dontcheck) {
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
