@@ -1290,7 +1290,6 @@ int main(int argc, char **argv) {
 
     fatInitDefault();
 
-
     int ret = 0;
 
     //Basic scam warning, brick warning, and credits by Arikado
@@ -1835,6 +1834,8 @@ int main(int argc, char **argv) {
             u32 deviceId;
  
 		    ES_GetDeviceID(&deviceId);
+			
+			Close_SD();
  
             sprintf(tmp, "\"Dop-IOS MOD Report\"\n");
             strcat(logBuffer, tmp);
@@ -1885,7 +1886,7 @@ int main(int argc, char **argv) {
 			printf("\n");
 			printf("Creating log on SD...\n\n");
 			
-			if(fatInitDefault()){
+			if(!Init_SD()){
 			logFile = fopen("sd:/signCheck.csv", "wb");
             fwrite(logBuffer, 1, strlen(logBuffer), logFile);
             fclose(logFile);
