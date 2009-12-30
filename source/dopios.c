@@ -976,7 +976,7 @@ void show_boot2_info()
 	printf("updated by this and you can't use it as indicator for this.\n");
 	printf("\n");
 	printf("Press any button to return to the menu\n");
-	waitforbuttonpress(NULL, NULL);
+	wait_anyKey();
 }
 
 int ios_selectionmenu(int default_ios)
