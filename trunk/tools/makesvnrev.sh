@@ -1,4 +1,4 @@
-REV=`svnversion -n ../`
+set REV=`svnversion -n ./`
 echo $REV
 touch ./source/svnrev.h
 cat > ./source/svnrev.h <<EOF
