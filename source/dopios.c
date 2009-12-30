@@ -1820,6 +1820,7 @@ int main(int argc, char **argv) {
 	    }
 		
 		if(screen == 5){
+			printMyTitle();
 		    printf("\n");
 			printf("\t[*] Using ios %i (rev %i)\n\t[*] Region %s\n\t[*] Hollywood version 0x%x\n", IOS_GetVersion(), IOS_GetRevision(), CheckRegion(), *(u32 *)0x80003138);
 			printf("\t[*] Getting certs.sys from the NAND\t\t\t\t");
@@ -1828,6 +1829,7 @@ int main(int argc, char **argv) {
 			iosToTest = ScanIos() - 1;
 			printf("\t[*] Found %i ios on this console.\n", iosToTest);
 			printf("\n");
+			sleep(5);
  
 			char tmp[1024];
             u32 deviceId;
@@ -1847,9 +1849,11 @@ int main(int argc, char **argv) {
             sprintf(tmp, "\n");
             strcat(logBuffer, tmp);
 			
+			WPAD_Shutdown();
+			
 			while (iosToTest > 0){
 			
-			WPAD_Shutdown();
+			printMyTitle();
 			
 			fflush(stdout);
  
@@ -1879,8 +1883,8 @@ int main(int argc, char **argv) {
 			WPAD_Init();
 			
 			printf("\n");
-			
 			printf("Creating log on SD...\n\n");
+			
 			logFile = fopen("sd:/signCheck.csv", "wb");
             fwrite(logBuffer, 1, strlen(logBuffer), logFile);
             fclose(logFile);
