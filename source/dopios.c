@@ -45,7 +45,11 @@ distribution.
 #include "nand.h"
 #include "network.h"
 #include "IOSPatcher.h"
+#include "signcheckfunctions.h"
 #include "svnrev.h"
+
+#include "ticket_dat.h"
+#include "tmd_dat.h"
 
 #define PROTECTED	0
 #define NORMAL		1
@@ -66,7 +70,7 @@ distribution.
 #define CYAN	6
 #define WHITE	7
 
-#define CIOS_VERSION 60
+#define CIOS_VERSION 36
 
 #define round_up(x,n)	(-(-(x) & -(n)))
 
@@ -75,6 +79,9 @@ distribution.
 #define IOS15version 523
 #define IOS36version 3351
 #define IOS37version 3869
+
+char logBuffer[1024*1024];//For signcheck
+int iosTable[256];//For signcheck
 
 // Prevent IOS36 loading at startup
 s32 __IOS_LoadStartupIOS()
@@ -223,6 +230,54 @@ void printMyTitle() {
     setConsoleFgColor(WHITE,0);
     fflush(stdout);
     printf("\n\n");
+}
+
+void addLogEntry(int iosNumber, int iosVersion, int trucha, int flash, int boot2, int usb2)
+{
+char tmp[1024];
+sprintf(tmp, "\"IOS%i (ver %i)\", %s, %s, %s, %s\n", iosNumber, iosVersion, ((trucha) ? "Enabled" : "Disabled"), \
+((flash) ? "Enabled" : "Disabled"), ((boot2) ? "Enabled" : "Disabled"), ((usb2) ? "Enabled" : "Disabled"));
+ 
+strcat(logBuffer, tmp);
+}
+
+int ScanIos()
+{
+int i, ret;
+u32 titlesCount, tmdSize, iosFound;
+static u64 *titles;
+ 
+ES_GetNumTitles(&titlesCount);
+titles = memalign(32, titlesCount * sizeof(u64));
+ES_GetTitles(titles, titlesCount);
+ 
+iosFound = 0;
+ 
+for (i = 0; i < titlesCount; i++)
+{
+ret = ES_GetStoredTMDSize(titles[i], &tmdSize);
+if (ret < 0)
+continue;
+static u8 tmdBuffer[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(32);
+signed_blob *s_tmd = (signed_blob *)tmdBuffer;
+ES_GetStoredTMD(titles[i], s_tmd, tmdSize);
+if (ret < 0)
+continue;
+ 
+tmd *title_tmd = (tmd *)SIGNATURE_PAYLOAD(s_tmd);
+ 
+if (((title_tmd->title_id >> 32) == 1) && ((title_tmd->title_id & 0xFFFFFFFF) != 2) && \
+((title_tmd->title_id & 0xFFFFFFFF) != 0x100) && ((title_tmd->title_id & 0xFFFFFFFF) != 0x101) && \
+(title_tmd->num_contents != 1) && (title_tmd->num_contents != 3))
+{
+iosTable[iosFound] = titles[i] & 0xFFFFFFFF;
+iosFound++;
+}
+}
+ 
+qsort (iosTable, iosFound, sizeof(u32), sortCallback);
+ 
+return iosFound;
 }
 
 bool getMyIOS() {
@@ -1456,6 +1511,10 @@ int main(int argc, char **argv) {
     int systemselection = 0;//Which system menu?
     int regionselection = 0;//Which region?
     int channelselection = 0;//Which channel?
+	
+	FILE * logFile;//For signcheck
+	int iosToTest = 0;//For signcheck
+    int reportResults[5];//For signcheck
 
     getMyIOS();
 
@@ -1497,9 +1556,10 @@ int main(int argc, char **argv) {
 			printf("%3s Channels\n", (selection == 1 ? "-->" : " "));
 			printf("%3s System Menu\n", (selection == 2 ? "-->" : " "));
 			printf("%3s Remove stubbed IOSs\n", (selection == 3 ? "-->" : " "));
-			printf("%3s Display boot2 information", (selection == 4 ? "-->" : " "));
+			printf("%3s Display boot2 information\n", (selection == 4 ? "-->" : " "));
+			printf("%3s Scan the Wii's internals (signcheck)", (selection == 5 ? "-->" : " "));
 
-            printf("\n\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
+            printf("\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
             printf("[A]               Select\n");
             printf("[HOME]/GC:[Y]     Exit\n\n\n");
             if (dontcheck) {
@@ -1518,6 +1578,8 @@ int main(int argc, char **argv) {
 					    screen = 4;
 					if(selection == 4)
 						show_boot2_info();
+					if(selection == 5)
+						screen = 5;
                     dontcheck = false;
                 }
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
@@ -1528,8 +1590,8 @@ int main(int argc, char **argv) {
                     selection--;
             }
             if (selection < 0)
-                selection = 4;
-            if (selection > 4)
+                selection = 5;
+            if (selection > 5)
                 selection = 0;
         }//End Screen 0
 
@@ -1756,6 +1818,82 @@ int main(int argc, char **argv) {
 		 }
 		 screen = 0;
 	    }
+		
+		if(screen == 5){
+		    printf("\n");
+			printf("\t[*] Using ios %i (rev %i)\n\t[*] Region %s\n\t[*] Hollywood version 0x%x\n", IOS_GetVersion(), IOS_GetRevision(), CheckRegion(), *(u32 *)0x80003138);
+			printf("\t[*] Getting certs.sys from the NAND\t\t\t\t");
+			printf("%s\n", (!GetCert()) ? "[DONE]" : "[FAIL]");
+			printf("\n");
+			iosToTest = ScanIos() - 1;
+			printf("\t[*] Found %i ios on this console.\n", iosToTest);
+			printf("\n");
+ 
+			char tmp[1024];
+            u32 deviceId;
+ 
+		    ES_GetDeviceID(&deviceId);
+ 
+            sprintf(tmp, "\"Dop-IOS MOD Report\"\n");
+            strcat(logBuffer, tmp);
+            sprintf(tmp, "\"Wii region\", %s\n", CheckRegion());
+            strcat(logBuffer, tmp);
+            sprintf(tmp, "\"Wii unique device id\", %u\n", deviceId);
+            strcat(logBuffer, tmp);
+            sprintf(tmp, "\n");
+            strcat(logBuffer, tmp);
+            sprintf(tmp, "%s, %s, %s, %s, %s\n", "\"IOS number\"", "\"Trucha bug\"", "\"Flash access\"", "\"Boot2 access\"", "\"Usb2.0 IOS tree\"");
+            strcat(logBuffer, tmp);
+            sprintf(tmp, "\n");
+            strcat(logBuffer, tmp);
+			
+			while (iosToTest > 0){
+			
+			WPAD_Shutdown();
+			
+			fflush(stdout);
+ 
+			IOS_ReloadIOS(iosTable[iosToTest]);
+ 
+			printf("\t[*] Analyzed IOS%d(rev %d)...\n", iosTable[iosToTest], IOS_GetRevision());
+ 
+			printf("\t\tTrucha bug : %sabled \n", (reportResults[1] = CheckEsIdentify()) ? "En" : "Dis");
+			printf("\t\tFlash access : %sabled \n", (reportResults[2] = CheckFlashAccess()) ? "En" : "Dis");
+			printf("\t\tBoot2 access : %sabled \n", (reportResults[3] = CheckBoot2Access()) ? "En" : "Dis");
+			printf("\t\tUsb 2.0 IOS tree : %sabled \n", (reportResults[4] = CheckUsb2Module()) ? "En" : "Dis");
+ 
+			addLogEntry(iosTable[iosToTest], IOS_GetRevision(), reportResults[1], reportResults[2], reportResults[3], reportResults[4]);
+ 
+			printf("\t[*] Press the reset button on the Wii or Gamecube controller [A] to continue...\n");
+ 
+			while (true){
+			PAD_ScanPads();
+			if(SYS_ResetButtonDown() || PAD_ButtonsDown(0)&PAD_BUTTON_A)
+			break;
+			}
+ 
+			iosToTest--;
+			}
+			
+			IOS_ReloadIOS(iosVersion[selectedios]);
+			WPAD_Init();
+			
+			printf("\n");
+			
+			printf("Creating log on SD...\n\n");
+			logFile = fopen("sd:/signCheck.csv", "wb");
+            fwrite(logBuffer, 1, strlen(logBuffer), logFile);
+            fclose(logFile);
+			
+			printf("All done, you can find the report on the root of your SD Card\n\n");
+			 
+			printf("Return to the main Dop-IOS MOD menu?\n");
+			if(!yes_or_no())
+			exit(0);
+			
+			iosToTest = 0;
+			screen = 0;
+		}
 
         VIDEO_WaitVSync();
         VIDEO_WaitVSync();
