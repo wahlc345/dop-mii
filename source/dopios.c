@@ -140,47 +140,6 @@ struct ios {
     char* desc;
 };
 
-/*//i just used this list to let me install stub IOSes to test removal.  it is otherwise useless.
-const struct ios ioses[]={
-// IOS# OLDVERSION# NEWVERSION#, ???, Description -- Arikado
-    {4,65280,65280,NORMAL,"Stub, useless now."},
-    {9,520,778,NORMAL,"Used by launch titles (Zelda: Twilight Princess) and System Menu 1.0."},
-    {10,768,768,NORMAL,"Stub, useless now."},
-    {11,10,256,NORMAL,"Used only by System Menu 2.0 and 2.1."},
-    {12,6,269,NORMAL,""},
-    {13,10,273,NORMAL,""},
-    {14,262,520,NORMAL,""},
-    {15,257,523,NORMAL,""},
-    {16,512,512,NORMAL,"Piracy prevention stub, useless."},
-    {17,512,775,NORMAL,""},
-    {20,12,0,NORMAL,"Used only by System Menu 2.2."},
-    {21,514,782,NORMAL,"Used by old third-party titles (No More Heroes)."},
-    {22,777,1037,NORMAL,""},
-    {28,1292,1550,NORMAL,""},
-    {30,1040,2816,NORMAL,"Used only by System Menu 3.0, 3.1, 3.2 and 3.3."},
-    {31,1040,3349,NORMAL,""},
-    {33,1040,3091,NORMAL,""},
-    {34,1039,3348,NORMAL,""},
-    {35,1040,3349,NORMAL,"Used by: Super Mario Galaxy."},
-    {36,1042,3351,NORMAL,"Used by: Smash Bros. Brawl, Mario Kart Wii. Can be ES_Identify patched."},
-    {37,2070,3869,NORMAL,"Used mostly by music games (Guitar Hero)."},
-    {38,3610,3867,NORMAL,"Used by some modern titles (Animal Crossing)."},
-    {50,4889,5120,NORMAL,"Used only by System Menu 3.4."},
-    {51,4633,4864,NORMAL,"Used only by Shop Channel 3.4."},
-    {53,4113,5406,NORMAL,"Used by some modern games and channels."},
-    {55,4633,5406,NORMAL,"Used by some modern games and channels."},
-    {56,4890,5405,NORMAL,"Used only by Wii Speak Channel 2.0."},
-    {57,5404,5661,NORMAL,"Unknown yet."},
-    {60,6174,6400,NORMAL,"Used by System Menu 4.0 and 4.1."},
-    {61,4890,5405,NORMAL,"Used by Shop Channel 4.x."},
-    {70,6687,6687,LATEST,"Used by System Menu 4.2."},
-    {222,65280,65280,NORMAL,"Piracy prevention stub, useless."},
-    {223,65280,65280,NORMAL,"Piracy prevention stub, useless."},
-    {249,65280,65280,NORMAL,"Piracy prevention stub, useless."},
-    {250,65280,65280,NORMAL,"Piracy prevention stub, useless."},
-    {254,2,260,NORMAL,"PatchMii prevention stub, useless."}
-};*/
-
 const struct ios ioses[]={
 // IOS# OLDVERSION# NEWVERSION#, ???, Description -- Arikado
     {4,65280,65280,PROTECTED,"Stub, useless now."},
@@ -209,7 +168,7 @@ const struct ios ioses[]={
     {51,4633,4864,STUB_NOW,"Used only by Shop Channel 3.4."},
     {53,4113,5406,NORMAL,"Used by some modern games and channels."},
     {55,4633,5406,NORMAL,"Used by some modern games and channels."},
-    {56,4890,5405,NORMAL,"Used only by Wii Speak Channel 2.0."},
+    {56,4890,5405,NORMAL,"Used by Wii Speak Channel and some newer WiiWare"},
     {57,5404,5661,NORMAL,"Unknown yet."},
     {60,6174,6400,STUB_NOW,"Used by System Menu 4.0 and 4.1."},
     {61,4890,5405,NORMAL,"Used by Shop Channel 4.x."},
