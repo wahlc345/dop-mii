@@ -100,11 +100,11 @@ UNAME := $(shell uname)
 #and now make the build list
 $(BUILD):
 ifeq ($(UNAME),Linux)
-	chmod 555 ./shared/makesvnrev.sh
-	chmod +x ./shared/makesvnrev.sh
-	./shared/makesvnrev.sh
+	chmod 555 ./tools/makesvnrev.sh
+	chmod +x ./tools/makesvnrev.sh
+	./tools/makesvnrev.sh
 else
-	./shared/SubWCRev.exe "." "./shared/svnrev_template.h" "./shared/svnrev.h"
+	./tools/SubWCRev.exe "." "./tools/svnrev_template.h" "./source/svnrev.h"
 endif
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile

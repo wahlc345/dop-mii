@@ -35,22 +35,17 @@ distribution.
 #include <gccore.h>
 #include <malloc.h>
 #include <fat.h>
-
 #include <wiiuse/wpad.h>
 
 #include "wiibasics.h"
 #include "patchmii_core.h"
-
 #include "title.h"
 #include "title_install.h"
 #include "tools.h"
-
 #include "nand.h"
-
 #include "network.h"
-
 #include "IOSPatcher.h"
-#include "../shared/svnrev.h"
+#include "svnrev.h"
 
 #define PROTECTED	0
 #define NORMAL		1
