@@ -193,7 +193,7 @@ const struct ios ioses[]={
     {15,257,523,NORMAL,""},
     {16,512,512,PROTECTED,"Piracy prevention stub, useless."},
     {17,512,775,NORMAL,""},
-    {20,12,0,STUB_NOW,"Used only by System Menu 2.2."},
+    {20,12,256,STUB_NOW,"Used only by System Menu 2.2."},
     {21,514,782,NORMAL,"Used by old third-party titles (No More Heroes)."},
     {22,777,1037,NORMAL,""},
     {28,1292,1550,NORMAL,""},
@@ -796,7 +796,7 @@ int checkAndRemoveStubs()// this can be made a whole lot smaller by using differ
 	rr=Title_GetVersionNObuf(0x0000000100000014ll);
 	printf("\x1b[2J");
 	gprintf("\nTitle_GetVersion 20 = %d",rr);
-	if (rr==0)
+	if (rr==256)
 	{
 		printf("\nOK to Remove stub IOS 20?\n\n");
 		if (yes_or_no())
