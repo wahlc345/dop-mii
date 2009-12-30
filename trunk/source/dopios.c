@@ -1885,11 +1885,16 @@ int main(int argc, char **argv) {
 			printf("\n");
 			printf("Creating log on SD...\n\n");
 			
+			if(fatInitDefault()){
 			logFile = fopen("sd:/signCheck.csv", "wb");
             fwrite(logBuffer, 1, strlen(logBuffer), logFile);
             fclose(logFile);
-			
 			printf("All done, you can find the report on the root of your SD Card\n\n");
+			}
+			
+			else{
+			printf("Failed to create log on your SD Card!\n\n");
+			}
 			 
 			printf("Return to the main Dop-IOS MOD menu?\n");
 			if(!yes_or_no())
@@ -1906,8 +1911,6 @@ int main(int argc, char **argv) {
             dontcheck = true;
     }
 
-
-    //STM_RebootSystem();
     printf("\nReturning to loader...");
     return 0;
 }
