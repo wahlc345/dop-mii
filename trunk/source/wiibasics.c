@@ -280,6 +280,7 @@ bool yes_or_no(void) {
 
             if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
                     (PAD_ButtonsDown(0)&PAD_BUTTON_Y)) {
+				printf("Returning to loader...");
                 exit(0);
             }
 
