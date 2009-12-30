@@ -1,4 +1,3 @@
-#!/bin/sh
 REV=`svnversion -n ../`
 echo $REV
 touch ./source/svnrev.h
