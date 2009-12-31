@@ -1413,6 +1413,8 @@ int main(int argc, char **argv) {
 
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
+		    Close_SD();
+			Close_USB();
         	ret = ios_selectionmenu(36);
 			if (ret != 0) {
 				WPAD_Shutdown();
@@ -1420,6 +1422,8 @@ int main(int argc, char **argv) {
 				WPAD_Init();				
 			}
 			
+			Init_SD();
+			Init_USB();
 			ret = mainmenu();
 			if (ret != 0) {
 				printf("\nPress A to return to loader.");
@@ -1807,6 +1811,7 @@ int main(int argc, char **argv) {
                 break;
         }//End Screen 3
 		
+		//Screen 4 -- Detect and remove stubbed IOSs
 		if(screen == 4){
 			printf("\n\nAre you sure you want to check for stub IOSs and delete them to\nfree up the 2 precious blocks they take up on that little nand?\n\n");
 	       if (yes_or_no()) {
@@ -1816,8 +1821,9 @@ int main(int argc, char **argv) {
 		}
 		 }
 		 screen = 0;
-	    }
+	    }//End screen 4
 		
+		//Screen 5 -- Signcheck
 		if(screen == 5){
 			printMyTitle();
 		    printf("\n");
@@ -1903,7 +1909,7 @@ int main(int argc, char **argv) {
 			
 			iosToTest = 0;
 			screen = 0;
-		}
+		}//End screen 5
 
         VIDEO_WaitVSync();
         VIDEO_WaitVSync();
