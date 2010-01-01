@@ -21,9 +21,9 @@
 #define MOUNT_USB  1
 
 /* Disc interfaces */
-extern const DISC_INTERFACE __io_usbstorage_ro;
-extern const DISC_INTERFACE __io_wiiums;
-extern const DISC_INTERFACE __io_wiiums_ro;
+const DISC_INTERFACE __io_usbstorage_ro;
+const DISC_INTERFACE __io_wiiums;
+const DISC_INTERFACE __io_wiiums_ro;
 
 sec_t _FAT_startSector;
 
@@ -33,17 +33,20 @@ sec_t fatSdSec = 0; // u32
 int   fatUsbMount = 0;
 sec_t fatUsbSec = 0;
 
-int UsbDeviceOpen() {
-	gprintf("\nUSBDevice_Init()");
+int UsbDeviceOpen() 
+{
+	gprintf("\nUSBDeviceOpen()");
 
 	//closing all open Files write back the cache and then shutdown em!
     fatUnmount("USB:/");
     //right now mounts first FAT-partition
 
 	//try first mount with cIOS
-    if (!fatMount("USB", &__io_wiiums, 0, CACHE, SECTORS)) {
+    if (!fatMount("USB", &__io_wiiums, 0, CACHE, SECTORS)) 
+	{
 		//try now mount with libogc
-		if (!fatMount("USB", &__io_usbstorage, 0, CACHE, SECTORS)) {
+		if (!fatMount("USB", &__io_usbstorage, 0, CACHE, SECTORS)) 
+		{
 			gprintf(":-1");
 			return -1;
 		}
@@ -55,7 +58,8 @@ int UsbDeviceOpen() {
 	return 0;
 }
 
-void UsbDeviceClose() {
+void UsbDeviceClose() 
+{
 	gprintf("\nUSBDevice_deInit()");
     //closing all open Files write back the cache and then shutdown em!
     fatUnmount("USB:/");
