@@ -51,28 +51,28 @@ distribution.
 #include "ticket_dat.h"
 #include "tmd_dat.h"
 
-#define PROTECTED	0
-#define NORMAL		1
-#define STUB_NOW	2
-#define LATEST		3
+#define PROTECTED       0
+#define NORMAL          1
+#define STUB_NOW        2
+#define LATEST          3
 #define MAX_REGION  3
-#define MAX_IOS		36
+#define MAX_IOS         36
 #define MAX_SYSTEMMENU 6
 #define MAX_CHANNEL 6
 
 
-#define BLACK	0
-#define RED		1
-#define GREEN	2
-#define YELLOW	3
-#define BLUE	4
-#define MAGENTA	5
-#define CYAN	6
-#define WHITE	7
+#define BLACK   0
+#define RED             1
+#define GREEN   2
+#define YELLOW  3
+#define BLUE    4
+#define MAGENTA 5
+#define CYAN    6
+#define WHITE   7
 
 #define CIOS_VERSION 36
 
-#define round_up(x,n)	(-(-(x) & -(n)))
+#define round_up(x,n)   (-(-(x) & -(n)))
 
 #define PAD_CHAN_0 0
 
@@ -86,12 +86,12 @@ int iosTable[256];//For signcheck
 // Prevent IOS36 loading at startup
 s32 __IOS_LoadStartupIOS()
 {
-	return 0;
+        return 0;
 }
 
 s32 __u8Cmp(const void *a, const void *b)
 {
-	return *(u8 *)a-*(u8 *)b;
+        return *(u8 *)a-*(u8 *)b;
 }
 
 struct region {
@@ -192,16 +192,17 @@ u32 ios_found[256];
 
 void printCenter(char *text, int width)
 {
-	int textLen = strlen(text);
-	int leftPad = (width - textLen) / 2;
-	int rightPad = (width - textLen) - leftPad;
-	printf("%*s%s%*s", leftPad, " ", text, rightPad, " ");
+        int textLen = strlen(text);
+        int leftPad = (width - textLen) / 2;
+        int rightPad = (width - textLen) - leftPad;
+        printf("%*s%s%*s", leftPad, " ", text, rightPad, " ");
 }
 
 void setConsoleFgColor(u8 color,u8 bold) {
     printf("\x1b[%u;%um", color+30,bold);
     fflush(stdout);
 }
+
 
 void setConsoleBgColor(u8 color,u8 bold) {
     printf("\x1b[%u;%um", color+40,bold);
@@ -213,17 +214,17 @@ void clearConsole() {
 }
 
 void printMyTitle() {
-	int lineLength = 72;
-	
-	clearConsole();
+        int lineLength = 72;
+       
+        clearConsole();
     setConsoleBgColor(RED,0);
     setConsoleFgColor(WHITE,0);
-	
-    printf("%*s", lineLength, " ");	
+       
+    printf("%*s", lineLength, " ");    
 
-	char text[lineLength];
-	sprintf(text, "Dop-IOS MOD v10.1 (SVN r%s)", SVN_REV_STR);
-	printCenter(text, lineLength);
+        char text[lineLength];
+        sprintf(text, "Dop-IOS MOD v10.1 (SVN r%s)", SVN_REV_STR);
+        printCenter(text, lineLength);
 
     printf("%*s", lineLength, " ");
     setConsoleBgColor(BLACK,0);
@@ -402,6 +403,7 @@ s32 Title_GetIOSVersions(u8 **outbuf, u32 *outlen) {
         ret = -1;
         goto out;
     }
+
 
     /* Copy IOS */
     for (cnt = idx = 0; idx < count; idx++) {
@@ -607,6 +609,7 @@ void InstallTheChosenChannel(int region, int channel) {
             printf("\nPhoto Channel 1.0 successfully installed!");
     }
 
+
 //Photo Channel 1.1
     if (channel == 2) {
         printf("\n\nInstalling the Photo Channel 1.1...");
@@ -701,584 +704,586 @@ extern int useSd;
 u8 fatIsInit = 0;
 int checkAndRemoveStubs()// this can be made a whole lot smaller by using different functions with args.  but i never meant to release it so i was ok with having it be big.
 {
-	int ret=0;
+        int ret=0;
     int rr=Title_GetVersionNObuf(0x00000001000000dell);
-	Nand_Init();
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 222 = %d",rr);
-	if (rr==65280)
-	{
-		printf("\nOK to Remove stub IOS 222?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 222");
-			Uninstall_FromTitle(0x00000001000000dell);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x00000001000000dfll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 223 = %d",rr);
-	if (rr==65280)
-	{
-		printf("\nOK to Remove stub IOS 223?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 223");
-			Uninstall_FromTitle(0x00000001000000dfll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x00000001000000f9ll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 249 = %d",rr);
-	if (rr==65280)
-	{
-		printf("\nOK to Remove stub IOS 249?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 249");
-			Uninstall_FromTitle(0x00000001000000f9ll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x00000001000000fall);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 250 = %d",rr);
-	if (rr==65280)
-	{
-		printf("\nOK to Remove stub IOS 250?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 250");
-			Uninstall_FromTitle(0x00000001000000fall);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x0000000100000004ll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 4 = %d",rr);
-	if (rr==65280)
-	{
-		printf("\nOK to Remove stub IOS 4?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 4");
-			Uninstall_FromTitle(0x0000000100000004ll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x000000010000000all);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 10 = %d",rr);
-	if (rr==768)
-	{
-		printf("\nOK to Remove stub IOS 10?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 10");
-			Uninstall_FromTitle(0x000000010000000all);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x000000010000000bll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 11 = %d",rr);
-	if (rr==256)
-	{
-		printf("\nOK to Remove stub IOS 11?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 11");
-			Uninstall_FromTitle(0x000000010000000bll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x0000000100000010ll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 16 = %d",rr);
-	if (rr==512)
-	{
-		printf("\nOK to Remove stub IOS 16?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 16");
-			Uninstall_FromTitle(0x0000000100000010ll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x0000000100000014ll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 20 = %d",rr);
-	if (rr==256)
-	{
-		printf("\nOK to Remove stub IOS 20?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 20");
-			Uninstall_FromTitle(0x0000000100000014ll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x000000010000001ell);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 30 = %d",rr);
-	if (rr==2816)
-	{
-		printf("\nOK to Remove stub IOS 30?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 30");
-			Uninstall_FromTitle(0x000000010000001ell);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x0000000100000032ll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 50 = %d",rr);
-	if (rr==5120)
-	{
-		printf("\nOK to Remove stub IOS 50?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 50");
-			Uninstall_FromTitle(0x0000000100000032ll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x0000000100000033ll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 51 = %d",rr);
-	if (rr==4864)
-	{
-		printf("\nOK to Remove stub IOS 51?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 51");
-			Uninstall_FromTitle(0x0000000100000033ll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x000000010000003cll);
-	printf("\x1b[2J");
-	gprintf("\nTitle_GetVersion 60 = %d",rr);
-	if (rr==6400)
-	{
-		printf("\nOK to Remove stub IOS 60?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 60");
-			Uninstall_FromTitle(0x000000010000003cll);
-		}
-		ret++;
-	}
-	rr=Title_GetVersionNObuf(0x00000001000000fell);
-	gprintf("\nTitle_GetVersion 254 = %d",rr);
-	if (rr==260)
-	{
-		printf("\nOK to Remove stub IOS 254?\n\n");
-		if (yes_or_no())
-		{
-			gprintf("\ndelete 254");
-			Uninstall_FromTitle(0x00000001000000fell);
-		}
-		ret++;
-	}
-	return ret;
-	
+        Nand_Init();
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 222 = %d",rr);
+        if (rr==65280)
+        {
+                printf("\nOK to Remove stub IOS 222?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 222");
+                        Uninstall_FromTitle(0x00000001000000dell);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x00000001000000dfll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 223 = %d",rr);
+        if (rr==65280)
+        {
+                printf("\nOK to Remove stub IOS 223?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 223");
+                        Uninstall_FromTitle(0x00000001000000dfll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x00000001000000f9ll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 249 = %d",rr);
+        if (rr==65280)
+        {
+                printf("\nOK to Remove stub IOS 249?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 249");
+                        Uninstall_FromTitle(0x00000001000000f9ll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x00000001000000fall);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 250 = %d",rr);
+        if (rr==65280)
+        {
+                printf("\nOK to Remove stub IOS 250?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 250");
+                        Uninstall_FromTitle(0x00000001000000fall);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x0000000100000004ll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 4 = %d",rr);
+        if (rr==65280)
+        {
+                printf("\nOK to Remove stub IOS 4?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 4");
+                        Uninstall_FromTitle(0x0000000100000004ll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x000000010000000all);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 10 = %d",rr);
+        if (rr==768)
+        {
+                printf("\nOK to Remove stub IOS 10?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 10");
+                        Uninstall_FromTitle(0x000000010000000all);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x000000010000000bll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 11 = %d",rr);
+        if (rr==256)
+        {
+                printf("\nOK to Remove stub IOS 11?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 11");
+                        Uninstall_FromTitle(0x000000010000000bll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x0000000100000010ll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 16 = %d",rr);
+        if (rr==512)
+        {
+                printf("\nOK to Remove stub IOS 16?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 16");
+                        Uninstall_FromTitle(0x0000000100000010ll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x0000000100000014ll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 20 = %d",rr);
+        if (rr==256)
+        {
+                printf("\nOK to Remove stub IOS 20?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 20");
+                        Uninstall_FromTitle(0x0000000100000014ll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x000000010000001ell);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 30 = %d",rr);
+        if (rr==2816)
+        {
+                printf("\nOK to Remove stub IOS 30?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 30");
+                        Uninstall_FromTitle(0x000000010000001ell);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x0000000100000032ll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 50 = %d",rr);
+        if (rr==5120)
+        {
+                printf("\nOK to Remove stub IOS 50?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 50");
+                        Uninstall_FromTitle(0x0000000100000032ll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x0000000100000033ll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 51 = %d",rr);
+        if (rr==4864)
+        {
+                printf("\nOK to Remove stub IOS 51?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 51");
+                        Uninstall_FromTitle(0x0000000100000033ll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x000000010000003cll);
+        printf("\x1b[2J");
+        gprintf("\nTitle_GetVersion 60 = %d",rr);
+        if (rr==6400)
+        {
+                printf("\nOK to Remove stub IOS 60?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 60");
+                        Uninstall_FromTitle(0x000000010000003cll);
+                }
+                ret++;
+        }
+        rr=Title_GetVersionNObuf(0x00000001000000fell);
+        gprintf("\nTitle_GetVersion 254 = %d",rr);
+        if (rr==260)
+        {
+                printf("\nOK to Remove stub IOS 254?\n\n");
+                if (yes_or_no())
+                {
+                        gprintf("\ndelete 254");
+                        Uninstall_FromTitle(0x00000001000000fell);
+                }
+                ret++;
+        }
+        return ret;
+       
 }
+
 
 u8 *get_ioslist(u32 *cnt)
 {
-	u64 *buf = 0;
-	s32 i, res;
-	u32 tcnt = 0, icnt;
-	u8 *ioses = NULL;
-	
-	//Get stored IOS versions.
-	res = ES_GetNumTitles(&tcnt);
-	if(res < 0)
-	{
-		printf("ES_GetNumTitles: Error! (result = %d)\n", res);
-		return 0;
-	}
-	buf = memalign(32, sizeof(u64) * tcnt);
-	res = ES_GetTitles(buf, tcnt);
-	if(res < 0)
-	{
-		printf("ES_GetTitles: Error! (result = %d)\n", res);
-		if (buf) free(buf);
-		return 0;
-	}
+        u64 *buf = 0;
+        s32 i, res;
+        u32 tcnt = 0, icnt;
+        u8 *ioses = NULL;
+       
+        //Get stored IOS versions.
+        res = ES_GetNumTitles(&tcnt);
+        if(res < 0)
+        {
+                printf("ES_GetNumTitles: Error! (result = %d)\n", res);
+                return 0;
+        }
+        buf = memalign(32, sizeof(u64) * tcnt);
+        res = ES_GetTitles(buf, tcnt);
+        if(res < 0)
+        {
+                printf("ES_GetTitles: Error! (result = %d)\n", res);
+                if (buf) free(buf);
+                return 0;
+        }
 
-	icnt = 0;
-	for(i = 0; i < tcnt; i++)
-	{
-		if(*((u32 *)(&(buf[i]))) == 1 && (u32)buf[i] > 2 && (u32)buf[i] < 0x100)
-		{
-			icnt++;
-			ioses = (u8 *)realloc(ioses, sizeof(u8) * icnt);
-			ioses[icnt - 1] = (u8)buf[i];
-		}
-	}
+        icnt = 0;
+        for(i = 0; i < tcnt; i++)
+        {
+                if(*((u32 *)(&(buf[i]))) == 1 && (u32)buf[i] > 2 && (u32)buf[i] < 0x100)
+                {
+                        icnt++;
+                        ioses = (u8 *)realloc(ioses, sizeof(u8) * icnt);
+                        ioses[icnt - 1] = (u8)buf[i];
+                }
+        }
 
-	ioses = (u8 *)malloc(sizeof(u8) * icnt);
-	icnt = 0;
-	
-	for(i = 0; i < tcnt; i++)
-	{
-		if(*((u32 *)(&(buf[i]))) == 1 && (u32)buf[i] > 2 && (u32)buf[i] < 0x100)
-		{
-			icnt++;
-			ioses[icnt - 1] = (u8)buf[i];
-		}
-	}
-	free(buf);
-	qsort(ioses, icnt, 1, __u8Cmp);
+        ioses = (u8 *)malloc(sizeof(u8) * icnt);
+        icnt = 0;
+       
+        for(i = 0; i < tcnt; i++)
+        {
+                if(*((u32 *)(&(buf[i]))) == 1 && (u32)buf[i] > 2 && (u32)buf[i] < 0x100)
+                {
+                        icnt++;
+                        ioses[icnt - 1] = (u8)buf[i];
+                }
+        }
+        free(buf);
+        qsort(ioses, icnt, 1, __u8Cmp);
 
-	*cnt = icnt;
-	return ioses;
+        *cnt = icnt;
+        return ioses;
 }
 
 void show_boot2_info()
 {
-	int ret;
+        int ret;
         printf("\x1b[2J");
         printMyTitle();
         printf("\x1b[2;0H");
-		printf("\n\n");
+                printf("\n\n");
 
-	printf("Retrieving boot2 version...\n");
-	u32 boot2version = 0;
-	ret = ES_GetBoot2Version(&boot2version);
-	if (ret < 0)
-	{
-		printf("Could not get boot2 version. It's possible your Wii is\n");
-		printf("a boot2v4+ Wii, maybe not.\n");
-	} else
-	{
-		printf("Your boot2 version is: %u\n", boot2version);
-		if (boot2version < 4)
-		{
-			printf("This means you should not have problems.\n");
-		}
-	}	
-	
-	printf("\n");
-	printf("Boot2v4 is an indicator for the 'new' Wii hardware revision that prevents\n");
-	printf("the execution of some old IOS. These Wiis are often called LU64+ Wiis or\n");
-	printf("'unsoftmoddable' Wiis. You MUST NOT downgrade one of these Wiis and be\n");
-	printf("EXTRA careful when messing with ANYTHING on them.\n");
-	printf("The downgraded IOS15 you get with the Trucha Bug Restorer should work\n");
-	printf("on these Wiis and not harm Wiis in general.\n");
-	printf("\n");
-	printf("If you updated your Wii via wifi to 4.2 or higher, your boot2 got\n");
-	printf("updated by this and you can't use it as indicator for this.\n");
-	printf("\n");
-	printf("Press any button to return to the menu\n");
-	wait_anyKey();
+        printf("Retrieving boot2 version...\n");
+        u32 boot2version = 0;
+        ret = ES_GetBoot2Version(&boot2version);
+        if (ret < 0)
+        {
+                printf("Could not get boot2 version. It's possible your Wii is\n");
+                printf("a boot2v4+ Wii, maybe not.\n");
+        } else
+        {
+                printf("Your boot2 version is: %u\n", boot2version);
+                if (boot2version < 4)
+                {
+                        printf("This means you should not have problems.\n");
+                }
+        }      
+       
+        printf("\n");
+        printf("Boot2v4 is an indicator for the 'new' Wii hardware revision that prevents\n");
+        printf("the execution of some old IOS. These Wiis are often called LU64+ Wiis or\n");
+        printf("'unsoftmoddable' Wiis. You MUST NOT downgrade one of these Wiis and be\n");
+        printf("EXTRA careful when messing with ANYTHING on them.\n");
+        printf("The downgraded IOS15 you get with the Trucha Bug Restorer should work\n");
+        printf("on these Wiis and not harm Wiis in general.\n");
+        printf("\n");
+        printf("If you updated your Wii via wifi to 4.2 or higher, your boot2 got\n");
+        printf("updated by this and you can't use it as indicator for this.\n");
+        printf("\n");
+        printf("Press any button to return to the menu\n");
+        wait_anyKey();
 }
 
 int ios_selectionmenu(int default_ios)
 {
-	u32 pressed;
-	u32 pressedGC;
-	int selection = 0;
-	u32 ioscount;
-	u8 *list = get_ioslist(&ioscount);
-	
-	int i;
-	for (i=0;i<ioscount;i++)
-	{
-		// Default to default_ios if found, else the loaded IOS
-		if (list[i] == default_ios)
-		{
-			selection = i;
-			break;
-		}
-		if (list[i] == IOS_GetVersion())
-		{
-			selection = i;
-		}
-	}	
-	
-	while (true)
-	{
-		//printf("\x1B[%d;%dH",2,0);	// move console cursor to y/x
-		
-	    printf("\x1b[2J");
+        u32 pressed;
+        u32 pressedGC;
+        int selection = 0;
+        u32 ioscount;
+        u8 *list = get_ioslist(&ioscount);
+       
+        int i;
+        for (i=0;i<ioscount;i++)
+        {
+                // Default to default_ios if found, else the loaded IOS
+                if (list[i] == default_ios)
+                {
+                        selection = i;
+                        break;
+                }
+                if (list[i] == IOS_GetVersion())
+                {
+                        selection = i;
+                }
+        }      
+       
+        while (true)
+        {
+                //printf("\x1B[%d;%dH",2,0);    // move console cursor to y/x
+               
+            printf("\x1b[2J");
         printMyTitle();
         printf("\x1b[2;0H");
-		printf("\n\n");
-		printf("Select which IOS to load:       \b\b\b\b\b\b");
-		
-		set_highlight(true);
-		printf("IOS%u\n", list[selection]);
-		set_highlight(false);
-		
-		printf("Press B to continue without IOS Reload\n");
-		
-		waitforbuttonpress(&pressed, &pressedGC);
-		
-		if (pressed == WPAD_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT)
-		{	
-			if (selection > 0)
-			{
-				selection--;
-			} else
-			{
-				selection = ioscount - 1;
-			}
-		}
-		if (pressed == WPAD_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT)
-		{
-			if (selection < ioscount -1	)
-			{
-				selection++;
-			} else
-			{
-				selection = 0;
-			}
-		}
-		if (pressed == WPAD_BUTTON_A || pressedGC == PAD_BUTTON_A) break;
-		if (pressed == WPAD_BUTTON_B || pressedGC == PAD_BUTTON_B)
-		{
-			return 0;
-		}
-		
-	}
-	return list[selection];
+                printf("\n\n");
+                printf("Select which IOS to load:       \b\b\b\b\b\b");
+               
+                set_highlight(true);
+                printf("IOS%u\n", list[selection]);
+                set_highlight(false);
+               
+                printf("Press B to continue without IOS Reload\n");
+               
+                waitforbuttonpress(&pressed, &pressedGC);
+               
+                if (pressed == WPAD_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT)
+                {      
+                        if (selection > 0)
+                        {
+                                selection--;
+                        } else
+                        {
+                                selection = ioscount - 1;
+                        }
+                }
+                if (pressed == WPAD_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT)
+                {
+                        if (selection < ioscount -1     )
+                        {
+                                selection++;
+                        } else
+                        {
+                                selection = 0;
+                        }
+                }
+                if (pressed == WPAD_BUTTON_A || pressedGC == PAD_BUTTON_A) break;
+                if (pressed == WPAD_BUTTON_B || pressedGC == PAD_BUTTON_B)
+                {
+                        return 0;
+                }
+               
+        }
+        return list[selection];
 }
 
 int iosinstallmenu(u32 ios, u32 revision)
 {
-	u32 pressed;
-	u32 pressedGC;
-	int selection = 0;
-	int destselect = 0;
-	int ret;
-	int i;
-	bool options[3] = { true, true, false };
+        u32 pressed;
+        u32 pressedGC;
+        int selection = 0;
+        int destselect = 0;
+        int ret;
+        int i;
+        bool options[3] = { true, true, false };
 
-	char *optionsstring[3] = {"Patch hash check (trucha): ", "Patch ES_Identify:         ", "Patch nand permissions:    "};
-	u32 destination[3] = { ios, 200+ios, 249 };
-	
-	while (true)
-	{
+        char *optionsstring[3] = {"Patch hash check (trucha): ", "Patch ES_Identify:         ", "Patch nand permissions:    "};
+        u32 destination[3] = { ios, 200+ios, 249 };
+       
+        while (true)
+        {
         printf("\x1b[2J");
         printMyTitle();
         printf("\x1b[2;0H");
-		printf("\n\n");
-		
-		set_highlight(selection == 0);
-		if (options[0] || options[1] || options[2] || ios != destination[destselect])
-		{
-			printf("Install patched IOS%u\n", ios);
-		} else
-		{
-			printf("Install IOS%u\n", ios);
-		}
-		set_highlight(false);
+                printf("\n\n");
+               
+                set_highlight(selection == 0);
+                if (options[0] || options[1] || options[2] || ios != destination[destselect])
+                {
+                        printf("Install patched IOS%u\n", ios);
+                } else
+                {
+                        printf("Install IOS%u\n", ios);
+                }
+                set_highlight(false);
 
-		printf("Install IOS to slot:       ");
-		set_highlight(selection == 1);
-		printf("%u\n", destination[destselect]);
-		set_highlight(false);
-		
-		for (i=0;i < 3;i++)
-		{
-			printf(optionsstring[i]);
-			set_highlight(selection == i+2);
-			printf("%s\n", options[i] ? "yes" : "no");
-			set_highlight(false);
-		}
-		printf("\n");
-		
-		waitforbuttonpress(&pressed, &pressedGC);
-		
-		if (pressed == WPAD_BUTTON_LEFT || pressed == WPAD_CLASSIC_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT)
-		{	
-			if (selection == 1)
-			{
-				if (destselect > 0)
-				{
-					destselect--;
-				} else
-				{
-					destselect = 2;
-				}
-			}
-			if (selection > 1)
-			{
-				options[selection-2] = !options[selection-2];
-			}
-		}
+                printf("Install IOS to slot:       ");
+                set_highlight(selection == 1);
+                printf("%u\n", destination[destselect]);
+                set_highlight(false);
+               
+                for (i=0;i < 3;i++)
+                {
+                        printf(optionsstring[i]);
+                        set_highlight(selection == i+2);
+                        printf("%s\n", options[i] ? "yes" : "no");
+                        set_highlight(false);
+                }
+                printf("\n");
+               
+                waitforbuttonpress(&pressed, &pressedGC);
+               
+                if (pressed == WPAD_BUTTON_LEFT || pressed == WPAD_CLASSIC_BUTTON_LEFT || pressedGC == PAD_BUTTON_LEFT)
+                {      
+                        if (selection == 1)
+                        {
+                                if (destselect > 0)
+                                {
+                                        destselect--;
+                                } else
+                                {
+                                        destselect = 2;
+                                }
+                        }
+                        if (selection > 1)
+                        {
+                                options[selection-2] = !options[selection-2];
+                        }
+                }
 
-		if (pressed == WPAD_BUTTON_RIGHT || pressed == WPAD_CLASSIC_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT)
-		{	
-			if (selection == 1)
-			{
-				if (destselect < 2)
-				{
-					destselect++;
-				} else
-				{
-					destselect = 0;
-				}
-			}
-			if (selection > 1)
-			{
-				options[selection-2] = !options[selection-2];
-			}
-		}
-		
-		if (pressed == WPAD_BUTTON_UP || pressed == WPAD_CLASSIC_BUTTON_UP || pressedGC == PAD_BUTTON_UP)
-		{
-			if (selection > 0)
-			{
-				selection--;
-			} else
-			{
-				selection = 4;
-			}
-		}
 
-		if (pressed == WPAD_BUTTON_DOWN || pressed == WPAD_CLASSIC_BUTTON_DOWN || pressedGC == PAD_BUTTON_DOWN)
-		{
-			if (selection < 4)
-			{
-				selection++;
-			} else
-			{
-				selection = 0;
-			}
-		}
+                if (pressed == WPAD_BUTTON_RIGHT || pressed == WPAD_CLASSIC_BUTTON_RIGHT || pressedGC == PAD_BUTTON_RIGHT)
+                {      
+                        if (selection == 1)
+                        {
+                                if (destselect < 2)
+                                {
+                                        destselect++;
+                                } else
+                                {
+                                        destselect = 0;
+                                }
+                        }
+                        if (selection > 1)
+                        {
+                                options[selection-2] = !options[selection-2];
+                        }
+                }
+               
+                if (pressed == WPAD_BUTTON_UP || pressed == WPAD_CLASSIC_BUTTON_UP || pressedGC == PAD_BUTTON_UP)
+                {
+                        if (selection > 0)
+                        {
+                                selection--;
+                        } else
+                        {
+                                selection = 4;
+                        }
+                }
 
-		if ((pressed == WPAD_BUTTON_A || pressed == WPAD_CLASSIC_BUTTON_A || pressedGC == PAD_BUTTON_A) && selection == 0)
-		{
-			if (destination[destselect] == 36)
-			{
-				ret = Install_patched_IOS(ios, revision, options[0], options[1], options[2], destination[destselect], revision);
-			} else
-			{
-				ret = Install_patched_IOS(ios, revision, options[0], options[1], options[2], destination[destselect], 1);
-			}
-			if (ret < 0)
-			{
-				printf("IOS%u installation failed.\n", ios);
-				return -1;
-			}
-			return 0;
-		}
-		
-		if (pressed == WPAD_BUTTON_B || pressed == WPAD_CLASSIC_BUTTON_B || pressedGC == PAD_BUTTON_B)
-		{
-			printf("Installation cancelled\n");
-			return 0;
-		}		
-	}	
+                if (pressed == WPAD_BUTTON_DOWN || pressed == WPAD_CLASSIC_BUTTON_DOWN || pressedGC == PAD_BUTTON_DOWN)
+                {
+                        if (selection < 4)
+                        {
+                                selection++;
+                        } else
+                        {
+                                selection = 0;
+                        }
+                }
+
+                if ((pressed == WPAD_BUTTON_A || pressed == WPAD_CLASSIC_BUTTON_A || pressedGC == PAD_BUTTON_A) && selection == 0)
+                {
+                        if (destination[destselect] == 36)
+                        {
+                                ret = Install_patched_IOS(ios, revision, options[0], options[1], options[2], destination[destselect], revision);
+                        } else
+                        {
+                                ret = Install_patched_IOS(ios, revision, options[0], options[1], options[2], destination[destselect], 1);
+                        }
+                        if (ret < 0)
+                        {
+                                printf("IOS%u installation failed.\n", ios);
+                                return -1;
+                        }
+                        return 0;
+                }
+               
+                if (pressed == WPAD_BUTTON_B || pressed == WPAD_CLASSIC_BUTTON_B || pressedGC == PAD_BUTTON_B)
+                {
+                        printf("Installation cancelled\n");
+                        return 0;
+                }              
+        }      
 
 }
 
 int mainmenu()
 {
-	u32 pressed;
-	u32 pressedGC;
-	int selection = 0;
-	int ret;
-	int i;
-	char *optionsstring[6] = { "IOS36 menu", "IOS37 menu", "Downgrade IOS15", "Restore IOS15", "Show boot2 info", "Exit" };
-	
-	while (true)
-	{
+        u32 pressed;
+        u32 pressedGC;
+        int selection = 0;
+        int ret;
+        int i;
+        char *optionsstring[6] = { "IOS36 menu", "IOS37 menu", "Downgrade IOS15", "Restore IOS15", "Show boot2 info", "Exit" };
+       
+        while (true)
+        {
         printf("\x1b[2J");
         printMyTitle();
         printf("\x1b[2;0H");
-		printf("\n\n");
-		
-		for (i=0;i < 6;i++)
-		{
-			set_highlight(selection == i);
-			printf("%s\n", optionsstring[i]);
-			set_highlight(false);
-		}
-		printf("\n");
-		
-		waitforbuttonpress(&pressed, &pressedGC);
-		
-		if (pressed == WPAD_BUTTON_UP || pressed == WPAD_CLASSIC_BUTTON_UP || pressedGC == PAD_BUTTON_UP)
-		{
-			if (selection > 0)
-			{
-				selection--;
-			} else
-			{
-				selection = 5;
-			}
-		}
+                printf("\n\n");
+               
+                for (i=0;i < 6;i++)
+                {
+                        set_highlight(selection == i);
+                        printf("%s\n", optionsstring[i]);
+                        set_highlight(false);
+                }
+                printf("\n");
+               
+                waitforbuttonpress(&pressed, &pressedGC);
+               
+                if (pressed == WPAD_BUTTON_UP || pressed == WPAD_CLASSIC_BUTTON_UP || pressedGC == PAD_BUTTON_UP)
+                {
+                        if (selection > 0)
+                        {
+                                selection--;
+                        } else
+                        {
+                                selection = 5;
+                        }
+                }
 
-		if (pressed == WPAD_BUTTON_DOWN || pressed == WPAD_CLASSIC_BUTTON_DOWN || pressedGC == PAD_BUTTON_DOWN)
-		{
-			if (selection < 5)
-			{
-				selection++;
-			} else
-			{
-				selection = 0;
-			}
-		}
+                if (pressed == WPAD_BUTTON_DOWN || pressed == WPAD_CLASSIC_BUTTON_DOWN || pressedGC == PAD_BUTTON_DOWN)
+                {
+                        if (selection < 5)
+                        {
+                                selection++;
+                        } else
+                        {
+                                selection = 0;
+                        }
+                }
 
-		if (pressed == WPAD_BUTTON_A || pressed == WPAD_CLASSIC_BUTTON_A || pressedGC == PAD_BUTTON_A)
-		{
-			if (selection == 0)
-			{
-				return iosinstallmenu(36, IOS36version);
-			}
-			
-			if (selection == 1)
-			{
-				return iosinstallmenu(37, IOS37version);
-			}
+                if (pressed == WPAD_BUTTON_A || pressed == WPAD_CLASSIC_BUTTON_A || pressedGC == PAD_BUTTON_A)
+                {
+                        if (selection == 0)
+                        {
+                                return iosinstallmenu(36, IOS36version);
+                        }
+                       
+                        if (selection == 1)
+                        {
+                                return iosinstallmenu(37, IOS37version);
+                        }
 
-			if (selection == 2)
-			{
-				ret = Downgrade_IOS(15, IOS15version, 257);
-				if (ret < 0)
-				{
-					printf("Downgrade failed\n");
-					return -1;
-				}
-				return 0;
-			}
-			
-			if (selection == 3)
-			{
-				ret = install_unpatched_IOS(15, IOS15version);
-				if (ret < 0)
-				{
-					printf("IOS15 Restore failed\n");
-					return -1;
-				}
-				printf("IOS15 restored.\n");
-				return 0;
-			}
-			
-			if (selection == 4)
-			{
-				show_boot2_info();
-			}
+                        if (selection == 2)
+                        {
+                                ret = Downgrade_IOS(15, IOS15version, 257);
+                                if (ret < 0)
+                                {
+                                        printf("Downgrade failed\n");
+                                        return -1;
+                                }
+                                return 0;
+                        }
+                       
+                        if (selection == 3)
+                        {
+                                ret = install_unpatched_IOS(15, IOS15version);
+                                if (ret < 0)
+                                {
+                                        printf("IOS15 Restore failed\n");
+                                        return -1;
+                                }
+                                printf("IOS15 restored.\n");
+                                return 0;
+                        }
+                       
+                        if (selection == 4)
+                        {
+                                show_boot2_info();
+                        }
 
-			if (selection == 5)
-			{
-				return 0;
-			}
-		}
-		
-		if (pressed == WPAD_BUTTON_B || pressed == WPAD_CLASSIC_BUTTON_B || pressedGC == PAD_BUTTON_B)
-		{
-			return 0;
-		}		
-	}	
+                        if (selection == 5)
+                        {
+                                return 0;
+                        }
+                }
+               
+                if (pressed == WPAD_BUTTON_B || pressed == WPAD_CLASSIC_BUTTON_B || pressedGC == PAD_BUTTON_B)
+                {
+                        return 0;
+                }              
+        }      
 }
 
 int main(int argc, char **argv) {
@@ -1287,8 +1292,6 @@ int main(int argc, char **argv) {
 
     PAD_Init();
     WPAD_Init();
-
-    fatInitDefault();
 
     int ret = 0;
 
@@ -1303,8 +1306,8 @@ int main(int argc, char **argv) {
     printf("Created by:\n");
     printf("SifJar\n");
     printf("PheonixTank\n");
-	printf("giantpune\n");
-	printf("Lunatik\n");
+        printf("giantpune\n");
+        printf("Lunatik\n");
     printf("Arikado - http://arikadosblog.blogspot.com\n\n");
     printf("Press A to continue. Press HOME to exit.");
 
@@ -1316,6 +1319,7 @@ int main(int argc, char **argv) {
         if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) \
                 || (PAD_ButtonsDown(0)&PAD_BUTTON_A))
             break;
+
 
         if (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME)
             exit(0);
@@ -1370,8 +1374,8 @@ int main(int argc, char **argv) {
             printf("\x1b[2;0H");
             printf("\n\n\nWhich IOS would you like to use to install other IOSs?\n");
 
-			printf("%3s IOS: %d\n", (firstselection == 0 ? "-->" : " "), iosVersion[selectedios]);
-			printf("%3s Install an IOS that accepts fakesigning\n\n", (firstselection == 1 ? "-->" : " "));
+                        printf("%3s IOS: %d\n", (firstselection == 0 ? "-->" : " "), iosVersion[selectedios]);
+                        printf("%3s Install an IOS that accepts fakesigning\n\n", (firstselection == 1 ? "-->" : " "));
 
             if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_UP) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_UP) || \
                     (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_UP))
@@ -1413,53 +1417,52 @@ int main(int argc, char **argv) {
 
         //Install an IOS that accepts fakesigning
         if (firstselection == 1) {
-		    Close_SD();
-			Close_USB();
-        	ret = ios_selectionmenu(36);
-			if (ret != 0) {
-				WPAD_Shutdown();
-				IOS_ReloadIOS(ret);
-				WPAD_Init();				
-			}
-			
-			Init_SD();
-			Init_USB();
-			ret = mainmenu();
-			if (ret != 0) {
-				printf("\nPress A to return to loader.");
-				while (true) {
-					PAD_ScanPads();
-					WPAD_ScanPads();
-					if (WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
-						exit(0);          					
-				}
-			}
-			
-			printf("\x1b[2J");
-			printMyTitle();
-			printf("\x1b[2;0H");
-			printf("\n\n");
-			printf("We are now returning you to your loader. If you\n");
-			printf("successfully installed a fakesign accepting IOS\n");
-			printf("select IOS 36 as your IOS to load when you return to Dop-IOS MOD\n");
-			printf("\nPress A to exit.");
+		
+                ret = ios_selectionmenu(36);
+                        if (ret != 0) {
+                                WPAD_Shutdown();
+                                IOS_ReloadIOS(ret);
+                                WPAD_Init();                            
+                        }
+                       
+                        Init_SD();
+                        Init_USB();
+                        ret = mainmenu();
+                        if (ret != 0) {
+                                printf("\nPress A to return to loader.");
+                                while (true) {
+                                    PAD_ScanPads();
+                                    WPAD_ScanPads();
+                                    if (WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
+                                        exit(0);                                                
+                                }
+                        }
+                       
+                        printf("\x1b[2J");
+                        printMyTitle();
+                        printf("\x1b[2;0H");
+                        printf("\n\n");
+                        printf("We are now returning you to your loader. If you\n");
+                        printf("successfully installed a fakesign accepting IOS\n");
+                        printf("select IOS 36 as your IOS to load when you return to Dop-IOS MOD\n");
+                        printf("\nPress A to exit.");
 
-			for(;;) {
-				PAD_ScanPads();
-				WPAD_ScanPads();
-				if(WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
-				exit(0);          
-			}
-	   }
+                        for(;;) {
+                                PAD_ScanPads();
+                                WPAD_ScanPads();
+                                if(WPAD_ButtonsDown(0)&WPAD_BUTTON_A || WPAD_ButtonsDown(0)&WPAD_CLASSIC_BUTTON_A || PAD_ButtonsDown(0)&PAD_BUTTON_A)
+                                exit(0);          
+                        }
+           }
 
         if (firstselection != 1) {
 
             printMyTitle();
             printf("\x1b[2;0H");
             printf("\n\nLoading selected IOS...\n");
-			
-			iosreloadcount++;
-			
+                       
+                        iosreloadcount++;
+                       
             if (iosreloadcount == 10) {
             printf("\nERROR! Too many attempts to load IOS. Please restart the program. Exiting...");
             VIDEO_WaitVSync();
@@ -1468,8 +1471,8 @@ int main(int argc, char **argv) {
             WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.--PhoenixTank
             ret = IOS_ReloadIOS(iosVersion[selectedios]);
             WPAD_Init(); // Okay to start wiimote up again.--PhoenixTank
-			
-			//gprintf("\n\tios = %d",IOS_GetVersion());
+                       
+                        //gprintf("\n\tios = %d",IOS_GetVersion());
             if (ret >= 0) {
                 printf("\n\n\nIOS successfully loaded! Press A to continue.");
             }
@@ -1514,10 +1517,11 @@ int main(int argc, char **argv) {
     int systemselection = 0;//Which system menu?
     int regionselection = 0;//Which region?
     int channelselection = 0;//Which channel?
-	
-	FILE * logFile;//For signcheck
-	int iosToTest = 0;//For signcheck
+       
+        FILE * logFile;//For signcheck
+        int iosToTest = 0;//For signcheck
     int reportResults[5];//For signcheck
+
 
     getMyIOS();
 
@@ -1525,26 +1529,28 @@ int main(int argc, char **argv) {
     regionselection = CONF_GetRegion();
 
     switch (regionselection) {
-		case CONF_REGION_JP:
-			regionselection = 2;
-			break;
+                case CONF_REGION_JP:
+                        regionselection = 2;
+                        break;
 
-		case CONF_REGION_EU:
-			regionselection = 1;
-			break;
+                case CONF_REGION_EU:
+                        regionselection = 1;
+                        break;
 
-		case CONF_REGION_US:
-			regionselection = 0;
-			break;
+                case CONF_REGION_US:
+                        regionselection = 0;
+                        break;
 
-		case CONF_REGION_KR:
-			regionselection = 3;
-			break;
+                case CONF_REGION_KR:
+                        regionselection = 3;
+                        break;
 
-		default:
-			regionselection = 0;
-			break;
+                default:
+                        regionselection = 0;
+                        break;
     }
+	
+	Init_SD();
 
     for (;;) {
         printMyTitle();
@@ -1553,14 +1559,14 @@ int main(int argc, char **argv) {
         WPAD_ScanPads();
 
         //Screen 0 -- Update Selection Screen
-		if (screen == 0) {
+                if (screen == 0) {
 
-			printf("%3s IOSs\n", (selection == 0 ? "-->" : " "));
-			printf("%3s Channels\n", (selection == 1 ? "-->" : " "));
-			printf("%3s System Menu\n", (selection == 2 ? "-->" : " "));
-			printf("%3s Remove stubbed IOSs\n", (selection == 3 ? "-->" : " "));
-			printf("%3s Display boot2 information\n", (selection == 4 ? "-->" : " "));
-			printf("%3s Scan the Wii's internals (signcheck)", (selection == 5 ? "-->" : " "));
+                        printf("%3s IOSs\n", (selection == 0 ? "-->" : " "));
+                        printf("%3s Channels\n", (selection == 1 ? "-->" : " "));
+                        printf("%3s System Menu\n", (selection == 2 ? "-->" : " "));
+                        printf("%3s Remove stubbed IOSs\n", (selection == 3 ? "-->" : " "));
+                        printf("%3s Display boot2 information\n", (selection == 4 ? "-->" : " "));
+                        printf("%3s Scan the Wii's internals (signcheck)", (selection == 5 ? "-->" : " "));
 
             printf("\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
             printf("[A]               Select\n");
@@ -1577,12 +1583,12 @@ int main(int argc, char **argv) {
                         screen = 2;
                     if (selection == 2)
                         screen = 3;
-					if (selection == 3)
-					    screen = 4;
-					if(selection == 4)
-						show_boot2_info();
-					if(selection == 5)
-						screen = 5;
+                    if (selection == 3)
+                        screen = 4;
+                    if(selection == 4)
+                        show_boot2_info();
+                    if(selection == 5)
+                        screen = 5;
                     dontcheck = false;
                 }
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_DOWN) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_DOWN) || \
@@ -1686,8 +1692,8 @@ int main(int argc, char **argv) {
 
         //Screen 2 = Channel Choice
         if (screen == 2) {
-			printf("%3s Install Channel: %s\n", (orregion == 0 ? "-->" : " "), channels[channelselection].name);
-			printf("%3s Region:          %s\n\n\n", (orregion == 1 ? "-->" : " "), regions[regionselection].name);
+                        printf("%3s Install Channel: %s\n", (orregion == 0 ? "-->" : " "), channels[channelselection].name);
+                        printf("%3s Region:          %s\n\n\n", (orregion == 1 ? "-->" : " "), regions[regionselection].name);
 
             if (dontcheck) {
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
@@ -1740,13 +1746,14 @@ int main(int argc, char **argv) {
                 break;
         }
 
+
         //Screen 3 = System Menu Choice
         if (screen == 3) {
             //Quick Fix
             if (regionselection == MAX_REGION && systemselection == 0) systemselection = 1;
 
-			printf("%3s Install System Menu: %s\n", (orregion == 0 ? "-->" : " "), systemmenus[systemselection].name);
-			printf("%3s Region:              %s\n\n\n", (orregion == 1 ? "-->" : " "), regions[regionselection].name);
+                        printf("%3s Install System Menu: %s\n", (orregion == 0 ? "-->" : " "), systemmenus[systemselection].name);
+                        printf("%3s Region:              %s\n\n\n", (orregion == 1 ? "-->" : " "), regions[regionselection].name);
 
             if (dontcheck) {
                 if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
@@ -1810,106 +1817,108 @@ int main(int argc, char **argv) {
                     (PAD_ButtonsDown(PAD_CHAN_0)&PAD_BUTTON_Y))
                 break;
         }//End Screen 3
-		
-		//Screen 4 -- Detect and remove stubbed IOSs
-		if(screen == 4){
-			printf("\n\nAre you sure you want to check for stub IOSs and delete them to\nfree up the 2 precious blocks they take up on that little nand?\n\n");
-	       if (yes_or_no()) {
-		       if (!checkAndRemoveStubs()) {
-			printf("\n\nNo stubs found!");
-			sleep(3);
-		}
-		 }
-		 screen = 0;
-	    }//End screen 4
-		
-		//Screen 5 -- Signcheck
-		if(screen == 5){
-			printMyTitle();
-		    printf("\n");
-			printf("\t[*] Using ios %i (rev %i)\n\t[*] Region %s\n\t[*] Hollywood version 0x%x\n", IOS_GetVersion(), IOS_GetRevision(), CheckRegion(), *(u32 *)0x80003138);
-			printf("\t[*] Getting certs.sys from the NAND\t\t\t\t");
-			printf("%s\n", (!GetCert()) ? "[DONE]" : "[FAIL]");
-			printf("\n");
-			iosToTest = ScanIos() - 1;
-			printf("\t[*] Found %i ios on this console.\n", iosToTest);
-			printf("\n");
-			sleep(5);
+               
+                //Screen 4 -- Detect and remove stubbed IOSs
+                if(screen == 4){
+                        printf("\n\nAre you sure you want to check for stub IOSs and delete them to\nfree up the 2 precious blocks they take up on that little nand?\n\n");
+               if (yes_or_no()) {
+                       if (!checkAndRemoveStubs()) {
+                        printf("\n\nNo stubs found!");
+                        sleep(3);
+                }
+                 }
+                 screen = 0;
+            }//End screen 4
+               
+                //Screen 5 -- Signcheck
+                if(screen == 5){
+				
+					Close_SD();
+					
+                    printMyTitle();
+                    printf("\n");
+                    printf("\t[*] Using ios %i (rev %i)\n\t[*] Region %s\n\t[*] Hollywood version 0x%x\n", IOS_GetVersion(), IOS_GetRevision(), CheckRegion(), *(u32 *)0x80003138);
+                    printf("\t[*] Getting certs.sys from the NAND\t\t\t\t");
+                    printf("%s\n", (!GetCert()) ? "[DONE]" : "[FAIL]");
+                    printf("\n");
+                    iosToTest = ScanIos() - 1;
+                    printf("\t[*] Found %i IOS(s) on this console.\n", iosToTest);
+                    printf("\n");
+                    sleep(5);
+
+                    char tmp[1024];
+			     	u32 deviceId;
  
-			char tmp[1024];
-            u32 deviceId;
+					ES_GetDeviceID(&deviceId);
  
-		    ES_GetDeviceID(&deviceId);
-			
-			Close_SD();
+					sprintf(tmp, "\"Dop-IOS MOD Report\"\n");
+					strcat(logBuffer, tmp);
+					sprintf(tmp, "\"Wii region\", %s\n", CheckRegion());
+					strcat(logBuffer, tmp);
+					sprintf(tmp, "\"Wii unique device id\", %u\n", deviceId);
+					strcat(logBuffer, tmp);
+					sprintf(tmp, "\n");
+					strcat(logBuffer, tmp);
+					sprintf(tmp, "%s, %s, %s, %s, %s\n", "\"IOS number\"", "\"Trucha bug\"", "\"Flash access\"", "\"Boot2 access\"", "\"Usb2.0 IOS tree\"");
+					strcat(logBuffer, tmp);
+					sprintf(tmp, "\n");
+					strcat(logBuffer, tmp);
+                    
+                     
+                    WPAD_Shutdown();
+                       
+                    while (iosToTest > 0){
+                       
+                        printMyTitle();
+                       
+                        fflush(stdout);
  
-            sprintf(tmp, "\"Dop-IOS MOD Report\"\n");
-            strcat(logBuffer, tmp);
-            sprintf(tmp, "\"Wii region\", %s\n", CheckRegion());
-            strcat(logBuffer, tmp);
-            sprintf(tmp, "\"Wii unique device id\", %u\n", deviceId);
-            strcat(logBuffer, tmp);
-            sprintf(tmp, "\n");
-            strcat(logBuffer, tmp);
-            sprintf(tmp, "%s, %s, %s, %s, %s\n", "\"IOS number\"", "\"Trucha bug\"", "\"Flash access\"", "\"Boot2 access\"", "\"Usb2.0 IOS tree\"");
-            strcat(logBuffer, tmp);
-            sprintf(tmp, "\n");
-            strcat(logBuffer, tmp);
-			
-			WPAD_Shutdown();
-			
-			while (iosToTest > 0){
-			
-			printMyTitle();
-			
-			fflush(stdout);
+                        IOS_ReloadIOS(iosTable[iosToTest]);
  
-			IOS_ReloadIOS(iosTable[iosToTest]);
+                        printf("\t[*] Analyzed IOS%d(rev %d)...\n", iosTable[iosToTest], IOS_GetRevision());
  
-			printf("\t[*] Analyzed IOS%d(rev %d)...\n", iosTable[iosToTest], IOS_GetRevision());
+                        printf("\t\tTrucha bug : %sabled \n", (reportResults[1] = CheckEsIdentify()) ? "En" : "Dis");
+                        printf("\t\tFlash access : %sabled \n", (reportResults[2] = CheckFlashAccess()) ? "En" : "Dis");
+                        printf("\t\tBoot2 access : %sabled \n", (reportResults[3] = CheckBoot2Access()) ? "En" : "Dis");
+                        printf("\t\tUsb 2.0 IOS tree : %sabled \n", (reportResults[4] = CheckUsb2Module()) ? "En" : "Dis");
  
-			printf("\t\tTrucha bug : %sabled \n", (reportResults[1] = CheckEsIdentify()) ? "En" : "Dis");
-			printf("\t\tFlash access : %sabled \n", (reportResults[2] = CheckFlashAccess()) ? "En" : "Dis");
-			printf("\t\tBoot2 access : %sabled \n", (reportResults[3] = CheckBoot2Access()) ? "En" : "Dis");
-			printf("\t\tUsb 2.0 IOS tree : %sabled \n", (reportResults[4] = CheckUsb2Module()) ? "En" : "Dis");
+                        addLogEntry(iosTable[iosToTest], IOS_GetRevision(), reportResults[1], reportResults[2], reportResults[3], reportResults[4]);
  
-			addLogEntry(iosTable[iosToTest], IOS_GetRevision(), reportResults[1], reportResults[2], reportResults[3], reportResults[4]);
+                        printf("\t[*] Press the reset button on the Wii or Gamecube controller [A] to continue...\n");
  
-			printf("\t[*] Press the reset button on the Wii or Gamecube controller [A] to continue...\n");
+                        while (true){
+                        PAD_ScanPads();
+                        if(SYS_ResetButtonDown() || PAD_ButtonsDown(0)&PAD_BUTTON_A)
+                        break;
+                        }
  
-			while (true){
-			PAD_ScanPads();
-			if(SYS_ResetButtonDown() || PAD_ButtonsDown(0)&PAD_BUTTON_A)
-			break;
-			}
- 
-			iosToTest--;
-			}
-			
-			IOS_ReloadIOS(iosVersion[selectedios]);
-			WPAD_Init();
-			
-			printf("\n");
-			printf("Creating log on SD...\n\n");
-			
-			if(!Init_SD()){
-			logFile = fopen("sd:/signCheck.csv", "wb");
-            fwrite(logBuffer, 1, strlen(logBuffer), logFile);
-            fclose(logFile);
-			printf("All done, you can find the report on the root of your SD Card\n\n");
-			}
-			
-			else{
-			printf("Failed to create log on your SD Card!\n\n");
-			}
-			 
-			printf("Return to the main Dop-IOS MOD menu?\n");
-			if(!yes_or_no())
-			exit(0);
-			
-			iosToTest = 0;
-			screen = 0;
-		}//End screen 5
+                        iosToTest--;
+                    }
+                       
+                    IOS_ReloadIOS(iosVersion[selectedios]);
+                    WPAD_Init();
+                       
+                    printf("\n");
+                    printf("Creating log on SD...\n\n");
+                       
+                    if(!Init_SD()){
+                        logFile = fopen("sd:/dopiosmodreport.csv", "wb");
+						fwrite(logBuffer, 1, strlen(logBuffer), logFile);
+						fclose(logFile);
+                        printf("All done, you can find the report on the root of your SD Card\n\n");
+                    }
+                       
+                    else{
+                        printf("Failed to create log on your SD Card!\n\n");
+                    }
+                         
+                    printf("Return to the main Dop-IOS MOD menu?\n");
+                    if(!yes_or_no())
+                    exit(0);
+                       
+                    iosToTest = 0;
+                    screen = 0;
+                }//End screen 5
 
         VIDEO_WaitVSync();
         VIDEO_WaitVSync();
