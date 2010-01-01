@@ -47,8 +47,9 @@ static inline void blink(void) {
     write32(0x0d8000c0, read32(0x0d8000c0) ^ 0x20);
 }
 
+
 void debug_printf(const char *fmt, ...);
-void hexdump(FILE *fp, void *d, int len);
+//void hexdump(FILE *fp, void *d, int len);
 void aes_set_key(u8 *key);
 void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);
 void aes_encrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);
