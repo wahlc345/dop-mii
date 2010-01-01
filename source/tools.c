@@ -94,7 +94,7 @@ s32 Init_SD() {
 
 void Close_SD() {
     fatUnmount("sd");
-    //__io_wiisd.shutdown();
+    __io_wiisd.shutdown();
 }
 
 s32 Init_USB() {
@@ -112,7 +112,7 @@ s32 Init_USB() {
 
 void Close_USB() {
     fatUnmount("usb");
-    //__io_usbstorage.shutdown();
+    __io_usbstorage.shutdown();
 }
 
 void printheadline() {
