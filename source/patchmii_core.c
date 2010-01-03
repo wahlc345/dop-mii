@@ -42,6 +42,8 @@
 #include "tools.h"
 #include "IOSPatcher.h"
 #include "haxx_certs.h"
+#include "nus.h"
+
 #ifdef TEMP_IOS
 #include "uninstall.h"
 #endif
@@ -54,41 +56,10 @@
 int http_status = 0;
 int tmd_dirty = 0, tik_dirty = 0, temp_ios_slot = 0;
 
-int useSd = 1;
-bool networkInitialized=false;
-
 // yeah, yeah, I know.
 signed_blob *s_tmd = NULL, *s_tik = NULL, *s_certs = NULL;
 static u8 tmdbuf[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(0x20);
 static u8 tikbuf[STD_SIGNED_TIK_SIZE] ATTRIBUTE_ALIGN(0x20);
-
-extern u8 fatIsInit;
-
-void debug_printf(const char *fmt, ...) {
-    char buf[1024];
-    int len;
-    va_list ap;
-    usb_flush(1);
-    va_start(ap, fmt);
-    len = vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-    if (len <= 0 || len > sizeof(buf)) printf("Error: len = %d\n", len);
-    else usb_sendbuffer(1, buf, len);
-    puts(buf);
-    fflush(stdout);
-}
-
-void gprintf(const char *fmt, ...) {
-    char buf[1024];
-    int len;
-    va_list ap;
-    usb_flush(1);
-    va_start(ap, fmt);
-    len = vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-    if (len <= 0 || len > sizeof(buf)) printf("Error: len = %d\n", len);
-    else usb_sendbuffer(1, buf, len);
-}
 
 char ascii(char s) {
     if (s < 0x20) return '.';
@@ -96,169 +67,47 @@ char ascii(char s) {
     return s;
 }
 
-void hexdump(FILE *fp, void *d, int len) {
+void hexdump(FILE *fp, void *d, int len) 
+{
     u8 *data;
     int i, off;
     data = (u8*)d;
-    for (off=0; off<len; off += 16) {
+    for (off=0; off<len; off += 16) 
+	{
         fprintf(fp, "%08x  ",off);
         for (i=0; i<16; i++)
+		{
             if ((i+off)>=len) fprintf(fp, "   ");
             else fprintf(fp, "%02x ",data[off+i]);
+		}
 
         fprintf(fp, " ");
         for (i=0; i<16; i++)
+		{
             if ((i+off)>=len) fprintf(fp," ");
             else fprintf(fp,"%c",ascii(data[off+i]));
+		}
         fprintf(fp,"\n");
     }
 }
 
-char *spinner_chars="/-\\|";
-int spin = 0;
-
-void spinner(void) {
-    printf("\b%c", spinner_chars[spin++]);
-    if (!spinner_chars[spin]) spin=0;
-}
-
 char *things[] = {"people", "hopes", "fail", "bricks", "firmware", "bugs", "hacks"};
-
-u32 progress_count = 0;
-void progress(int delta) {
-    if (!(progress_count%10)) spinner();
-    progress_count += delta;
-//	gecko_printf("progress=%u\n", progress_count);
-    if ((progress_count % 800) == 0 && (progress_count/800)< (sizeof(things)/4)) {
-        printf("\b %s......", things[(progress_count/800)]);
-    }
-}
-
-static void *xfb = NULL;
-static GXRModeObj *rmode = NULL;
 
 void printvers(void) {
     debug_printf("IOS Version: %08x\n", *((u32*)0xC0003140));
 }
 
-void console_setup(void) {
-    VIDEO_Init();
-    PAD_Init();
-
-    rmode = VIDEO_GetPreferredMode(NULL);
-
-    xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-    VIDEO_ClearFrameBuffer(rmode,xfb,COLOR_BLACK);
-    VIDEO_Configure(rmode);
-    VIDEO_SetNextFramebuffer(xfb);
-    VIDEO_SetBlack(FALSE);
-    VIDEO_Flush();
-    VIDEO_WaitVSync();
-    if (rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
-    CON_InitEx(rmode,20,30,rmode->fbWidth - 40,rmode->xfbHeight - 60);
-}
-
-//int get_nus_object(u32 titleid1, u32 titleid2, char *content, u8 **outbuf, u32 *outlen) {
-int get_nus_object(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **outbuf, u32 *outlen) {
-//gprintf("\nget_nus_object()");
-    char buf[200] = {0};
-    int retval;
-    u32 http_status;
-
-    FILE *fd;
-
-    if (useSd) {
-        //gprintf("\n\tuseSd ok");
-
-        snprintf(buf, sizeof(buf), "SD:/%08x/%08x/v%d/%s", titleid1, titleid2, version, content);
-        //gprintf("\ntry to open \"%s\"",buf);
-        fd = fopen(buf, "r");
-        if (!fd) {
-            gprintf("\n\tdidnt find %s on the SD card",buf);
-
-            if (!networkInitialized) {
-                printf("\n*** I can't find this file in SD card.\n*** Trying to download it from internet...\n");
-                patchmii_network_init();
-                printf("Network initialized.\n");
-                networkInitialized=true;
-            }
-        } else {
-            //gprintf("\n %s is on the SD card",buf);
-
-            printf(" (from SD)  ");
-            fseek(fd, 0, SEEK_END);
-            *outlen = ftell(fd);
-            fseek(fd, 0, SEEK_SET);
-
-            *outbuf = malloc(*outlen);
-
-            if (*outbuf == NULL) {
-                debug_printf("Out of memory size %d\n", *outlen);
-                return -1;
-            }
-
-            if (fread(*outbuf, *outlen, 1, fd) != 1) {
-                fclose(fd);
-                return -2;
-
-            } else {
-                fclose(fd);
-                return 0;
-            }
-        }
-    } else if (!networkInitialized) {
-        printf("\n*** Trying to connect...\n");
-        patchmii_network_init();
-        printf("Network initialized.\n");
-        networkInitialized=true;
-    }
-
-    spinner();
-    snprintf(buf, 128, "http://nus.cdn.shop.wii.com/ccs/download/%08x%08x/%s",
-             titleid1, titleid2, content);
-
-    retval = http_request(buf, 1 << 31);
-    if (!retval) {
-        debug_printf("Error making http request\n");
-        debug_printf("Request: %s Ret: %d\n", buf, retval);
-        return -1;
-    }
-
-    retval = http_get_result(&http_status, outbuf, outlen);
-
-
-    if (useSd) {
-        snprintf(buf, sizeof(buf), "SD:/%08x/%08x/v%d", titleid1, titleid2, version);
-        gprintf("\n\tsubfoldercreate() = %d",subfoldercreate(buf));
-        snprintf(buf, sizeof(buf), "SD:/%08x/%08x/v%d/%s", titleid1, titleid2, version, content);
-        fd = fopen(buf, "wb");
-        if (fd) {
-            fwrite(*outbuf, *outlen, 1, fd);
-            fclose(fd);
-            gprintf("\n\twrote %s to the Sd card\n",buf);
-        } else gprintf("\n\tcant open %s for writing\n",buf);
-
-
-    } else gprintf("\n\tcant write to the SD card because useSd = %d\n",useSd);
-
-
-
-    if (((int)*outbuf & 0xF0000000) == 0xF0000000) {
-        return (int) *outbuf;
-    }
-
-    return 0;
-}
-
 void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
     static u8 iv[16];
-    if (!source) {
+    if (!source) 
+	{
         debug_printf("decrypt_buffer: invalid source paramater\n");
-        exit(1);
+        ReturnToLoader();
     }
-    if (!dest) {
+    if (!dest) 
+	{
         debug_printf("decrypt_buffer: invalid dest paramater\n");
-        exit(1);
+        ReturnToLoader();
     }
 
     memset(iv, 0, 16);
@@ -307,9 +156,10 @@ u32 save_nus_object (u16 index, u8 *buf, u32 size) {
         return retval;
     }
 
-    for (i=0; i<size;) {
+    for (i=0; i<size;) 
+	{
         u32 numbytes = ((size-i) < 1024)?size-i:1024;
-        spinner();
+        //spinner();
         memcpy(bounce_buf, buf+i, numbytes);
         retval = ISFS_Write(fd, bounce_buf, numbytes);
         if (retval < 0) {
@@ -324,7 +174,8 @@ u32 save_nus_object (u16 index, u8 *buf, u32 size) {
     return size;
 }
 
-s32 install_nus_object (tmd *p_tmd, u16 index) {
+s32 install_nus_object (tmd *p_tmd, u16 index) 
+{
     char filename[256];
     static u8 bounce_buf1[1024] ATTRIBUTE_ALIGN(0x20);
     static u8 bounce_buf2[1024] ATTRIBUTE_ALIGN(0x20);
@@ -335,10 +186,11 @@ s32 install_nus_object (tmd *p_tmd, u16 index) {
     int retval, fd, cfd, ret;
     snprintf(filename, sizeof(filename), "/tmp/patchmii/%08x", p_cr[index].cid);
 
-    spinner();
-    fd = ISFS_Open (filename, ISFS_ACCESS_READ);
+    //spinner();
+    fd = ISFS_Open(filename, ISFS_ACCESS_READ);
 
-    if (fd < 0) {
+    if (fd < 0) 
+	{
         debug_printf("ISFS_OpenFile(%s) returned %d\n", filename, fd);
         return fd;
     }
@@ -346,20 +198,20 @@ s32 install_nus_object (tmd *p_tmd, u16 index) {
 //  debug_printf("ES_AddContentStart(%016llx, %x)\n", p_tmd->title_id, index);
 
     cfd = ES_AddContentStart(p_tmd->title_id, p_cr[index].cid);
-    if (cfd < 0) {
-        debug_printf(":\nES_AddContentStart(%016llx, %x) failed: %d\n",p_tmd->title_id, index, cfd);
+    if (cfd < 0) 
+	{
+        printf(":\nES_AddContentStart(%016llx, %x) failed: %d\n", p_tmd->title_id, index, cfd);
         ES_AddTitleCancel();
         return -1;
     }
 // debug_printf("\b (cfd %d): ",cfd);
     for (i=0; i<p_cr[index].size;) {
         u32 numbytes = ((p_cr[index].size-i) < 1024)?p_cr[index].size-i:1024;
-        spinner();
+        //spinner();
         numbytes = ALIGN(numbytes, 32);
         retval = ISFS_Read(fd, bounce_buf1, numbytes);
         if (retval < 0) {
-            debug_printf("ISFS_Read(%d, %p, %d) returned %d at offset %d\n",
-                         fd, bounce_buf1, numbytes, retval, i);
+            debug_printf("ISFS_Read(%d, %p, %d) returned %d at offset %d\n", fd, bounce_buf1, numbytes, retval, i);
             ES_AddContentFinish(cfd);
             ES_AddTitleCancel();
             ISFS_Close(fd);
@@ -386,7 +238,7 @@ s32 install_nus_object (tmd *p_tmd, u16 index) {
         ISFS_Close(fd);
         return -1;
     }
-    spinner();
+    //spinner();
     ISFS_Close(fd);
 
     return 0;
@@ -576,13 +428,14 @@ static void forge_tik(signed_blob *s_tik) {
 
 #define BLOCK 0x1000
 
-s32 install_ticket(const signed_blob *s_tik, const signed_blob *s_certs, u32 certs_len) {
+int install_ticket(const signed_blob *s_tik, const signed_blob *s_certs, u32 certs_len) 
+{
     u32 ret;
 
-    spinner();
-//  debug_printf("Installing ticket...\n");
-    ret = ES_AddTicket(s_tik,STD_SIGNED_TIK_SIZE,s_certs,certs_len, NULL, 0);
-    if (ret < 0) {
+	//  debug_printf("Installing ticket...\n");
+    ret = ES_AddTicket(s_tik, STD_SIGNED_TIK_SIZE, s_certs, certs_len, NULL, 0);
+    if (ret < 0) 
+	{
         debug_printf("ES_AddTicket failed: %d\n",ret);
         return ret;
     }
@@ -596,16 +449,17 @@ s32 install(const signed_blob *s_tmd, const signed_blob *s_certs, u32 certs_len)
 
     ret = ES_AddTitleStart(s_tmd, SIGNED_TMD_SIZE(s_tmd), s_certs, certs_len, NULL, 0);
 
-    spinner();
-    if (ret < 0) {
+    //spinner();
+    if (ret < 0) 
+	{
         debug_printf("ES_AddTitleStart failed: %d\n",ret);
         ES_AddTitleCancel();
         return ret;
     }
 
-    for (i=0; i<p_tmd->num_contents; i++) {
-//    debug_printf("Adding content ID %08x", i);
-
+    for (i=0; i<p_tmd->num_contents; i++) 
+	{
+		//debug_printf("Adding content ID %08x", i);
         printf("\b%u....", i+1);
         ret = install_nus_object((tmd *)SIGNATURE_PAYLOAD(s_tmd), i);
         if (ret) return ret;
@@ -621,27 +475,6 @@ s32 install(const signed_blob *s_tmd, const signed_blob *s_certs, u32 certs_len)
 
 //  printf("Installation complete!\n");
     return 0;
-}
-
-void patchmii_network_init(void) {
-    int retval;
-    printf("PatchMii Core by bushing et. al.\nInitializing Network......");
-    fflush(stdout);
-    while (1) {
-        retval = net_init ();
-        if (retval < 0) {
-            if (retval != -EAGAIN) {
-                debug_printf ("net_init failed: %d\nI need a network to download IOS, sorry :(\n)", retval);
-                exit(0);
-            }
-        }
-        if (!retval) break;
-        usleep(100000);
-        printf(".");
-        fflush(stdout);
-    }
-
-    printf("\n");
 }
 
 void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool patch2) {
@@ -663,11 +496,10 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
     	mkdir(buf,S_IREAD | S_IWRITE);
     }*/
 
-
-
-    if (ISFS_Initialize() || create_temp_dir()) {
+    if (ISFS_Initialize() || create_temp_dir()) 
+	{
         perror("Failed to create temp dir: ");
-        exit(1);
+        ReturnToLoader();
     }
     strcpy(tmdstring, "tmd");
     if (version) sprintf(tmdstring, "%s.%u", tmdstring, version);
@@ -675,49 +507,54 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
 //  	debug_printf("Downloading IOS%d metadata: ..", titleid2);
 //	debug_printf("Sending things to Earth...");
     printf("TMD...");
-    //retval = get_nus_object(titleid1, titleid2, tmdstring, &temp_tmdbuf, &tmdsize);
-    retval = get_nus_object(titleid1, titleid2, version, tmdstring, &temp_tmdbuf, &tmdsize);
-    if (retval<0) {
-        debug_printf("get_nus_object(tmd) returned %d, tmdsize = %u\n", retval, tmdsize);
-        exit(1);
+	SpinnerStart();
+    retval = GetNusObject(titleid1, titleid2, version, tmdstring, &temp_tmdbuf, &tmdsize);
+	SpinnerStop();
+    if (retval < 0) 
+	{
+        debug_printf("GetNusObject(tmd) returned %d, tmdsize = %u\n", retval, tmdsize);
+        ReturnToLoader();
     }
-    if (temp_tmdbuf == NULL) {
+    if (temp_tmdbuf == NULL) 
+	{
         debug_printf("Failed to allocate temp buffer for encrypted content, size was %u\n", tmdsize);
-        exit(1);
+        ReturnToLoader();
     }
     memcpy(tmdbuf, temp_tmdbuf, MIN(tmdsize, sizeof(tmdbuf)));
     free(temp_tmdbuf);
 
     s_tmd = (signed_blob *)tmdbuf;
-    if (!IS_VALID_SIGNATURE(s_tmd)) {
+    if (!IS_VALID_SIGNATURE(s_tmd)) 
+	{
         debug_printf("Bad TMD signature!\n");
-        exit(1);
+        ReturnToLoader();
     }
-    printf("\bDone\n");
+    printf("\b.Done\n");
 
     printf("Ticket...");
     u32 ticketsize;
-    //retval = get_nus_object(titleid1, titleid2,
-    retval = get_nus_object(titleid1, titleid2, version,
-                            "cetk", &temp_tikbuf, &ticketsize);
 
-    if (retval < 0) debug_printf("get_nus_object(cetk) returned %d, ticketsize = %u\n", retval, ticketsize);
+	SpinnerStart();
+    retval = GetNusObject(titleid1, titleid2, version, "cetk", &temp_tikbuf, &ticketsize);
+	SpinnerStop();
+
+    if (retval < 0) debug_printf("GetNusObject(cetk) returned %d, ticketsize = %u\n", retval, ticketsize);
     memcpy(tikbuf, temp_tikbuf, MIN(ticketsize, sizeof(tikbuf)));
 
     s_tik = (signed_blob *)tikbuf;
     if (!IS_VALID_SIGNATURE(s_tik)) {
         debug_printf("Bad tik signature!\n");
-        exit(1);
+        ReturnToLoader();
     }
 
     free(temp_tikbuf);
 
-    printf("\bDone\n");
+    printf("\b.Done\n");
 
     s_certs = (signed_blob *)haxx_certs;
     if (!IS_VALID_SIGNATURE(s_certs)) {
         debug_printf("Bad cert signature!\n");
-        exit(1);
+        ReturnToLoader();
     }
 
 
@@ -728,7 +565,7 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
     const tmd *p_tmd;
     tmd_content *p_cr;
     p_tmd = (tmd*)SIGNATURE_PAYLOAD(s_tmd);
-    p_cr = TMD_CONTENTS(p_tmd);
+    p_cr = TMD_CONTENTS((tmd*)p_tmd);
 
 //	print_tmd_summary(p_tmd);
 
@@ -736,7 +573,8 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
 
     static char cidstr[32];
 
-    for (i=0;i<p_tmd->num_contents;i++) {
+    for (i=0;i<p_tmd->num_contents;i++) 
+	{
 //		debug_printf("Downloading part %d/%d (%lluK): ", i+1,
 //					p_tmd->num_contents, p_cr[i].size / 1024);
         sprintf(cidstr, "%08x", p_cr[i].cid);
@@ -745,47 +583,51 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
         u32 content_size;
 
         printf("\bContent %u/%u ID: %08x....", i+1, p_tmd->num_contents, p_cr[i].cid);
-        //retval = get_nus_object(titleid1, titleid2, cidstr, &content_buf, &content_size);
-        retval = get_nus_object(titleid1, titleid2, version, cidstr, &content_buf, &content_size);
-        if (retval < 0) {
-            debug_printf("get_nus_object(%s) failed with error %d, content size = %u\n",
-                         cidstr, retval, content_size);
-            exit(1);
+		SpinnerStart();
+        retval = GetNusObject(titleid1, titleid2, version, cidstr, &content_buf, &content_size);
+		SpinnerStop();
+        if (retval < 0) 
+		{
+            debug_printf("GetNusObject(%s) failed with error %d, content size = %u\n", cidstr, retval, content_size);
+            ReturnToLoader();
         }
 
-        if (content_buf == NULL) {
+        if (content_buf == NULL) 
+		{
             debug_printf("error allocating content buffer, size was %u\n", content_size);
-            exit(1);
+            ReturnToLoader();
         }
 
-        if (content_size % 16) {
-            debug_printf("ERROR: downloaded content[%hu] size %u is not a multiple of 16\n",
-                         i, content_size);
+        if (content_size % 16) 
+		{
+            debug_printf("ERROR: downloaded content[%hu] size %u is not a multiple of 16\n", i, content_size);
             free(content_buf);
-            exit(1);
+            ReturnToLoader();
         }
 
-        if (content_size < p_cr[i].size) {
+        if (content_size < p_cr[i].size) 
+		{
             debug_printf("ERROR: only downloaded %u / %llu bytes\n", content_size, p_cr[i].size);
             free(content_buf);
-            exit(1);
+            ReturnToLoader();
         }
 
         decrypted_buf = malloc(content_size);
         if (!decrypted_buf) {
             debug_printf("ERROR: failed to allocate decrypted_buf (%u bytes)\n", content_size);
             free(content_buf);
-            exit(1);
+            ReturnToLoader();
         }
 
         decrypt_buffer(i, content_buf, decrypted_buf, content_size);
 
-        printf("\bDone\n");
+        printf("\b.Done\n");
 
         sha1 hash;
         SHA1(decrypted_buf, p_cr[i].size, hash);
 
-        if (!memcmp(p_cr[i].hash, hash, sizeof hash)) {
+        if (!memcmp(p_cr[i].hash, hash, sizeof hash)) 
+		{
 //			debug_printf("\b\b hash OK. ");
 //			display_ios_tags(decrypted_buf, content_size);
 
@@ -813,11 +655,13 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
             retval = (int) save_nus_object(p_cr[i].cid, decrypted_buf, content_size);
             if (retval < 0) {
                 debug_printf("save_nus_object(%x) returned error %d\n", p_cr[i].cid, retval);
-                exit(1);
+                ReturnToLoader();
             }
-        } else {
+        } 
+		else 
+		{
             debug_printf("hash BAD\n");
-            exit(1);
+            ReturnToLoader();
         }
 
         free(decrypted_buf);
@@ -828,64 +672,51 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
 }
 
 s32 patchmii_install(u32 in_title_h, u32 in_title_l, u32 in_version, u32 out_title_h, u32 out_title_l, u32 out_version, bool patch,bool patch2) {
-//gprintf("\npatchmii_install()");
-    //if (fatInitDefault()) {
-    if (!fatIsInit) {
-        if (fatInitDefault()) {
-            //gprintf("\nfatinitdefault ok");
+	//gprintf("\npatchmii_install()");
 
-            //chdir ("fat0:/");
-            useSd=1;
-            fatIsInit =1;
-        } else {
-            useSd=0;
-            //gprintf("\ncant init FAT :(");
+    if (in_version) printf("Downloading Title %08x-%08x v%u.....\n", in_title_h, in_title_l, in_version);
+    else printf("Downloading Title %08x-%08x.....\n", in_title_h, in_title_l);
 
-        }
-    }
-
-
-    if (in_version)
-        printf("Downloading Title %08x-%08x v%u.....\n", in_title_h, in_title_l, in_version);
-    else
-        printf("Downloading Title %08x-%08x.....\n", in_title_h, in_title_l);
     patchmii_download(in_title_h, in_title_l, in_version, patch,patch2);
-    if (in_title_h != out_title_h ||
-            in_title_l != out_title_l ) {
-
+    if (in_title_h != out_title_h || in_title_l != out_title_l ) 
+	{
         change_ticket_title_id(s_tik, out_title_h, out_title_l);
         change_tmd_title_id(s_tmd, out_title_h, out_title_l);
         tmd_dirty = 1;
         tik_dirty = 1;
     }
-    if (in_version != out_version) {
+    if (in_version != out_version) 
+	{
         change_tmd_version(s_tmd, out_version);
         tmd_dirty = 1;
         tik_dirty = 1;
     }
 
-    if (tmd_dirty) {
+    if (tmd_dirty) 
+	{
         forge_tmd(s_tmd);
         tmd_dirty = 0;
     }
 
-    if (tik_dirty) {
+    if (tik_dirty) 
+	{
         forge_tik(s_tik);
         tik_dirty = 0;
     }
 
-    if (out_version)
-        printf("\bDownload complete. Installing to Title %08x-%08x v%u...\n", out_title_h, out_title_l, out_version);
-    else
-        printf("\bDownload complete. Installing to Title %08x-%08x...\n", out_title_h, out_title_l);
+    if (out_version) printf("\bDownload complete. Installing to Title %08x-%08x v%u...\n", out_title_h, out_title_l, out_version);
+    else printf("\bDownload complete. Installing to Title %08x-%08x...\n", out_title_h, out_title_l);
 
     int retval = install_ticket(s_tik, s_certs, haxx_certs_size);
-    if (retval) {
+    if (retval) 
+	{
         debug_printf("install_ticket returned %d\n", retval);
-        exit(1);
+        ReturnToLoader();
     }
-
+	
+	SpinnerStart();
     retval = install(s_tmd, s_certs, haxx_certs_size);
+	SpinnerStop();
 //	debug_printf("\b..hacks..\b");
 
     if (retval) printf("install returned %d\n", retval);
@@ -960,55 +791,3 @@ s32 cleanup_temporary_ios(void) {
 }
 #endif
 
-#ifdef STANDALONE
-int main(int argc, char **argv) {
-    gprintf("\nmain()");
-    console_setup();
-    printf("PatchMii Core v" VERSION ", by bushing\n");
-
-// ******* WARNING *******
-// Obviously, if you're reading this, you're obviously capable of disabling the
-// following checks.  If you put any of the following titles into an unusuable state,
-// your Wii will fail to boot:
-//
-// 1-1 (BOOT2), 1-2 (System Menu), 1-30 (IOS30, currently specified by 1-2's TMD)
-// Corrupting other titles (for example, BC or the banners of installed channels)
-// may also cause difficulty booting.  Please do not remove these safety checks
-// unless you have performed extensive testing and are willing to take on the risk
-// of bricking the systems of people to whom you give this code.  -bushing
-
-    if ((OUTPUT_TITLEID_H == 1) && (OUTPUT_TITLEID_L == 2)) {
-        printf("Sorry, I won't modify the system menu; too dangerous. :(\n");
-        while (1);
-    }
-
-    if ((OUTPUT_TITLEID_H == 1) && (OUTPUT_TITLEID_L == 30)) {
-        printf("Sorry, I won't modify IOS30; too dangerous. :(\n");
-        while (1);
-    }
-
-    printvers();
-
-
-
-    if (fatInitDefault()) {
-        gprintf("\nfatinitdefault ok");
-
-        chdir ("sd:/");
-        useSd=1;
-    } else {
-        useSd=0;
-        gprintf("\ncant init FAT :(");
-
-    }
-
-    patchmii_network_init();
-//	patchmii_download(INPUT_TITLEID_H, INPUT_TITLEID_L);
-//	patchmii_install();
-    install_temporary_ios(11);
-    cleanup_temporary_ios();
-    debug_printf("Done!\n");
-
-    exit(0);
-}
-#endif

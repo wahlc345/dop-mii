@@ -191,7 +191,8 @@ s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u32 revision) {
     }
 
     printf("Loading contents");
-    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) {
+    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) 
+	{
         printf(".");
         tmd_content *content = &tmd_data->contents[cnt];
 
@@ -226,8 +227,9 @@ s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u32 revision) {
     sha1 hash;
     int i;
 
-    printf("Checking hashes...\n");
-    for (i=0;i < (*ios)->content_count;i++) {
+    printf("Checking hashes...");
+    for (i=0;i < (*ios)->content_count;i++) 
+	{
         SHA1((*ios)->decrypted_buffer[i], (u32)p_cr[i].size, hash);
         if (memcmp(p_cr[i].hash, hash, sizeof hash) != 0) {
             printf("Wrong hash for content #%u\n", i);

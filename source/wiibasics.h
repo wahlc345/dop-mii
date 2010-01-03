@@ -54,13 +54,6 @@ void IdentSysMenu(void);
 // Clean up after ourselves (Deinit ISFS)
 void miscDeInit(void);
 
-// Scan the pads and return buttons
-u32 getButtons(void);
-
-u32 wait_anyKey(void);
-
-u32 wait_key(u32 button);
-
 void hex_print_array16(const u8 *array, u32 size);
 
 /* Reads a file from ISFS to an array in memory */
@@ -69,6 +62,7 @@ s32 ISFS_ReadFileToArray (const char *filepath, u8 *filearray, u32 max_size, u32
 /* Writes from an array in memory to a file with ISFS */
 s32 ISFS_WriteFileFromArray (const char *filepath, const u8 *filearray, u32 array_size, u32 ownerID, u16 groupID, u8 attr, u8 own_perm, u8 group_perm, u8 other_perm);
 
-bool yes_or_no(void);
+bool PromptContinue();
+bool PromptYesNo();
 
 #endif

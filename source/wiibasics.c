@@ -32,6 +32,9 @@ distribution.
 #include <wiiuse/wpad.h>
 
 #include "wiibasics.h"
+#include "controller.h"
+#include "tools.h"
+
 //#include "id.h"
 
 #define MAX_WIIMOTES 4
@@ -142,13 +145,13 @@ void miscInit(void) {
     fflush(stdout);
 
     ret = ISFS_Initialize();
-    if (ret < 0) {
+    if (ret < 0) 
+	{
         printf("\nError! ISFS_Initialize (ret = %d)\n", ret);
-        wait_anyKey();
-        exit(1);
-    } else {
-        printf("OK!\n");
-    }
+		WaitAnyKey();
+        ReturnToLoader();
+    } 
+	else printf("OK!\n");
 
     //IdentSysMenu();
 }
@@ -160,10 +163,11 @@ void IdentSysMenu(void) {
     //Identify_SysMenu();
 
     ret = ES_SetUID(TITLE_ID(1, 2));
-    if (ret < 0) {
+    if (ret < 0) 
+	{
         printf("SetUID fail %d", ret);
-        wait_anyKey();
-        exit(1);
+		WaitAnyKey();
+		ReturnToLoader();
     }
 
     printf("Initializing Filesystem driver...");
@@ -171,44 +175,38 @@ void IdentSysMenu(void) {
 
     ISFS_Deinitialize();
     ret = ISFS_Initialize();
-    if (ret < 0) {
+    if (ret < 0) 
+	{
         printf("\nError! ISFS_Initialize (ret = %d)\n", ret);
-        wait_anyKey();
-        exit(1);
-    } else {
-        printf("OK!\n");
-    }
+		WaitAnyKey();
+		ReturnToLoader();
+    } 
+	else printf("OK!\n");
 }
 
-void miscDeInit(void) {
+void miscDeInit() 
+{
     fflush(stdout);
     ISFS_Deinitialize();
 }
 
-u32 getButtons(void) {
-    WPAD_ScanPads();
-    PAD_ScanPads();
-    return WPAD_ButtonsDown(0)||PAD_ButtonsDown(0);
-}
+//u32 getButtons() 
+//{
+//    WPAD_ScanPads();
+//    PAD_ScanPads();
+//    return WPAD_ButtonsDown(0)||PAD_ButtonsDown(0);
+//}
 
-u32 wait_anyKey(void) {
-    u32 pressed;
-    while (!(pressed = getButtons())) {
-        VIDEO_WaitVSync();
-    }
-    return pressed;
-}
-
-u32 wait_key(u32 button) {
-    u32 pressed;
-    do {
-        VIDEO_WaitVSync();
-        pressed = getButtons();
-        if (pressed & WPAD_BUTTON_HOME) exit(1);
-    } while (!(pressed & button));
-
-    return pressed;
-}
+//u32 wait_key(u32 button) {
+//    u32 pressed;
+//    do {
+//        VIDEO_WaitVSync();
+//        pressed = getButtons();
+//        if (pressed & WPAD_BUTTON_HOME) ReturnToLoader();
+//    } while (!(pressed & button));
+//
+//    return pressed;
+//}
 
 char charASCII(u8 c) {
     if (c < 0x20 || c > 0x7E)
@@ -217,74 +215,66 @@ char charASCII(u8 c) {
         return (char)c;
 }
 
-void hex_print_array16(const u8 *array, u32 size) {
+void hex_print_array16(const u8 *array, u32 size) 
+{
     u32 offset = 0;
     u32 page_size = 0x100;
     char line[17];
     line[16] = 0;
-    if (size > page_size)
-        printf("Page 1 of %u", (size / page_size)+1);
-    while (offset < size) {
+    if (size > page_size) printf("Page 1 of %u", (size / page_size)+1);
+	u32 button = 0;
+
+    while (offset < size) 
+	{
         if (!(offset % 16)) printf("\n0x%08X: ", offset);
 
         printf("%02X", array[offset]);
 
         line[offset % 16] = charASCII(array[offset]);
 
-        if (!(++offset % 2))
-            printf(" ");
+        if (!(++offset % 2)) printf(" ");
 
-        if (!(offset % 16))
-            printf(line);
+        if (!(offset % 16)) printf(line);
 
-        if (!(offset % page_size) && offset < size) {
+        if (!(offset % page_size) && offset < size) 
+		{
 
             printf("\n\tPress A for next page or B for finish\n");
-
-            while (true) {
-                PAD_ScanPads();
-                WPAD_ScanPads();
-
-                if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
-                        (PAD_ButtonsDown(0)&PAD_BUTTON_Y))
-                    exit(1);
-                if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
-                        (PAD_ButtonsDown(0)&PAD_BUTTON_B))
-                    return;
-                if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
-                        (PAD_ButtonsDown(0)&PAD_BUTTON_A))
-                    break;
-
-            }
+			for (button = 0;;ScanPads(&button))
+			{
+				if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+				if (button&WPAD_BUTTON_A) break;
+				if (button&WPAD_BUTTON_B) return;
+			}
         }
     }
 }
 
-bool yes_or_no(void) {
+bool PromptYesNo()
+{
+    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");	
 
-    bool yes = false;
+	u32 button;
+	for (button = 0;;ScanPads(&button))
+	{
+		if (button&WPAD_BUTTON_A) return true;
+		if (button&WPAD_BUTTON_B) return false;
+		if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+	}
+}
 
+bool PromptContinue() 
+{
     printf("Are you sure you want to continue?\n");
-    printf("      [A] Yes        [B] NO    [HOME]/[Y] Exit\n");
+    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");	
 
-        wait_anyKey();
-
-            if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_A) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_A) || \
-                    (PAD_ButtonsDown(0)&PAD_BUTTON_A)) {
-                yes = true;
-            }
-
-            if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_B) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_B) || \
-                    (PAD_ButtonsDown(0)&PAD_BUTTON_B))
-                yes = false;
-
-            if ((WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_BUTTON_HOME) || (WPAD_ButtonsDown(WPAD_CHAN_0)&WPAD_CLASSIC_BUTTON_HOME) || \
-                    (PAD_ButtonsDown(0)&PAD_BUTTON_Y)) {
-				printf("Returning to loader...");
-                exit(0);
-            }
-
-    return yes;
+	u32 button;
+	for (button = 0;;ScanPads(&button))
+	{
+		if (button&WPAD_BUTTON_A) return true;
+		if (button&WPAD_BUTTON_B) return false;
+		if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+	}
 }
 
 /* Reads a file from ISFS to an array in memory */
@@ -437,14 +427,12 @@ s32 ISFS_WriteFileFromArray (const char *filepath, const u8 *filearray, u32 arra
         ret = ES_GetTitleID(&currentTid);
         if (ret) {
             printf("Fail GetTitleID %d", ret);
-            if (wait_key(WPAD_BUTTON_A | WPAD_BUTTON_B) & WPAD_BUTTON_B)
-                goto cleanup;
+            if (WaitKey(WPAD_BUTTON_A | WPAD_BUTTON_B) & WPAD_BUTTON_B) goto cleanup;
         }
         ret = ES_SetUID(getUIDTitleID(ownerID));
         if (ret) {
             printf("Couldn't set OwnerID, using current owner ID\n");
-            if (wait_key(WPAD_BUTTON_A | WPAD_BUTTON_B) & WPAD_BUTTON_B)
-                goto cleanup;
+            if (WaitKey(WPAD_BUTTON_A | WPAD_BUTTON_B) & WPAD_BUTTON_B) goto cleanup;
             ownerID = realownid;
         }
     }
@@ -456,12 +444,13 @@ s32 ISFS_WriteFileFromArray (const char *filepath, const u8 *filearray, u32 arra
         goto cleanup;
     }
 
-    if (realownid != ownerID) {
+    if (realownid != ownerID) 
+	{
         ret = ES_SetUID(currentTid);
-        if (ret) {
+        if (ret) 
+		{
             printf("Fail SetUID %d", ret);
-            if (wait_key(WPAD_BUTTON_A | WPAD_BUTTON_B) & WPAD_BUTTON_B)
-                goto cleanup;
+            if (WaitKey(WPAD_BUTTON_A | WPAD_BUTTON_B) & WPAD_BUTTON_B) goto cleanup;
         }
     }
 

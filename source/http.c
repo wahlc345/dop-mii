@@ -30,6 +30,7 @@
 #include <fcntl.h>
 
 #include "http.h"
+#include "tools.h"
 
 char *http_host;
 u16 http_port;
@@ -225,7 +226,8 @@ bool tcp_read (const s32 s, u8 **buffer, const u32 length) {
 	return left == 0;
 }
 
-bool tcp_write (const s32 s, const u8 *buffer, const u32 length) {
+bool tcp_write (const s32 s, const u8 *buffer, const u32 length) 
+{
 	const u8 *p;
 	u32 step, left, block, sent;
 	s64 t;
@@ -237,26 +239,27 @@ bool tcp_write (const s32 s, const u8 *buffer, const u32 length) {
 	sent = 0;
 
 	t = gettime ();
-	while (left) {
-		if (ticks_to_millisecs (diff_ticks (t, gettime ())) >
-				TCP_BLOCK_SEND_TIMEOUT) {
-
+	while (left) 
+	{
+		if (ticks_to_millisecs (diff_ticks (t, gettime ())) > TCP_BLOCK_SEND_TIMEOUT) 
+		{
 			printf ("tcp_write timeout\n");
 			break;
 		}
 
 		block = left;
-		if (block > 2048)
-			block = 2048;
+		if (block > 2048) block = 2048;
 
 		res = net_write (s, p, block);
 
-		if ((res == 0) || (res == -56)) {
+		if ((res == 0) || (res == -56)) 
+		{
 			usleep (20 * 1000);
 			continue;
 		}
 
-		if (res < 0) {
+		if (res < 0) 
+		{
 			printf ("net_write failed: %d\n", res);
 			break;
 		}
@@ -292,7 +295,8 @@ bool http_split_url (char **host, char **path, const char *url) {
 	return true;
 }
 
-bool http_request (const char *url, const u32 max_size) {
+bool http_request (const char *url, const u32 max_size) 
+{
 	int linecount;
 	if (!http_split_url(&http_host, &http_path, url)) return false;
 
@@ -305,7 +309,8 @@ bool http_request (const char *url, const u32 max_size) {
 
 	int s = tcp_connect (http_host, http_port);
 //	printf("tcp_connect(%s, %hu) = %d\n", http_host, http_port, s);
-	if (s < 0) {
+	if (s < 0) 
+	{
 		result = HTTPR_ERR_CONNECT;
 		return false;
 	}
@@ -324,7 +329,8 @@ bool http_request (const char *url, const u32 max_size) {
 	free (request);
 	linecount = 0;
 
-	for (linecount=0; linecount < 32; linecount++) {
+	for (linecount=0; linecount < 32; linecount++) 
+	{
 	  char *line = tcp_readln (s, 0xff, gettime(), (u16)HTTP_TIMEOUT);
 //		printf("tcp_readln returned %p (%s)\n", line, line?line:"(null)");
 		if (!line) {
@@ -348,7 +354,8 @@ bool http_request (const char *url, const u32 max_size) {
 	}
 //	printf("content_length = %d, status = %d, linecount = %d\n", content_length, http_status, linecount);
 	if (linecount == 32 || !content_length) http_status = 404;
-	if (http_status != 200) {
+	if (http_status != 200) 
+	{
 		result = HTTPR_ERR_STATUS;
 		net_close (s);
 		return false;
@@ -360,7 +367,8 @@ bool http_request (const char *url, const u32 max_size) {
 	}
 	http_data = (u8 *) memalign (32, content_length);
 	b = tcp_read (s, &http_data, content_length);
-	if (!b) {
+	if (!b) 
+	{
 		free (http_data);
 		http_data = NULL;
 		result = HTTPR_ERR_RECEIVE;
@@ -375,14 +383,18 @@ bool http_request (const char *url, const u32 max_size) {
 	return true;
 }
 
-bool http_get_result (u32 *_http_status, u8 **content, u32 *length) {
+bool http_get_result (u32 *_http_status, u8 **content, u32 *length) 
+{
 	if (http_status) *_http_status = http_status;
 
-	if (result == HTTPR_OK) {
+	if (result == HTTPR_OK) 
+	{
 		*content = http_data;
 		*length = content_length;
 
-	} else {
+	} 
+	else 
+	{
 		*content = NULL;
 		*length = 0;
 	}
