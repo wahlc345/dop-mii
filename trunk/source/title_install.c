@@ -4,6 +4,7 @@
 #include <malloc.h>
 #include <ogcsys.h>
 
+#include "controller.h"
 #include "nand.h"
 #include "network.h"
 #include "sys.h"
@@ -128,7 +129,8 @@ s32 __Title_DownloadContent(tik *p_tik, tmd_content *content) {
 }
 
 
-s32 Title_Download(u64 tid, u16 version, signed_blob **p_tik, signed_blob **p_tmd) {
+s32 Title_Download(u64 tid, u16 version, signed_blob **p_tik, signed_blob **p_tmd) 
+{
     signed_blob *s_tik = NULL, *s_tmd = NULL;
 
     tik *tik_data = NULL;
@@ -147,7 +149,7 @@ s32 Title_Download(u64 tid, u16 version, signed_blob **p_tik, signed_blob **p_tm
         goto err;
     }
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Downloading ticket...");
     fflush(stdout);
@@ -159,7 +161,7 @@ s32 Title_Download(u64 tid, u16 version, signed_blob **p_tik, signed_blob **p_tm
         goto err;
     }
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Downloading TMD...");
     fflush(stdout);
@@ -182,10 +184,11 @@ s32 Title_Download(u64 tid, u16 version, signed_blob **p_tik, signed_blob **p_tm
     tmd_data = (tmd *)SIGNATURE_PAYLOAD(s_tmd);
 
     /* Title contents */
-    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) {
+    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) 
+	{
         tmd_content *content = &tmd_data->contents[cnt];
 
-        Con_ClearLine();
+        ClearLine();
 
         printf("\r\t\t>> Downloading content #%02d...", content->cid);
         fflush(stdout);
@@ -202,7 +205,7 @@ s32 Title_Download(u64 tid, u16 version, signed_blob **p_tik, signed_blob **p_tm
     *p_tik = s_tik;
     *p_tmd = s_tmd;
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Title downloaded successfully!\n");
     fflush(stdout);
@@ -251,7 +254,7 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
     /* Move to TMD */
     offset += round_up(header->tik_len, 64);
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Extracting TMD...");
     fflush(stdout);
@@ -290,7 +293,7 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
 
         void *p_content = NULL;
 
-        Con_ClearLine();
+        ClearLine();
 
         printf("\r\t\t>> Extracting content #%02d...", content->cid);
         fflush(stdout);
@@ -327,7 +330,7 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
     *p_tik = s_tik;
     *p_tmd = s_tmd;
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Title extracted successfully!\n");
     fflush(stdout);
@@ -372,7 +375,7 @@ s32 Title_Install(signed_blob *p_tik, signed_blob *p_tmd) {
     /* Get TMD info */
     tmd_data = (tmd *)SIGNATURE_PAYLOAD(p_tmd);
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Installing ticket...");
     fflush(stdout);
@@ -384,7 +387,7 @@ s32 Title_Install(signed_blob *p_tik, signed_blob *p_tmd) {
         return ret;
     }
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Installing title...");
     fflush(stdout);
@@ -402,7 +405,7 @@ s32 Title_Install(signed_blob *p_tik, signed_blob *p_tmd) {
 
         char filename[ISFS_MAXPATH];
 
-        Con_ClearLine();
+        ClearLine();
 
         printf("\r\t\t>> Installing content #%02d...", content->cid);
         fflush(stdout);
@@ -465,7 +468,7 @@ s32 Title_Install(signed_blob *p_tik, signed_blob *p_tmd) {
         Nand_CloseFile(fd);
     }
 
-    Con_ClearLine();
+    ClearLine();
 
     printf("\r\t\t>> Finishing installation...");
     fflush(stdout);
@@ -654,15 +657,12 @@ s32 Uninstall_FromTitle(const u64 tid)
 			}
 		}*/
 	}
-	if (tik_ret < 0 && contents_ret < 0 && title_ret < 0)
-		ret = -1;
-	else if (tik_ret < 0 || contents_ret < 0 || title_ret < 0)
-		ret =  1;
-	else
-		ret =  0;
+	if (tik_ret < 0 && contents_ret < 0 && title_ret < 0) ret = -1;
+	else if (tik_ret < 0 || contents_ret < 0 || title_ret < 0) ret =  1;
+	else ret =  0;
 	
-	printf("\nPress a button to continue");
-	wait_anyKey();
+	printf("\nPress any button to continue");
+	WaitAnyKey();
 	return ret;
 }
 

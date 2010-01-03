@@ -14,13 +14,15 @@ void Con_Init(u32 x, u32 y, u32 w, u32 h) {
     CON_InitEx(vmode, x, y, w, h);
 }
 
-void Con_Clear(void) {
+void ClearScreen() 
+{
     /* Clear console */
     printf("\x1b[2J");
     fflush(stdout);
 }
 
-void Con_ClearLine(void) {
+void ClearLine() 
+{
     s32 cols, rows;
     u32 cnt;
 

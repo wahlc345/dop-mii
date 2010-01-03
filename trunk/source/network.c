@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <ogcsys.h>
 #include <network.h>
+
+#include "tools.h"
 
 /* Constants */
 #define BLOCK_SIZE 100
@@ -14,13 +17,12 @@
 /* Network variables */
 static char hostip[16];
 static s32 sockfd = -1;
-
+bool networkInitialized = false;
 
 char *Network_GetIP(void) {
     /* Return IP string */
     return hostip;
 }
-
 
 s32 Network_Init(void) {
     s32 ret;
@@ -160,3 +162,33 @@ s32 Network_Write(void *buf, u32 len) {
     return written;
 }
 
+void NetworkInit() 
+{
+	if (networkInitialized) return;
+
+    int ret;
+    printf("\nInitializing Network...");
+    fflush(stdout);
+	SpinnerStart();
+    while (1) 
+	{
+        ret = net_init();
+        if (ret < 0) 
+		{
+            if (ret != -EAGAIN) 
+			{
+                printf("net_init failed: %d\n", ret);
+				printf("I need a network to download IOS, sorry :(\n)");
+                ReturnToLoader();
+            }
+        }
+        if (!ret) break;
+		sleep(1);
+        printf(".");
+        fflush(stdout);
+    }
+	SpinnerStop();
+
+    printf("\b.Done\n");
+	networkInitialized = true;
+}

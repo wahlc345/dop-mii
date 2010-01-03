@@ -5,8 +5,8 @@
 
 /* Prototypes */
 void Con_Init(u32, u32, u32, u32);
-void Con_Clear(void);
-void Con_ClearLine(void);
+void ClearScreen();
+void ClearLine();
 void Con_FgColor(u32, u8);
 void Con_BgColor(u32, u8);
 void Con_FillRow(u32, u32, u8);

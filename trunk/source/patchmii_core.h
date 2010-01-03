@@ -10,13 +10,10 @@ s32 patchmii_install(u32 in_title_h, u32 in_title_l, u32 in_version, u32 out_tit
 s32 install_temporary_ios(u32 base_ios, u32 base_ver);
 s32 load_temporary_ios(void);
 s32 cleanup_temporary_ios(void);
-void gprintf(const char *fmt, ...);
 
 //Tools
 //static void forge_tmd(signed_blob *s_tmd);
 //static void forge_tik(signed_blob *s_tik);
-
-void spinner(void);
 
 //#define TEMP_IOS
 
@@ -24,7 +21,7 @@ void spinner(void);
 
 static inline u32 read32(u32 addr) {
     u32 x;
-asm volatile("lwz %0,0(%1) ; sync" : "=r"(x) : "b"(0xc0000000 | addr));
+	asm volatile("lwz %0,0(%1) ; sync" : "=r"(x) : "b"(0xc0000000 | addr));
     return x;
 }
 
@@ -47,8 +44,6 @@ static inline void blink(void) {
     write32(0x0d8000c0, read32(0x0d8000c0) ^ 0x20);
 }
 
-
-void debug_printf(const char *fmt, ...);
 //void hexdump(FILE *fp, void *d, int len);
 void aes_set_key(u8 *key);
 void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len);

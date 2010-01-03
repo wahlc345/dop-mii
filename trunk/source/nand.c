@@ -73,18 +73,19 @@ s32 Nand_RemoveDir(u64 tid) {
         return ret;
 
     /* There are files inside the directory */
-    if (nb_files) {
+    if (nb_files) 
+	{
         /* Allocate memory */
         dirlist = (char *)memalign(32, ISFS_MAXPATH * nb_files);
-        if (!dirlist)
-            return -1;
+        if (!dirlist) return -1;
 
         /* Retrieve filelist */
         ret = ISFS_ReadDir(dirpath, dirlist, &nb_files);
         if (ret < 0)
             goto out;
 
-        for (cnt = idx = 0; cnt < nb_files; cnt++) {
+        for (cnt = idx = 0; cnt < nb_files; cnt++) 
+		{
             char *ptr = dirlist + idx;
 
             /* Generate filepath */
@@ -105,8 +106,7 @@ s32 Nand_RemoveDir(u64 tid) {
 
 out:
     /* Free memory */
-    if (dirlist)
-        free(dirlist);
+    if (dirlist) free(dirlist);
 
     return ret;
 }

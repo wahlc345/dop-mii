@@ -1,45 +1,109 @@
+#include <malloc.h>
 #include <gccore.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <fat.h>
 #include <sdcard/wiisd_io.h>
+#include <sys/dir.h>
 
 #include "tools.h"
 
 static void *xfb = NULL;
 static GXRModeObj *rmode = NULL;
+static volatile u32 tickcount = 0;
+bool IsDebugging = false;
 
+static lwp_t spinnerThread = LWP_THREAD_NULL;
+static bool spinnerRunning = false;
 
-void Reboot() {
+static void * spinner(void *args) 
+{	
+	char *spinnerChars = "/-\\|";
+	int spin  = 0;
+	while (1) 
+	{		
+		if (!spinnerRunning) break;				
+		printf("\b%c", spinnerChars[spin++]);
+		if (!spinnerChars[spin]) spin = 0;
+		fflush(stdout);
+		if (!spinnerRunning) break;
+		usleep(50000);			
+	}	
+	return NULL;
+}
+
+void SpinnerStart()
+{
+	if (spinnerThread != LWP_THREAD_NULL) return;
+	spinnerRunning = true;
+	LWP_CreateThread(&spinnerThread, spinner, NULL, NULL, 0, LWP_PRIO_IDLE);
+}
+
+void SpinnerStop()
+{
+	if (spinnerRunning) 
+	{		
+		spinnerRunning = false;
+		LWP_JoinThread(spinnerThread, NULL);
+		spinnerThread = LWP_THREAD_NULL;		
+	}
+}
+
+void ReturnToLoader() 
+{
+	printf("\n\nReturning To Loader");
+	exit(0);
+}
+
+/*
+	Used if you have Gecko, however it's not tested since we don't have Gecko
+*/
+void gprintf(const char *fmt, ...) 
+{
+    char buf[1024];
+    int len;
+    va_list ap;
+    usb_flush(1);
+    va_start(ap, fmt);
+    len = vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    if (len <= 0 || len > sizeof(buf)) printf("Error: len = %d\n", len);
+    else usb_sendbuffer(1, buf, len);
+}
+
+void debug_printf(const char *fmt, ...) 
+{
+	if (!IsDebugging) return;
+
+    char buf[1024];
+    int len;
+    va_list ap;
+    //usb_flush(1);
+    va_start(ap, fmt);
+	len = vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+ //   if (len <= 0 || len > sizeof(buf)) printf("Error: len = %d\n", len);
+	//else printf("DEBUG: %s", buf);
+    //else usb_sendbuffer(1, buf, len);
+	puts(buf);
+    //fflush(stdout);
+}
+
+void Reboot() 
+{
     if (*(u32*)0x80001800) exit(0);
     SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 }
 
-void waitforbuttonpress(u32 *out, u32 *outGC) {
-    u32 pressed = 0;
-    u32 pressedGC = 0;
-
-    while (true) {
-        WPAD_ScanPads();
-        pressed = WPAD_ButtonsDown(0);
-
-        PAD_ScanPads();
-        pressedGC = PAD_ButtonsDown(0);
-
-        if (pressed || pressedGC) {
-            if (pressedGC) {
-                // Without waiting you can't select anything
-                usleep (20000);
-            }
-            if (out) *out = pressed;
-            if (outGC) *outGC = pressedGC;
-            return;
-        }
-    }
+void *AllocateMemory(u32 size)
+{
+	return memalign(32, (size+31)&(~31));
 }
 
-void Init_Console() {
+void Init_Console() 
+{
     // Initialise the video system
     VIDEO_Init();
 
@@ -78,56 +142,33 @@ void Init_Console() {
     VIDEO_ClearFrameBuffer(rmode, xfb, COLOR_BLACK);
 }
 
-s32 Init_SD() {
-    if (!__io_wiisd.startup()) {
-        printf("SD card error, press any button to exit...\n");
-        return -1;
-    }
-
-    if (!fatMountSimple("sd", &__io_wiisd)) {
-        printf("FAT error, press any button to exit...\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-void Close_SD() {
-    fatUnmount("sd");
+void Close_SD() 
+{
+	fatUnmount("sd:/");
     __io_wiisd.shutdown();
 }
 
-s32 Init_USB() {
-    if (!__io_usbstorage.startup()) {
-        printf("USB storage error, press any button to exit...\n");
-        return -1;
-    }
-
-    if (!fatMountSimple("usb", &__io_usbstorage)) {
-        printf("FAT error, press any button to exit...\n");
-        return -1;
-    }
-    return 0;
+bool Init_SD() 
+{
+	Close_SD();
+	return fatMountSimple("sd", &__io_wiisd);
 }
 
 void Close_USB() {
-    fatUnmount("usb");
+	fatUnmount("usb:/");
     __io_usbstorage.shutdown();
 }
 
-void printheadline() {
-    int rows, cols;
-    CON_GetMetrics(&cols, &rows);
+s32 Init_USB() 
+{
+	Close_USB();
 
-    printf("Trucha Bug Restorer 1.11");
-
-    char buf[64];
-    sprintf(buf, "IOS%u (Rev %u)\n", IOS_GetVersion(), IOS_GetRevision());
-    printf("\x1B[%d;%dH", 0, cols-strlen(buf)-1);
-    printf(buf);
+    if (!fatMountSimple("usb", &__io_usbstorage)) return 0;
+    return 1;
 }
 
-void set_highlight(bool highlight) {
+void set_highlight(bool highlight) 
+{
     if (highlight) {
         printf("\x1b[%u;%um", 47, false);
         printf("\x1b[%u;%um", 30, false);
@@ -136,34 +177,11 @@ void set_highlight(bool highlight) {
         printf("\x1b[%u;%um", 40, false);
     }
 }
-/*
-void Con_ClearLine()
-{
-	s32 cols, rows;
-	u32 cnt;
 
-	printf("\r");
-	fflush(stdout);
-
-
-	CON_GetMetrics(&cols, &rows);
-
-
-	for (cnt = 1; cnt < cols; cnt++) {
-		printf(" ");
-		fflush(stdout);
-	}
-
-	printf("\r");
-	fflush(stdout);
-}
-*/
-
-#include <sys/dir.h>
-bool subfoldercreate(const char * fullpath) {
-    //check forsubfolders
+bool FolderCreateTree(const char *fullpath) 
+{    
     char dir[300];
-    char * pch = NULL;
+    char *pch = NULL;
     u32 len;
     struct stat st;
 
@@ -174,20 +192,18 @@ bool subfoldercreate(const char * fullpath) {
         dir[len++] = '/';
         dir[len] = '\0';
     }
-    if (stat(dir, &st) != 0) { // fullpath not exist?
-        while (len && dir[len-1] == '/')
-            dir[--len] = '\0';				// remove all trailing /
+    if (stat(dir, &st) != 0) // fullpath not exist?
+	{ 
+        while (len && dir[len-1] == '/') dir[--len] = '\0';	// remove all trailing /
         pch = strrchr(dir, '/');
         if (pch == NULL) return false;
         *pch = '\0';
-        if (subfoldercreate(dir)) {
+        if (FolderCreateTree(dir)) 
+		{
             *pch = '/';
-            if (mkdir(dir, 0777) == -1)
-                return false;
-        } else
-            return false;
+            if (mkdir(dir, 0777) == -1) return false;
+        } 
+		else return false;
     }
     return true;
 }
-
-
