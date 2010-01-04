@@ -437,7 +437,7 @@ s32 install_IOS(IOS *ios, bool skipticket)
         ES_AddTitleCancel();
         return ret;
     }
-    printf("\b.\n");
+    printf("\b..");
 
     return 0;
 }
@@ -525,13 +525,18 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
 
     printf("\nLoading ticket...");
     u8 *ticket_buffer = NULL;
+	SpinnerStart();
     ret = GetNusObject(1, iosnr, revision, "cetk", &ticket_buffer, &((*ios)->ticket_size));
-    if (ret < 0) {
+	SpinnerStop();
+    if (ret < 0) 
+	{
         printf("Loading ticket failed, ret = %u\n", ret);
         goto err;
     }
+	printf("\b.Done\n");
 
-    if (ticket_buffer == NULL || (*ios)->ticket_size == 0) {
+    if (ticket_buffer == NULL || (*ios)->ticket_size == 0) 
+	{
         printf("ticket error\n");
         ret = -1;
         goto err;
@@ -539,7 +544,8 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
 
     (*ios)->ticket_size = SIGNED_TIK_SIZE((signed_blob *)ticket_buffer);
     (*ios)->ticket = memalign(32, (*ios)->ticket_size);
-    if ((*ios)->ticket == NULL) {
+    if ((*ios)->ticket == NULL) 
+	{
         printf("Out of memory\n");
         ret = -1;
         goto err;
@@ -547,7 +553,8 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
     memcpy((*ios)->ticket, ticket_buffer, (*ios)->ticket_size);
     free(ticket_buffer);
 
-    if (!IS_VALID_SIGNATURE((*ios)->ticket)) {
+    if (!IS_VALID_SIGNATURE((*ios)->ticket)) 
+	{
         printf("Error: Bad ticket signature!\n");
         ret = -1;
         goto err;
@@ -556,7 +563,7 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
     /* Get TMD info */
     tmd_data = (tmd *)SIGNATURE_PAYLOAD((*ios)->tmd);
 
-    printf("\nChecking titleid and revision...");
+    printf("Checking titleid and revision...");
     if (TITLE_UPPER(tmd_data->title_id) != 1 || TITLE_LOWER(tmd_data->title_id) != iosnr) {
         printf("IOS has titleid: %08x%08x but expected was: %08x%08x\n", TITLE_UPPER(tmd_data->title_id), TITLE_LOWER(tmd_data->title_id), 1, iosnr);
         ret = -1;
@@ -726,7 +733,7 @@ int IosInstallUnpatched(u32 iosVersion, u32 revision)
     }
 	printf("\b.Done\n");
 
-    printf("Installing IOS%u Rev %u...\n", iosVersion, revision);
+    printf("Installing IOS%u Rev %u...", iosVersion, revision);
 	SpinnerStart();
     ret = install_IOS(ios, false);
 	SpinnerStop();
@@ -1004,7 +1011,7 @@ s32 IosDowngrade(u32 iosVersion, u32 highRevision, u32 lowRevision)
         return -1;
     }*/
 
-    printf("Installing IOS%u Rev %u...\n", iosVersion, lowRevision);
+    printf("Installing IOS%u Rev %u...", iosVersion, lowRevision);
 	SpinnerStart();
     ret = install_IOS(lowIos, true);
 	SpinnerStop();
@@ -1015,6 +1022,7 @@ s32 IosDowngrade(u32 iosVersion, u32 highRevision, u32 lowRevision)
         free_IOS(&lowIos);
         return ret;
     }
+	printf("\b.Done\n");
 
     printf("IOS%u downgrade to revision: %u complete.\n", iosVersion, lowRevision);
     free_IOS(&highIos);

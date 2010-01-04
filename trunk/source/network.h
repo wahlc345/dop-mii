@@ -10,6 +10,7 @@ s32 Network_Request(const char *, u32 *);
 s32 Network_Read(void *, u32);
 s32 Network_Write(void *, u32);
 void NetworkInit();
+void NetworkShutdown();
 
 #endif
 

@@ -9,6 +9,7 @@
 #include <wiiuse/wpad.h>
 
 #include "signcheckfunctions.h"
+#include "tools.h"
 
 #define ES_ERROR_1028 -1028 // No ticket installed 
 #define ES_ERROR_1035 -1035 // Title with a higher version is already installed 
@@ -45,6 +46,7 @@ int CheckFakeSign()
 	// We are expecting an error here, but depending on the error it will mean
 	// that it is valid for fakesign. If we get -2011 it is definately not patched with fakesign.
 	int ret = ES_AddTitleStart((signed_blob*)tmd_dat, tmd_dat_size, (signed_blob *)certs_sys, sizeof certs_sys, NULL, 0);
+	debug_printf("ES_AddTitleStart = %d\n", ret);
 	if (ret >= 0) ES_AddTitleCancel();	
 	if (ret == ES_ERROR_1028) return 1;
 	return 0;
@@ -87,10 +89,8 @@ int sortCallback(const void * first, const void * second)
 /* Deep stuff :D */
  
 int GetCert()
-{
-	u32 fd;
- 
-	fd = IOS_Open("/sys/cert.sys", 1);
+{ 
+	u32 fd = IOS_Open("/sys/cert.sys", 1);
 	if (IOS_Read(fd, certs_sys, sizeof(certs_sys)) < sizeof(certs_sys)) return -1;
 	IOS_Close(fd);
 	return 0;

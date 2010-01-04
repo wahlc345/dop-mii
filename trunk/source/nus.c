@@ -36,9 +36,11 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
 	FILE *fp = NULL;
 	
 	snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%d/%s", titleid1, titleid2, version, content);
-
+	
+	debug_printf("\nNusGetObject:Init_SD...");
     if (Init_SD()) 
 	{		
+		debug_printf("Complete\n");
 		fp = fopen(filename, "rb");
 		if (fp) 
 		{
@@ -61,14 +63,18 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
 				else ret = 1; /* File successfully loaded so return */
 			}
 			fclose(fp);
-			fp = NULL;
-			return ret;		
+			fp = NULL;				
+			Close_SD();
+			return ret;	
 		}
 
+		Close_SD();
 		gprintf("\n***%s not found on the SD card.\n*** Trying to download it from the internet...\n",filename);
 	}
     	
+	debug_printf("NusGetObject:NetworkInit...");
 	NetworkInit();
+	debug_printf("Completed\n");
     
     snprintf(buf, 128, "http://nus.cdn.shop.wii.com/ccs/download/%08x%08x/%s", titleid1, titleid2, content);
 
@@ -101,6 +107,7 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
 			fclose(fp);
 		}
 		else gprintf("\n\tDEBUG: Could not write file %s to the SD Card. \n", filename);
+		Close_SD();
     }
 
     if (((int)*outbuf & 0xF0000000) == 0xF0000000) return (int) *outbuf;
