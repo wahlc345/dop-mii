@@ -9,6 +9,7 @@
 #include <sys/dir.h>
 
 #include "tools.h"
+#include "network.h"
 
 static void *xfb = NULL;
 static GXRModeObj *rmode = NULL;
@@ -20,7 +21,7 @@ static bool spinnerRunning = false;
 
 static void * spinner(void *args) 
 {	
-	char *spinnerChars = "/-\\|";
+	char *spinnerChars = (char*)"/-\\|";
 	int spin  = 0;
 	while (1) 
 	{		
@@ -63,7 +64,7 @@ void ReturnToLoader()
 void gprintf(const char *fmt, ...) 
 {
     char buf[1024];
-    int len;
+    u32 len;
     va_list ap;
     usb_flush(1);
     va_start(ap, fmt);
@@ -143,14 +144,16 @@ void Init_Console()
 }
 
 void Close_SD() 
-{
-	fatUnmount("sd:/");
+{	
+	//closing all open Files write back the cache and then shutdown em!
+	fatUnmount("SD:/");
     __io_wiisd.shutdown();
 }
 
 bool Init_SD() 
 {
 	Close_SD();
+	//right now mounts first FAT-partition
 	return fatMountSimple("sd", &__io_wiisd);
 }
 
@@ -206,4 +209,22 @@ bool FolderCreateTree(const char *fullpath)
 		else return false;
     }
     return true;
+}
+
+/*
+This will shutdown the controllers, SD & USB then reload the IOS.
+*/
+
+int __reloadIos(int version, bool initWPAD)
+{
+	int ret;
+	// The following needs to be shutdown before reload
+	Close_SD(); 
+	Close_USB();
+	WPAD_Shutdown();
+	NetworkShutdown();
+
+	ret = IOS_ReloadIOS(version);
+	if (initWPAD) WPAD_Init();
+	return ret;
 }

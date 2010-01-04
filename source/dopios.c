@@ -37,6 +37,7 @@ distribution.
 #include <fat.h>
 #include <wiiuse/wpad.h>
 
+#include "FakeSignInstaller.h"
 #include "wiibasics.h"
 #include "patchmii_core.h"
 #include "title.h"
@@ -77,10 +78,6 @@ distribution.
 
 #define PAD_CHAN_0 0
 
-#define IOS15version 523
-#define IOS36version 3351
-#define IOS37version 3869
-
 char logBuffer[1024*1024];//For signcheck
 u32 iosTable[256];//For signcheck
 extern bool IsDebugging;
@@ -99,22 +96,24 @@ s32 __u8Cmp(const void *a, const void *b)
 struct region 
 {
     u32 idnumber;
-    char * name;
+    const char *name;
 };
 
-const struct region regions[] = {
+const struct region regions[] = 
+{
     {0, "North America (U)"},
     {1, "Europe (E)"},
     {2, "Japan (J)"},
     {3, "Korea (K)"}
 };
 
-
-struct systemmenu {
-    char* name;
+struct systemmenu 
+{
+    const char* name;
 };
 
-const struct systemmenu systemmenus[] = {
+const struct systemmenu systemmenus[] = 
+{
 	//VERSION#1, VERSION#2, VERSION#3 NAME
     {"System Menu 3.2"},
     {"System Menu 3.3"},
@@ -125,9 +124,9 @@ const struct systemmenu systemmenus[] = {
     {"System Menu 4.2"}
 };
 
-struct channel {
-
-    char* name;
+struct channel 
+{
+    const char* name;
 };
 
 const struct channel channels[] =
@@ -148,7 +147,7 @@ struct ios
     u32 lowRevision;
     u32 highRevision;
     u8 type;
-    char* desc;
+    const char *desc;
 };
 
 const struct ios ioses[]=
@@ -233,7 +232,7 @@ void printMyTitle()
     setConsoleBgColor(BLACK,0);
     setConsoleFgColor(WHITE,0);
     fflush(stdout);
-    printf("\n\n");
+	printf("\n\n");
 }
 
 void addLogEntry(int iosNumber, int iosVersion, int trucha, int flash, int boot2, int usb2)
@@ -253,7 +252,7 @@ void addLogEntry(int iosNumber, int iosVersion, int trucha, int flash, int boot2
 
 int ScanIos()
 {
-	int i, ret;
+	int ret;
 	u32 titlesCount, tmdSize, iosFound;
 	u64 *titles;
 	tmd *pTMD;
@@ -265,6 +264,7 @@ int ScanIos()
  
 	iosFound = 0;
  
+	u32 i;
 	for (i = 0; i < titlesCount; i++)
 	{
 		if (titles[i] >> 32 != 1) continue; // skip non-system titles
@@ -285,16 +285,16 @@ int ScanIos()
 		u16 numContents = pTMD->num_contents;
 		free(tmdBuffer);
 		
-		if (numContents == 1)  continue; // Is A Stub
-		if (numContents == 3)
-		{
-			// IOS15 sometimes report 3, so we want to include until it gets stubbed
-			if (titleId != 0xF) continue; 
-		}
+		if (numContents == 1) continue; // Is A Stub
+		if (numContents == 3) continue; // May be a stub so we are going to skip
 
-		iosTable[iosFound] = titles[i] & 0xFFFFFFFF;
+		iosTable[iosFound] = titleId;
 		iosFound++;
 	}
+	
+	// Adding IOS15 to the list as it is safe to test
+	iosTable[iosFound] = 0xF;	
+	iosFound++;
  
 	qsort (iosTable, iosFound, sizeof(u32), sortCallback);
  
@@ -304,8 +304,7 @@ int ScanIos()
 bool getMyIOS() 
 {
     s32 ret;
-    u32 count;
-    int i;
+    u32 count, i;
     for (i=0;i<256;i++) ios_found[i]=0;
     
     printMyTitle();
@@ -325,7 +324,6 @@ bool getMyIOS()
         printf("ERROR: ES_GetTitles=%d\n", ret);
         return false;
     }
-
 
     for (i=0;i<count;i++) 
 	{
@@ -377,7 +375,7 @@ void doparIos(struct ios ios, bool newest)
                 esIdentifyPatch = PromptYesNo();
             }
 
-			if (iosVersion == (36||37)) 
+			if (iosVersion == 36 || iosVersion == 37) 
 			{
 				printf("\nApply NAND Permissions Patch?\n");
 				nandPatch = PromptYesNo();
@@ -837,7 +835,8 @@ int checkAndRemoveStubs()// this can be made a whole lot smaller by using differ
 u8 *get_ioslist(u32 *cnt)
 {
 	u64 *buf = 0;
-	s32 i, res;
+	s32 res;
+	u32 i;
 	u32 tcnt = 0, icnt;
 	u8 *ioses = NULL;
 	
@@ -923,12 +922,12 @@ void show_boot2_info()
 
 int ios_selectionmenu(int default_ios)
 {
-	int selection = 0;
+	u32 selection = 0;
 	u32 ioscount;
 	u8 *list = get_ioslist(&ioscount);
 	u32 button;
 	
-	int i;
+	u32 i;
 	for (i=0;i<ioscount;i++)
 	{
 		// Default to default_ios if found, else the loaded IOS
@@ -981,190 +980,6 @@ int ios_selectionmenu(int default_ios)
 	return list[selection];
 }
 
-int iosinstallmenu(u32 ios, u32 revision)
-{
-	u32 button;
-	int selection = 0;
-	int destselect = 0;
-	int ret = 0;
-	int i;
-	bool options[3] = { true, true, false };
-
-	char *optionsstring[3] = {"Patch hash check (trucha): ", "Patch ES_Identify:         ", "Patch nand permissions:    "};
-	u32 destination[3] = { ios, 200+ios, 249 };
-	
-	while (true)
-	{
-        ClearScreen();
-        printMyTitle();
-        printf("\x1b[2;0H");
-		printf("\n\n");
-		
-		set_highlight(selection == 0);
-		if (options[0] || options[1] || options[2] || ios != destination[destselect])
-		{
-			printf("Install patched IOS%u\n", ios);
-		} else
-		{
-			printf("Install IOS%u\n", ios);
-		}
-		set_highlight(false);
-
-		printf("Install IOS to slot:       ");
-		set_highlight(selection == 1);
-		printf("%u\n", destination[destselect]);
-		set_highlight(false);
-		
-		for (i=0;i < 3;i++)
-		{
-			printf(optionsstring[i]);
-			set_highlight(selection == i+2);
-			printf("%s\n", options[i] ? "yes" : "no");
-			set_highlight(false);
-		}
-		printf("\n");
-		
-		for (button = 0;;ScanPads(&button))
-		{
-			if (button&WPAD_BUTTON_LEFT)
-			{
-				if (selection == 1)
-				{
-					if (destselect > 0) destselect--;
-					else destselect = 2;
-				}
-
-				if (selection > 1) options[selection-2] = !options[selection-2];
-			}
-
-			if (button&WPAD_BUTTON_RIGHT)
-			{
-				if (selection == 1)
-				{
-					if (destselect < 2) destselect++;
-					else destselect = 0;
-				}
-				if (selection > 1)
-				{
-					options[selection-2] = !options[selection-2];
-				}
-			}
-
-			if (button&WPAD_BUTTON_UP)
-			{
-				if (selection > 0) selection--;
-				else selection = 4;
-			}
-
-			if (button&WPAD_BUTTON_DOWN)
-			{
-				if (selection < 4) selection++;
-				else selection = 0;
-			}
-
-			if (button&WPAD_BUTTON_A && selection == 0)
-			{
-				if (destination[destselect] == 36)
- 					//ret = InstallIOS(ios, revision, options[0], options[1], options[2], destination[destselect], revision);
-					ret = IosInstall(ios, revision, options[0], options[1], options[2]);
-				//else
-					//ret = InstallIOS(ios, revision, options[0], options[1], options[2], destination[destselect], 1);
-				
-				if (ret < 0)
-				{
-					printf("IOS%u installation failed.\n", ios);
-					return -1;
-				}
-				return 0;
-			}
-
-			if (button&WPAD_BUTTON_B) 
-			{
-				printf("Installation Cancelled.\n");
-				return 0;
-			}
-
-			if (button) break;
-		}
-	}	
-}
-
-int mainmenu()
-{
-	u32 button;
-	int selection = 0;
-	int ret;
-	int i;
-	char *optionsstring[6] = { "IOS36 menu", "IOS37 menu", "Downgrade IOS15", "Restore IOS15", "Show boot2 info", "Exit" };
-	
-	while (1)
-	{
-        ClearScreen();
-        printMyTitle();
-        printf("\x1b[2;0H");
-		printf("\n\n");
-		
-		for (i=0;i < 6;i++)
-		{
-			set_highlight(selection == i);
-			printf("%s\n", optionsstring[i]);
-			set_highlight(false);
-		}
-		printf("\n");
-
-		for (button = 0;;ScanPads(&button))
-		{
-			
-			if (button&WPAD_BUTTON_UP)
-			{
-				if (selection > 0) selection--;
-				else selection = 5;
-			}
-
-			if (button&WPAD_BUTTON_DOWN)
-			{
-				if (selection < 5) selection++;
-				else selection = 0;
-			}
-
-			if (button&WPAD_BUTTON_A)
-			{
-				if (selection == 0) return iosinstallmenu(36, IOS36version);			
-				if (selection == 1) return iosinstallmenu(37, IOS37version);
-
-				if (selection == 2)
-				{
-					ret = IosDowngrade(15, IOS15version, 257);
-					if (ret < 0)
-					{
-						printf("Downgrade failed\n");
-						return -1;
-					}
-					return 0;
-				}
-			
-				if (selection == 3)
-				{
-					ret = IosInstallUnpatched(15, IOS15version);
-					if (ret < 0)
-					{
-						printf("IOS15 Restore failed\n");
-						return -1;
-					}
-					printf("IOS15 restored.\n");
-					return 0;
-				}
-			
-				if (selection == 4) show_boot2_info();
-				if (selection == 5) return 0;
-			}
-		
-			if (button&WPAD_BUTTON_B) return 0;
-			if (button) break;
-		}
-	}	
-}
-
 int main(int argc, char **argv) 
 {
 	if (argc > 1) IsDebugging = true; // used by debug_printf()
@@ -1201,7 +1016,8 @@ int main(int argc, char **argv)
     u32 iosCnt;
 
     u32 cnt;
-    s32 retios, selectedios = 0;
+    s32 retios;
+	s32 selectedIos = 0;
 
     /* Get IOS versions */
     retios = Title_GetIOSVersions(&iosVersion, &iosCnt);
@@ -1217,130 +1033,116 @@ int main(int argc, char **argv)
         /* Custom IOS available */
         if (version == CIOS_VERSION) 
 		{
-            selectedios = cnt;
+            selectedIos = cnt;
             break;
         }
 
         /* Current IOS */
-        if (version == IOS_GetVersion()) selectedios = cnt;
+        if (version == IOS_GetVersion()) selectedIos = cnt;
     }
 
     WPAD_Init();
 
-    int iosreloadcount = 0;//Forces the Wii to exit; if IOS_ReloadIOS() is called 11 times
-	int firstselection = 0;
+	int firstSelection= 0;
 
     while (1) 
 	{		
+InitialMenu:
 		while (1) 
 		{
             printMyTitle();
             printf("\x1b[2;0H");
             printf("\n\n\nWhich IOS would you like to use to install other IOSs?\n");
 
-			printf("%3s IOS: %d\n", (firstselection == 0 ? "-->" : " "), iosVersion[selectedios]);
-			printf("%3s Install an IOS that accepts fakesigning\n", (firstselection == 1 ? "-->" : " "));
-			printf("%3s Exit", (firstselection == 2 ? "-->" : " "));
+			printf("%3s IOS: %d\n", (firstSelection== 0 ? "-->" : " "), iosVersion[selectedIos]);
+			printf("%3s Install IOS36 (r%d) w/FakeSign\n", (firstSelection== 1 ? "-->" : " "), IOS36Version);
+			printf("%3s Exit\n", (firstSelection== 2 ? "-->" : " "));
 
 			button = 0;
 			ScanPads(&button);
 
 			if (button&WPAD_BUTTON_A) break;
 			if (button&WPAD_BUTTON_HOME) ReturnToLoader();
-			if (button&WPAD_BUTTON_UP) firstselection--;
-			if (button&WPAD_BUTTON_DOWN) firstselection++;
+			
+			if (button&WPAD_BUTTON_UP) firstSelection--;
+			if (button&WPAD_BUTTON_DOWN) firstSelection++;
 
-			if (firstselection == 0)
+			if (firstSelection< 0) firstSelection= 2;
+			if (firstSelection> 2) firstSelection= 0;
+
+			if (firstSelection== 0)
 			{
-				if (button&WPAD_BUTTON_LEFT && --selectedios <= -1) selectedios = (iosCnt - 1);
-				if (button&WPAD_BUTTON_RIGHT && ++selectedios >= iosCnt) selectedios = 0;
+				if (button&WPAD_BUTTON_LEFT && --selectedIos <= -1) selectedIos = (iosCnt - 1);
+				if (button&WPAD_BUTTON_RIGHT && ++selectedIos >= iosCnt) selectedIos = 0;
 			}
 
 			VIDEO_WaitVSync();
         }
 
-		if (firstselection == 2) ReturnToLoader();
+		if (firstSelection== 2)
+		{
+			printf("\n\nAre you sure you want to exit?\n");
+			if (PromptYesNo()) ReturnToLoader();
+			firstSelection = 0;
+			goto InitialMenu;
+		}
 
         //Install an IOS that accepts fakesigning
-        if (firstselection == 1) 
+        if (firstSelection == 1) 
 		{
-        	ret = ios_selectionmenu(36);
-			if (ret != 0) 
-			{
-				WPAD_Shutdown();
-				IOS_ReloadIOS(ret);
-				WPAD_Init();				
-			}
-			
-			if (mainmenu() != 0) 
-			{
-				printf("\nPress A to return to loader.");
-				for (button = 0;;ScanPads(&button))
-				{
-					if (button&(WPAD_BUTTON_A | WPAD_BUTTON_HOME)) ReturnToLoader();
-				}
-			}
-			
+			printf("\n");
+			if (!PromptContinue()) goto InitialMenu;
+
 			ClearScreen();
 			printMyTitle();
-			printf("\x1b[2;0H");
-			printf("\n\n");
-			printf("We are now returning you to your loader. If you\n");
-			printf("successfully installed a fakesign accepting IOS\n");
-			printf("select IOS 36 as your IOS to load when you return to Dop-IOS MOD\n");
-			printf("\nPress A to exit.");
-
-			for (button = 0;;ScanPads(&button))
+			ret = FakeSignInstall();
+			if (ret > 0) 
 			{
-				if (button&WPAD_BUTTON_A || button&WPAD_BUTTON_HOME) ReturnToLoader();
+				ClearScreen();
+				printMyTitle();
+				printf("Installation of IOS36 (r%d) w/FakeSign was completed successfully!!!\n", IOS36Version);
+				printf("You may now use IOS36 to install anything else.\n");
 			}
+			printf("\n\nPress any key to continue.\n");
+			WaitAnyKey();
+			firstSelection = 0;
+			goto InitialMenu;
 	   }
 
-        if (firstselection != 1) 
+        if (firstSelection == 0) 
 		{
             printMyTitle();
             printf("\x1b[2;0H");
             printf("\n\nLoading selected IOS...\n");
 			
-			iosreloadcount++;
-			
-            if (iosreloadcount == 10) 
-			{
-				printf("\nERROR! Too many attempts to load IOS. Please restart the program. Exiting...");
-				VIDEO_WaitVSync();
-				ReturnToLoader();
-			}
+			ret = ReloadIos(iosVersion[selectedIos]);
 
-            WPAD_Shutdown(); // We need to shut down the Wiimote(s) before reloading IOS or we get a crash. Video seems unaffected.--PhoenixTank
-            ret = IOS_ReloadIOS(iosVersion[selectedios]);
-            WPAD_Init(); // Okay to start wiimote up again.--PhoenixTank
-			
-			//gprintf("\n\tios = %d",IOS_GetVersion());
-            if (ret >= 0) printf("\n\n\nIOS successfully loaded! Press A to continue.");
-        }
+            if (ret >= 0) printf("\n\nIOS successfully loaded! Press A to continue.");
 
-		for (button = 0;;ScanPads(&button))
-		{
-			if (button&WPAD_BUTTON_A) break;
-			if (button&WPAD_BUTTON_HOME) ReturnToLoader();
-		}
-
-        if ((ret < 0) && (ret != -1017)) 
-		{
-            printf("\n\n\nERROR! Choose an IOS that accepts fakesigning! Press A to continue.");
 			for (button = 0;;ScanPads(&button))
 			{
 				if (button&WPAD_BUTTON_A) break;
 				if (button&WPAD_BUTTON_HOME) ReturnToLoader();
 			}
         }
-        break;
+
+		if (firstSelection == 0)
+		{
+			if ((ret < 0) && (ret != -1017)) 
+			{
+				printf("\n\n\nERROR! Choose an IOS that accepts fakesigning! Press A to continue.");
+				for (button = 0;;ScanPads(&button))
+				{
+					if (button&WPAD_BUTTON_A) break;
+					if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+				}
+			}
+			break;
+		}
     }
 
     /*This definines he max number of IOSs we can have to select from*/
     int selected=19;
-
-    bool dontcheck = false;//Small fix for a small bug
 
     int screen = 0;//Checks what screen we're on
     int selection = 0;//IOSs or Channels?
@@ -1383,26 +1185,23 @@ int main(int argc, char **argv)
             printf("[A]               Select\n");
 			printf("[HOME]/GC:[START] Exit\n\n\n");
 
-   //         if (dontcheck) 
-			//{			
-				for (button = 0;;ScanPads(&button))
-				{
-					if (button&WPAD_BUTTON_A)
-					{					
-						if (selection == 0) screen = 1;
-						if (selection == 1) screen = 2;
-						if (selection == 2) screen = 3;
-						if (selection == 3) screen = 4;
-						if (selection == 4) show_boot2_info();
-						if (selection == 5) screen = 5;
-//						dontcheck = false;
-					}
-					if (button&WPAD_BUTTON_DOWN) selection++;
-					if (button&WPAD_BUTTON_UP) selection--;
-					if (button&WPAD_BUTTON_HOME) ReturnToLoader();
-					if (button) break;
+			for (button = 0;;ScanPads(&button))
+			{
+				if (button&WPAD_BUTTON_A)
+				{					
+					if (selection == 0) screen = 1;
+					if (selection == 1) screen = 2;
+					if (selection == 2) screen = 3;
+					if (selection == 3) screen = 4;
+					if (selection == 4) show_boot2_info();
+					if (selection == 5) screen = 5;
 				}
-            //}
+				if (button&WPAD_BUTTON_DOWN) selection++;
+				if (button&WPAD_BUTTON_UP) selection--;
+				if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+				if (button) break;
+			}
+
             if (selection < 0) selection = 5;
             if (selection > 5) selection = 0;
 
@@ -1462,8 +1261,6 @@ int main(int argc, char **argv)
             printf("[HOME]/GC:[START] Exit\n\n\n\n\n\n\n\n");
             printf("-- Dop-IOS MOD by Arikado, SifJar, PhoenixTank, giantpune, Lunatik");		
 
-   //         if (dontcheck) 
-			//{
 			for (button = 0;;ScanPads(&button))
 			{
 				if (button&WPAD_BUTTON_B) screen = 0;
@@ -1607,13 +1404,15 @@ int main(int argc, char **argv)
 		if (screen == 5)
 		{
 			printMyTitle();
-		    printf("\n");
-			printf("\t[*] Using IOS%i (rev %i)\n\t[*] Region %s\n\t[*] Hollywood version 0x%x\n", IOS_GetVersion(), IOS_GetRevision(), CheckRegion(), *(u32 *)0x80003138);
-			printf("\t[*] Getting certs.sys from the NAND\t\t\t\t");
+			printf("\x1b[2;0H\n\n"); // Move Cursor
+			printf("[*] Using IOS%i (rev %i)\n", IOS_GetVersion(), IOS_GetRevision());
+			printf("[*] Region %s\n", CheckRegion());
+			printf("[*] Hollywood version 0x%x\n", *(u32 *)0x80003138);
+			printf("[*] Getting certs.sys from the NAND\t\t\t\t");
 			printf("%s\n", (!GetCert()) ? "[DONE]" : "[FAIL]");
 			printf("\n");
 			iosToTest = ScanIos() - 1;			
-			printf("\t[*] Found %i IOSes on this console.\n", iosToTest);
+			printf("[*] Found %i IOSes that are safe to test.\n", iosToTest);
 			printf("\n");
 			sleep(5);
  
@@ -1634,20 +1433,21 @@ int main(int argc, char **argv)
             strcat(logBuffer, tmp);
             sprintf(tmp, "\n");
             strcat(logBuffer, tmp);
-			
-			WPAD_Shutdown();
-			
+						
 			printMyTitle();
+			printf("\x1b[2;0H\n\n"); // Move Cursor
 			setConsoleFgColor(WHITE,true);
 			printf("%-13s %-10s %-11s %-10s %-10s %-10s\n", "IOS Version", "FakeSign", "ES_Identify", "Flash", "Boot2", "USB 2.0");
 			setConsoleFgColor(WHITE,false);
+
+			WPAD_Shutdown();
 
 			int iosToTestCnt = 1;
 			while (iosToTest > 0) 
 			{			
 				fflush(stdout);
  
-				IOS_ReloadIOS(iosTable[iosToTest]);
+				ReloadIosNoInit(iosTable[iosToTest]);
  				
 				char iosString[50] = "";
 				sprintf(iosString, "%d (r%d)", iosTable[iosToTest], IOS_GetRevision());
@@ -1662,7 +1462,7 @@ int main(int argc, char **argv)
  
 				addLogEntry(iosTable[iosToTest], IOS_GetRevision(), reportResults[1], reportResults[2], reportResults[3], reportResults[4]);
  
-				if ((iosToTestCnt % 19) == 0) 
+				if ((iosToTestCnt % 20) == 0) 
 				{
 					WPAD_Init();
 					printf("Press [A] Continue, [HOME|START] Return Loader\n");
@@ -1678,8 +1478,7 @@ int main(int argc, char **argv)
 				iosToTestCnt++;
 			}
 			
-			IOS_ReloadIOS(iosVersion[selectedios]);
-			WPAD_Init();
+			ReloadIos(iosVersion[selectedIos]);
 			
 			printf("\n");
 			printf("Creating log on SD...\n\n");
@@ -1690,8 +1489,8 @@ int main(int argc, char **argv)
 				fwrite(logBuffer, 1, strlen(logBuffer), logFile);
 				fclose(logFile);
 				printf("All done, you can find the report on the root of your SD Card\n\n");
+				Close_SD();
 			}
-
 			else printf("Failed to create log on your SD Card!\n\n");
 			 
 			printf("Return to the main Dop-IOS MOD menu?\n");
@@ -1699,12 +1498,10 @@ int main(int argc, char **argv)
 			
 			iosToTest = 0;
 			screen = 0;
-		}//End screen 5
+		} //End screen 5
 
         VIDEO_WaitVSync();
         VIDEO_WaitVSync();
-
-        if (!dontcheck) dontcheck = true;
     }
 
     printf("\nReturning to loader...");

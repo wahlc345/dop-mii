@@ -179,6 +179,7 @@ void NetworkInit()
 			{
                 printf("net_init failed: %d\n", ret);
 				printf("I need a network to download IOS, sorry :(\n)");
+				sleep(3);
                 ReturnToLoader();
             }
         }
@@ -191,4 +192,10 @@ void NetworkInit()
 
     printf("\b.Done\n");
 	networkInitialized = true;
+}
+
+void NetworkShutdown()
+{	
+	net_deinit();
+	networkInitialized = false;
 }

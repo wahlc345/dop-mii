@@ -1,3 +1,10 @@
+#ifndef _TOOLS_H_
+#define _TOOLS_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/unistd.h>
 #include <wiiuse/wpad.h>
 
@@ -10,7 +17,6 @@ void Init_Console();
 bool Init_SD();
 s32 Init_USB();
 void Reboot();
-void waitforbuttonpress(u32 *out, u16 *outGC);
 
 void set_highlight(bool highlight);
 bool FolderCreateTree(const char *fullpath);
@@ -21,5 +27,18 @@ void ReturnToLoader();
 void SpinnerStart();
 void SpinnerStop();
 
+#define ReloadIosNoInit(version) __reloadIos(version, false);
+#define ReloadIos(version) __reloadIos(version, true);
+/*
+This will shutdown the controllers, SD & USB then reload the IOS.
+*/
+int __reloadIos(int version, bool initWPAD);
+
 void debug_printf(const char *fmt, ...);
 void gprintf(const char *fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
