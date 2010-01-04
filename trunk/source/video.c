@@ -128,7 +128,7 @@ void Video_Clear(s32 color) {
     VIDEO_ClearFrameBuffer(vmode, framebuffer, color);
 }
 
-void Video_DrawPng(IMGCTX ctx, PNGUPROP imgProp, u16 x, u16 y) {
-    PNGU_DECODE_TO_COORDS_YCbYCr(ctx, x, y, imgProp.imgWidth, imgProp.imgHeight, vmode->fbWidth, vmode->xfbHeight, framebuffer);
-}
+//void Video_DrawPng(IMGCTX ctx, PNGUPROP imgProp, u16 x, u16 y) {
+//    PNGU_DECODE_TO_COORDS_YCbYCr(ctx, x, y, imgProp.imgWidth, imgProp.imgHeight, vmode->fbWidth, vmode->xfbHeight, framebuffer);
+//}
 
