@@ -1491,7 +1491,25 @@ InitialMenu:
 				printf("All done, you can find the report on the root of your SD Card\n\n");
 				Close_SD();
 			}
-			else printf("Failed to create log on your SD Card!\n\n");
+			else{ 
+			
+			printf("Failed to create log on your SD Card!\n\n");
+			
+			printf("\n");
+			printf("Creating log on USB...\n\n");
+			
+			if (Init_USB())
+			{
+				logFile = fopen("usb:/DopIosModReport.csv", "wb");
+				fwrite(logBuffer, 1, strlen(logBuffer), logFile);
+				fclose(logFile);
+				printf("All done, you can find the report on the root of your USB Device\n\n");
+				Close_USB();
+			}
+			
+			else { printf("Failed to create log on your USB device!\n\n"); }
+			
+			}
 			 
 			printf("Return to the main Dop-IOS MOD menu?\n");
 			if(!PromptYesNo()) ReturnToLoader();
