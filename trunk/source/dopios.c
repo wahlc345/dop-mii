@@ -906,10 +906,10 @@ void show_boot2_info()
 	}	
 	
 	printf("\n");
-	printf("Boot2v4 is an indicator for the 'new' Wii hardware revision that prevents\n");
-	printf("the execution of some old IOS. These Wiis are often called LU64+ Wiis or\n");
-	printf("'unsoftmoddable' Wiis. You MUST NOT downgrade one of these Wiis and be\n");
-	printf("EXTRA careful when messing with ANYTHING on them.\n");
+	printf("Boot2v4 is an indicator for the 'new' Wii hardware revision that \n");
+	printf("prevents the execution of some old IOS. These Wiis are often called\n");
+	printf("LU64+ Wiis or 'unsoftmoddable' Wiis. You MUST NOT downgrade one of these\n");
+	printf("Wiis and be EXTRA careful when messing with ANYTHING on them.\n");
 	printf("The downgraded IOS15 you get with the Trucha Bug Restorer should work\n");
 	printf("on these Wiis and not harm Wiis in general.\n");
 	printf("\n");
@@ -1491,24 +1491,22 @@ InitialMenu:
 				printf("All done, you can find the report on the root of your SD Card\n\n");
 				Close_SD();
 			}
-			else{ 
-			
-			printf("Failed to create log on your SD Card!\n\n");
-			
-			printf("\n");
-			printf("Creating log on USB...\n\n");
-			
-			if (Init_USB())
-			{
-				logFile = fopen("usb:/DopIosModReport.csv", "wb");
-				fwrite(logBuffer, 1, strlen(logBuffer), logFile);
-				fclose(logFile);
-				printf("All done, you can find the report on the root of your USB Device\n\n");
-				Close_USB();
-			}
-			
-			else { printf("Failed to create log on your USB device!\n\n"); }
-			
+			else
+			{ 			
+				printf("Failed to create log on your SD Card!\n\n");
+				
+				printf("\n");
+				printf("Creating log on USB...\n\n");
+				
+				if (Init_USB())
+				{
+					logFile = fopen("usb:/DopIosModReport.csv", "wb");
+					fwrite(logBuffer, 1, strlen(logBuffer), logFile);
+					fclose(logFile);
+					printf("All done, you can find the report on the root of your USB Device\n\n");
+					Close_USB();
+				}				
+				else printf("Failed to create log on your USB device!\n\n");				
 			}
 			 
 			printf("Return to the main Dop-IOS MOD menu?\n");
