@@ -43,6 +43,7 @@
 #include "IOSPatcher.h"
 #include "haxx_certs.h"
 #include "nus.h"
+#include "gecko.h"
 
 #ifdef TEMP_IOS
 #include "uninstall.h"
@@ -94,19 +95,19 @@ void hexdump(FILE *fp, void *d, int len)
 char *things[] = {"people", "hopes", "fail", "bricks", "firmware", "bugs", "hacks"};
 
 void printvers(void) {
-    debug_printf("IOS Version: %08x\n", *((u32*)0xC0003140));
+    gprintf("IOS Version: %08x\n", *((u32*)0xC0003140));
 }
 
 void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
     static u8 iv[16];
     if (!source) 
 	{
-        debug_printf("decrypt_buffer: invalid source paramater\n");
+        gprintf("decrypt_buffer: invalid source paramater\n");
         ReturnToLoader();
     }
     if (!dest) 
 	{
-        debug_printf("decrypt_buffer: invalid dest paramater\n");
+        gprintf("decrypt_buffer: invalid dest paramater\n");
         ReturnToLoader();
     }
 
@@ -130,7 +131,7 @@ int create_temp_dir(void) {
     // Try to delete the temp directory in case we're starting over
     ISFS_Delete(TEMP_DIR);
     retval = ISFS_CreateDir (TEMP_DIR, 0, 3, 1, 1);
-    if (retval) debug_printf("ISFS_CreateDir(/tmp/patchmii) returned %d\n", retval);
+    if (retval) gprintf("ISFS_CreateDir(/tmp/patchmii) returned %d\n", retval);
     return retval;
 }
 
@@ -145,14 +146,14 @@ u32 save_nus_object (u16 index, u8 *buf, u32 size) {
     retval = ISFS_CreateFile (filename, 0, 3, 1, 1);
 
     if (retval != ISFS_OK) {
-        debug_printf("ISFS_CreateFile(%s) returned %d\n", filename, retval);
+        gprintf("ISFS_CreateFile(%s) returned %d\n", filename, retval);
         return retval;
     }
 
     fd = ISFS_Open (filename, ISFS_ACCESS_WRITE);
 
     if (fd < 0) {
-        debug_printf("ISFS_OpenFile(%s) returned %d\n", filename, fd);
+        gprintf("ISFS_OpenFile(%s) returned %d\n", filename, fd);
         return retval;
     }
 
@@ -163,7 +164,7 @@ u32 save_nus_object (u16 index, u8 *buf, u32 size) {
         memcpy(bounce_buf, buf+i, numbytes);
         retval = ISFS_Write(fd, bounce_buf, numbytes);
         if (retval < 0) {
-            debug_printf("ISFS_Write(%d, %p, %d) returned %d at offset %d\n",
+            gprintf("ISFS_Write(%d, %p, %d) returned %d at offset %d\n",
                          fd, bounce_buf, numbytes, retval, i);
             ISFS_Close(fd);
             return retval;
@@ -181,7 +182,7 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
     static u8 bounce_buf2[1024] ATTRIBUTE_ALIGN(0x20);
     u32 i;
     const tmd_content *p_cr = TMD_CONTENTS(p_tmd);
-//  debug_printf("install_nus_object(%p, %lu)\n", p_tmd, index);
+//  gprintf("install_nus_object(%p, %lu)\n", p_tmd, index);
 
     int retval, fd, cfd, ret;
     snprintf(filename, sizeof(filename), "/tmp/patchmii/%08x", p_cr[index].cid);
@@ -191,11 +192,11 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
 
     if (fd < 0) 
 	{
-        debug_printf("ISFS_OpenFile(%s) returned %d\n", filename, fd);
+        gprintf("ISFS_OpenFile(%s) returned %d\n", filename, fd);
         return fd;
     }
     set_encrypt_iv(index);
-//  debug_printf("ES_AddContentStart(%016llx, %x)\n", p_tmd->title_id, index);
+//  gprintf("ES_AddContentStart(%016llx, %x)\n", p_tmd->title_id, index);
 
     cfd = ES_AddContentStart(p_tmd->title_id, p_cr[index].cid);
     if (cfd < 0) 
@@ -204,14 +205,14 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
         ES_AddTitleCancel();
         return -1;
     }
-// debug_printf("\b (cfd %d): ",cfd);
+// gprintf("\b (cfd %d): ",cfd);
     for (i=0; i<p_cr[index].size;) {
         u32 numbytes = ((p_cr[index].size-i) < 1024)?p_cr[index].size-i:1024;
         //spinner();
         numbytes = ALIGN(numbytes, 32);
         retval = ISFS_Read(fd, bounce_buf1, numbytes);
         if (retval < 0) {
-            debug_printf("ISFS_Read(%d, %p, %d) returned %d at offset %d\n", fd, bounce_buf1, numbytes, retval, i);
+            gprintf("ISFS_Read(%d, %p, %d) returned %d at offset %d\n", fd, bounce_buf1, numbytes, retval, i);
             ES_AddContentFinish(cfd);
             ES_AddTitleCancel();
             ISFS_Close(fd);
@@ -221,7 +222,7 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
         encrypt_buffer(bounce_buf1, bounce_buf2, sizeof(bounce_buf1));
         ret = ES_AddContentData(cfd, bounce_buf2, retval);
         if (ret < 0) {
-            debug_printf("ES_AddContentData(%d, %p, %d) returned %d\n", cfd, bounce_buf2, retval, ret);
+            gprintf("ES_AddContentData(%d, %p, %d) returned %d\n", cfd, bounce_buf2, retval, ret);
             ES_AddContentFinish(cfd);
             ES_AddTitleCancel();
             ISFS_Close(fd);
@@ -230,7 +231,7 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
         i += retval;
     }
 
-// debug_printf("\b  done! (0x%x bytes)\n",i);
+// gprintf("\b  done! (0x%x bytes)\n",i);
     ret = ES_AddContentFinish(cfd);
     if (ret < 0) {
         printf("ES_AddContentFinish failed: %d\n",ret);
@@ -259,7 +260,7 @@ int get_title_key(signed_blob *s_tik, u8 *key) {
     memcpy(iv, &p_tik->titleid, sizeof p_tik->titleid);
 
     retval = ES_Decrypt(ES_KEY_COMMON, iv, keyin, sizeof keyin, keyout);
-    if (retval) debug_printf("ES_Decrypt returned %d\n", retval);
+    if (retval) gprintf("ES_Decrypt returned %d\n", retval);
     memcpy(key, keyout, sizeof keyout);
     return retval;
 }
@@ -284,7 +285,7 @@ int change_ticket_title_id(signed_blob *s_tik, u32 titleid1, u32 titleid2) {
     memcpy(iv, &p_tik->titleid, sizeof p_tik->titleid);
 
     retval = ES_Encrypt(ES_KEY_COMMON, iv, keyout, sizeof keyout, keyin);
-    if (retval) debug_printf("ES_Decrypt returned %d\n", retval);
+    if (retval) gprintf("ES_Decrypt returned %d\n", retval);
     memcpy(enc_key, keyin, sizeof keyin);
     tik_dirty = 1;
 
@@ -300,14 +301,14 @@ s32 get_title_version(u32 titleid1, u32 titleid2) {
     u64 titleid =  (u64)titleid1 << 32 | (u64)titleid2;
     retval = ES_GetStoredTMDSize(titleid, &tmdsize);
     if (retval < 0) {
-        if (retval != -106) debug_printf("ES_GetStoredTMDSize(%llx) = %x, retval=%d\n", titleid, tmdsize, retval);
+        if (retval != -106) gprintf("ES_GetStoredTMDSize(%llx) = %x, retval=%d\n", titleid, tmdsize, retval);
         return retval;
     }
 
     retval = ES_GetStoredTMD(titleid, stmd, tmdsize);
 
     if (retval < 0) {
-        debug_printf("ES_GetStoredTMD returned %d\n", retval);
+        gprintf("ES_GetStoredTMD returned %d\n", retval);
         return retval;
     }
 
@@ -316,14 +317,16 @@ s32 get_title_version(u32 titleid1, u32 titleid2) {
     return version;
 }
 
-void change_tmd_version(signed_blob *s_tmd, u32 version) {
+void change_tmd_version(signed_blob *s_tmd, u32 version) 
+{
     tmd *p_tmd;
     p_tmd = (tmd*)SIGNATURE_PAYLOAD(s_tmd);
     p_tmd->title_version = version;
     tmd_dirty = 1;
 }
 
-void change_tmd_title_id(signed_blob *s_tmd, u32 titleid1, u32 titleid2) {
+void change_tmd_title_id(signed_blob *s_tmd, u32 titleid1, u32 titleid2) 
+{
     tmd *p_tmd;
     u64 title_id = titleid1;
     title_id <<= 32;
@@ -334,22 +337,25 @@ void change_tmd_title_id(signed_blob *s_tmd, u32 titleid1, u32 titleid2) {
 }
 
 
-void display_tag(u8 *buf) {
-    debug_printf("Firmware version: %s      Builder: %s",
-                 buf, buf+0x30);
+void display_tag(u8 *buf) 
+{
+    gprintf("Firmware version: %s      Builder: %s", buf, buf+0x30);
 }
 
 void display_ios_tags(u8 *buf, u32 size) {
     u32 i;
     char *ios_version_tag = "$IOSVersion:";
 
-    if (size == 64) {
+    if (size == 64) 
+	{
         display_tag(buf);
         return;
     }
 
-    for (i=0; i<(size-64); i++) {
-        if (!strncmp((char *)buf+i, ios_version_tag, 10)) {
+    for (i=0; i<(size-64); i++) 
+	{
+        if (!strncmp((char *)buf+i, ios_version_tag, 10)) 
+		{
             char version_buf[128], *date;
             while (buf[i+strlen(ios_version_tag)] == ' ') i++; // skip spaces
             strlcpy(version_buf, (char *)buf + i + strlen(ios_version_tag), sizeof version_buf);
@@ -357,71 +363,77 @@ void display_ios_tags(u8 *buf, u32 size) {
             strsep(&date, "$");
             date = version_buf;
             strsep(&date, ":");
-            debug_printf("%s (%s)\n", version_buf, date);
+            gprintf("%s (%s)\n", version_buf, date);
             i += 64;
         }
     }
 }
 
-void print_tmd_summary(const tmd *p_tmd) {
+void print_tmd_summary(const tmd *p_tmd) 
+{
     const tmd_content *p_cr;
     p_cr = TMD_CONTENTS(p_tmd);
 
     u32 size=0;
 
     u16 i=0;
-    for (i=0;i<p_tmd->num_contents;i++) {
-        size += p_cr[i].size;
-    }
+    for (i=0;i<p_tmd->num_contents;i++) size += p_cr[i].size;
 
-    debug_printf("Title ID: %016llx\n",p_tmd->title_id);
-    debug_printf("Number of parts: %d.  Total size: %uK\n", p_tmd->num_contents, (u32) (size / 1024));
+    gprintf("Title ID: %016llx\n",p_tmd->title_id);
+	gprintf("Title Version: %u", p_tmd->title_version);
+    gprintf("Number of parts: %d.  Total size: %uK\n", p_tmd->num_contents, (u32) (size / 1024));
 }
 
-void zero_sig(signed_blob *sig) {
+void zero_sig(signed_blob *sig) 
+{
     u8 *sig_ptr = (u8 *)sig;
     memset(sig_ptr + 4, 0, SIGNATURE_SIZE(sig)-4);
 }
 
 void brute_tmd(tmd *p_tmd) {
     u16 fill;
-    for (fill=0; fill<65535; fill++) {
+    for (fill=0; fill<65535; fill++) 
+	{
         p_tmd->fill3=fill;
         sha1 hash;
-        //    debug_printf("SHA1(%p, %x, %p)\n", p_tmd, TMD_SIZE(p_tmd), hash);
+        gprintf("SHA1(%p, %x, %p)\n", p_tmd, TMD_SIZE(p_tmd), hash);
         SHA1((u8 *)p_tmd, TMD_SIZE(p_tmd), hash);;
 
-        if (hash[0]==0) {
-            //      debug_printf("setting fill3 to %04hx\n", fill);
+        if (hash[0]==0) 
+		{
+            gprintf("setting fill3 to %04hx\n", fill);
             return;
         }
     }
     printf("Unable to fix tmd :(\n");
-    exit(4);
+    ReturnToLoader();
 }
 
-void brute_tik(tik *p_tik) {
+void brute_tik(tik *p_tik) 
+{
     u16 fill;
-    for (fill=0; fill<65535; fill++) {
+    for (fill=0; fill<65535; fill++) 
+	{
         p_tik->padding=fill;
         sha1 hash;
-        //    debug_printf("SHA1(%p, %x, %p)\n", p_tmd, TMD_SIZE(p_tmd), hash);
+        //    gprintf("SHA1(%p, %x, %p)\n", p_tmd, TMD_SIZE(p_tmd), hash);
         SHA1((u8 *)p_tik, sizeof(tik), hash);
-
         if (hash[0]==0) return;
     }
     printf("Unable to fix tik :(\n");
-    exit(5);
+    ReturnToLoader();
 }
 
-static void forge_tmd(signed_blob *s_tmd) {
-//  debug_printf("forging tmd sig");
+static void forge_tmd(signed_blob *s_tmd) 
+{
+	gprintf("forging tmd sig");
     zero_sig(s_tmd);
     brute_tmd(SIGNATURE_PAYLOAD(s_tmd));
 }
 
-static void forge_tik(signed_blob *s_tik) {
-//  debug_printf("forging tik sig");
+static void forge_tik(signed_blob *s_tik) 
+{
+	gprintf("forging tik sig");
     zero_sig(s_tik);
     brute_tik(SIGNATURE_PAYLOAD(s_tik));
 }
@@ -432,34 +444,35 @@ int install_ticket(const signed_blob *s_tik, const signed_blob *s_certs, u32 cer
 {
     u32 ret;
 
-	//  debug_printf("Installing ticket...\n");
+	//  gprintf("Installing ticket...\n");
     ret = ES_AddTicket(s_tik, STD_SIGNED_TIK_SIZE, s_certs, certs_len, NULL, 0);
     if (ret < 0) 
 	{
-        debug_printf("ES_AddTicket failed: %d\n",ret);
+        gprintf("ES_AddTicket failed: %d\n",ret);
         return ret;
     }
     return 0;
 }
 
-s32 install(const signed_blob *s_tmd, const signed_blob *s_certs, u32 certs_len) {
+s32 install(const signed_blob *s_tmd, const signed_blob *s_certs, u32 certs_len) 
+{
     u32 ret, i;
     tmd *p_tmd = SIGNATURE_PAYLOAD(s_tmd);
-//  debug_printf("Adding title...\n");
+//  gprintf("Adding title...\n");
 
     ret = ES_AddTitleStart(s_tmd, SIGNED_TMD_SIZE(s_tmd), s_certs, certs_len, NULL, 0);
 
     //spinner();
     if (ret < 0) 
 	{
-        debug_printf("ES_AddTitleStart failed: %d\n",ret);
+        gprintf("ES_AddTitleStart failed: %d\n",ret);
         ES_AddTitleCancel();
         return ret;
     }
 
     for (i=0; i<p_tmd->num_contents; i++) 
 	{
-		//debug_printf("Adding content ID %08x", i);
+		//gprintf("Adding content ID %08x", i);
         printf("\b%u....", i+1);
         ret = install_nus_object((tmd *)SIGNATURE_PAYLOAD(s_tmd), i);
         if (ret) return ret;
@@ -467,7 +480,8 @@ s32 install(const signed_blob *s_tmd, const signed_blob *s_certs, u32 certs_len)
     printf("\b!\n");
 
     ret = ES_AddTitleFinish();
-    if (ret < 0) {
+    if (ret < 0) 
+	{
         printf("ES_AddTitleFinish failed: %d\n",ret);
         ES_AddTitleCancel();
         return ret;
@@ -477,47 +491,36 @@ s32 install(const signed_blob *s_tmd, const signed_blob *s_certs, u32 certs_len)
     return 0;
 }
 
-void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool patch2) {
+void patchmii_download(u32 titleid1, u32 titleid2, u16 *version, bool patch, bool patch2) 
+{
     u8 *temp_tmdbuf = NULL, *temp_tikbuf = NULL;
     u32 tmdsize;
     u8 update_tmd;
-    char tmdstring[20];
+    char tmdstring[20] = "tmd";
     int i, retval;
-//gprintf("\npatchmii_download() useSd = %d",useSd);
-
-    /*if (useSd) {
-    	gprintf("\nmaking the folders to put that shit in");
-    	char buf[128];
-    	snprintf(buf, 128, "fat0:/%08x", titleid1);
-    	mkdir(buf,S_IREAD | S_IWRITE);
-    	snprintf(buf, 128, "fat0:/%08x/%08x", titleid1, titleid2);
-    	mkdir(buf,S_IREAD | S_IWRITE);
-    	snprintf(buf, 128, "fat0:/%08x/%08x/v%d", titleid1, titleid2, version);
-    	mkdir(buf,S_IREAD | S_IWRITE);
-    }*/
+	//gprintf("\npatchmii_download() useSd = %d",useSd);
 
     if (ISFS_Initialize() || create_temp_dir()) 
 	{
         perror("Failed to create temp dir: ");
         ReturnToLoader();
     }
-    strcpy(tmdstring, "tmd");
-    if (version) sprintf(tmdstring, "%s.%u", tmdstring, version);
+    
+    if (*version != 0) sprintf(tmdstring, "%s.%u", tmdstring, *version);
 
-//  	debug_printf("Downloading IOS%d metadata: ..", titleid2);
-//	debug_printf("Sending things to Earth...");
     printf("TMD...");
 	SpinnerStart();
     retval = GetNusObject(titleid1, titleid2, version, tmdstring, &temp_tmdbuf, &tmdsize);
 	SpinnerStop();
+
     if (retval < 0) 
 	{
-        debug_printf("GetNusObject(tmd) returned %d, tmdsize = %u\n", retval, tmdsize);
+        gprintf("GetNusObject(tmd) returned %d, tmdsize = %u\n", retval, tmdsize);
         ReturnToLoader();
     }
     if (temp_tmdbuf == NULL) 
 	{
-        debug_printf("Failed to allocate temp buffer for encrypted content, size was %u\n", tmdsize);
+        gprintf("Failed to allocate temp buffer for encrypted content, size was %u\n", tmdsize);
         ReturnToLoader();
     }
     memcpy(tmdbuf, temp_tmdbuf, MIN(tmdsize, sizeof(tmdbuf)));
@@ -526,7 +529,7 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
     s_tmd = (signed_blob *)tmdbuf;
     if (!IS_VALID_SIGNATURE(s_tmd)) 
 	{
-        debug_printf("Bad TMD signature!\n");
+        gprintf("Bad TMD signature!\n");
         ReturnToLoader();
     }
     printf("\b.Done\n");
@@ -538,12 +541,12 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
     retval = GetNusObject(titleid1, titleid2, version, "cetk", &temp_tikbuf, &ticketsize);
 	SpinnerStop();
 
-    if (retval < 0) debug_printf("GetNusObject(cetk) returned %d, ticketsize = %u\n", retval, ticketsize);
+    if (retval < 0) gprintf("GetNusObject(cetk) returned %d, ticketsize = %u\n", retval, ticketsize);
     memcpy(tikbuf, temp_tikbuf, MIN(ticketsize, sizeof(tikbuf)));
 
     s_tik = (signed_blob *)tikbuf;
     if (!IS_VALID_SIGNATURE(s_tik)) {
-        debug_printf("Bad tik signature!\n");
+        gprintf("Bad tik signature!\n");
         ReturnToLoader();
     }
 
@@ -552,11 +555,11 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
     printf("\b.Done\n");
 
     s_certs = (signed_blob *)haxx_certs;
-    if (!IS_VALID_SIGNATURE(s_certs)) {
-        debug_printf("Bad cert signature!\n");
+    if (!IS_VALID_SIGNATURE(s_certs)) 
+	{
+        printf("Bad cert signature!\n");
         ReturnToLoader();
     }
-
 
     u8 key[16];
     get_title_key(s_tik, key);
@@ -569,13 +572,13 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
 
 //	print_tmd_summary(p_tmd);
 
-//	debug_printf("\b ..games..\b");
+//	gprintf("\b ..games..\b");
 
     static char cidstr[32];
 
     for (i=0;i<p_tmd->num_contents;i++) 
 	{
-//		debug_printf("Downloading part %d/%d (%lluK): ", i+1,
+//		gprintf("Downloading part %d/%d (%lluK): ", i+1,
 //					p_tmd->num_contents, p_cr[i].size / 1024);
         sprintf(cidstr, "%08x", p_cr[i].cid);
 
@@ -588,33 +591,33 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
 		SpinnerStop();
         if (retval < 0) 
 		{
-            debug_printf("GetNusObject(%s) failed with error %d, content size = %u\n", cidstr, retval, content_size);
+            gprintf("GetNusObject(%s) failed with error %d, content size = %u\n", cidstr, retval, content_size);
             ReturnToLoader();
         }
 
         if (content_buf == NULL) 
 		{
-            debug_printf("error allocating content buffer, size was %u\n", content_size);
+            gprintf("error allocating content buffer, size was %u\n", content_size);
             ReturnToLoader();
         }
 
         if (content_size % 16) 
 		{
-            debug_printf("ERROR: downloaded content[%hu] size %u is not a multiple of 16\n", i, content_size);
+            gprintf("ERROR: downloaded content[%d] size %u is not a multiple of 16\n", i, content_size);
             free(content_buf);
             ReturnToLoader();
         }
 
         if (content_size < p_cr[i].size) 
 		{
-            debug_printf("ERROR: only downloaded %u / %llu bytes\n", content_size, p_cr[i].size);
+            gprintf("ERROR: only downloaded %u / %llu bytes\n", content_size, p_cr[i].size);
             free(content_buf);
             ReturnToLoader();
         }
 
         decrypted_buf = malloc(content_size);
         if (!decrypted_buf) {
-            debug_printf("ERROR: failed to allocate decrypted_buf (%u bytes)\n", content_size);
+            gprintf("ERROR: failed to allocate decrypted_buf (%u bytes)\n", content_size);
             free(content_buf);
             ReturnToLoader();
         }
@@ -628,24 +631,29 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
 
         if (!memcmp(p_cr[i].hash, hash, sizeof hash)) 
 		{
-//			debug_printf("\b\b hash OK. ");
+//			gprintf("\b\b hash OK. ");
 //			display_ios_tags(decrypted_buf, content_size);
 
             update_tmd = 0;
-            if (patch) {
-                if ((p_tmd->title_id >> 32) == 1 && ((u32)(p_tmd->title_id)) > 2) {
+            if (patch) 
+			{
+                if ((p_tmd->title_id >> 32) == 1 && ((u32)(p_tmd->title_id)) > 2) 
+				{
                     if (patch_hash_check(decrypted_buf, content_size)) update_tmd = 1;
                 }
             }
 
-            if (patch2) {
-                if ((p_tmd->title_id >> 32) == 1 && ((u32)(p_tmd->title_id)) > 2) {
+            if (patch2) 
+			{
+                if ((p_tmd->title_id >> 32) == 1 && ((u32)(p_tmd->title_id)) > 2) 
+				{
                     if (patch_identify_check(decrypted_buf, content_size)) update_tmd = 1;
                 }
             }
 
-            if (update_tmd == 1) {
-//				debug_printf("Updating TMD.\n");
+            if (update_tmd == 1) 
+			{
+				// gprintf("Updating TMD.\n");
                 SHA1(decrypted_buf, p_cr[i].size, hash);
                 memcpy(p_cr[i].hash, hash, sizeof hash);
                 if (p_cr[i].type == 0x8001) p_cr[i].type = 1;
@@ -653,31 +661,35 @@ void patchmii_download(u32 titleid1, u32 titleid2, u32 version, bool patch,bool 
             }
 
             retval = (int) save_nus_object(p_cr[i].cid, decrypted_buf, content_size);
-            if (retval < 0) {
-                debug_printf("save_nus_object(%x) returned error %d\n", p_cr[i].cid, retval);
+            if (retval < 0) 
+			{
+                printf("save_nus_object(%x) returned error %d\n", p_cr[i].cid, retval);
                 ReturnToLoader();
             }
         } 
 		else 
 		{
-            debug_printf("hash BAD\n");
+            printf("hash BAD\n");
             ReturnToLoader();
         }
 
         free(decrypted_buf);
         free(content_buf);
     }
-//	debug_printf("\b ..keys..\b");
+//	gprintf("\b ..keys..\b");
 
 }
 
-s32 patchmii_install(u32 in_title_h, u32 in_title_l, u32 in_version, u32 out_title_h, u32 out_title_l, u32 out_version, bool patch,bool patch2) {
+s32 patchmii_install(u32 in_title_h, u32 in_title_l, u16 in_version, u32 out_title_h, u32 out_title_l, u16 out_version, bool patch, bool patch2) 
+{
 	//gprintf("\npatchmii_install()");
 
-    if (in_version) printf("Downloading Title %08x-%08x v%u.....\n", in_title_h, in_title_l, in_version);
-    else printf("Downloading Title %08x-%08x.....\n", in_title_h, in_title_l);
+	u16 version = in_version;
 
-    patchmii_download(in_title_h, in_title_l, in_version, patch,patch2);
+    if (version) gcprintf("Downloading Title %08x-%08x v%u.....\n", in_title_h, in_title_l, version);
+    else gcprintf("Downloading Title %08x-%08x.....\n", in_title_h, in_title_l);
+
+    patchmii_download(in_title_h, in_title_l, &version, patch,patch2);
     if (in_title_h != out_title_h || in_title_l != out_title_l ) 
 	{
         change_ticket_title_id(s_tik, out_title_h, out_title_l);
@@ -685,7 +697,7 @@ s32 patchmii_install(u32 in_title_h, u32 in_title_l, u32 in_version, u32 out_tit
         tmd_dirty = 1;
         tik_dirty = 1;
     }
-    if (in_version != out_version) 
+    if (version != out_version) 
 	{
         change_tmd_version(s_tmd, out_version);
         tmd_dirty = 1;
@@ -704,20 +716,20 @@ s32 patchmii_install(u32 in_title_h, u32 in_title_l, u32 in_version, u32 out_tit
         tik_dirty = 0;
     }
 
-    if (out_version) printf("\bDownload complete. Installing to Title %08x-%08x v%u...\n", out_title_h, out_title_l, out_version);
-    else printf("\bDownload complete. Installing to Title %08x-%08x...\n", out_title_h, out_title_l);
+    if (out_version) gcprintf("\bDownload complete. Installing to Title %08x-%08x v%u...\n", out_title_h, out_title_l, out_version);
+    else gcprintf("\bDownload complete. Installing to Title %08x-%08x...\n", out_title_h, out_title_l);
 
     int retval = install_ticket(s_tik, s_certs, haxx_certs_size);
     if (retval) 
 	{
-        debug_printf("install_ticket returned %d\n", retval);
+        gprintf("install_ticket returned %d\n", retval);
         ReturnToLoader();
     }
 	
 	SpinnerStart();
     retval = install(s_tmd, s_certs, haxx_certs_size);
 	SpinnerStop();
-//	debug_printf("\b..hacks..\b");
+//	gprintf("\b..hacks..\b");
 
     if (retval) printf("install returned %d\n", retval);
     printf("\bInstallation complete!\n");
@@ -732,11 +744,11 @@ s32 find_empty_IOS_slot(void) {
         if (get_title_version(1,i)==-106) break;
     }
     if (i>64) {
-//		debug_printf("Found empty IOS slot (IOS%d)\n", i);
+//		gprintf("Found empty IOS slot (IOS%d)\n", i);
         temp_ios_slot = i;
         return i;
     }
-    debug_printf("Couldn't find empty IOS slot :(\n");
+    gprintf("Couldn't find empty IOS slot :(\n");
     return -1;
 }
 
@@ -750,16 +762,16 @@ s32 install_temporary_ios(u32 base_ios, u32 base_ver) {
        forge_tmd(s_tmd);
        forge_tik(s_tik);
 
-    //  	debug_printf("Download complete. Installing:\n");
+    //  	gprintf("Download complete. Installing:\n");
 
       int retval = install_ticket(s_tik, s_certs, haxx_certs_size);
       if (retval) {
-    	debug_printf("install_ticket returned %d\n", retval);
+    	gprintf("install_ticket returned %d\n", retval);
     	exit(1);
       }
 
       retval = install(s_tmd, s_certs, haxx_certs_size);
-    //    debug_printf("\b..hacks..\b");
+    //    gprintf("\b..hacks..\b");
 
     if (retval) printf("install returned %d\n", retval);
     return retval;*/
@@ -772,7 +784,7 @@ s32 load_temporary_ios(void) {
 }
 
 s32 cleanup_temporary_ios(void) {
-    debug_printf("Cleaning up temporary IOS version %d", temp_ios_slot);
+    gprintf("Cleaning up temporary IOS version %d", temp_ios_slot);
     if (temp_ios_slot < 64) { // this should never happen
         printf("Not gonna do it, would't be prudent...\n");
         while (1);
@@ -780,9 +792,9 @@ s32 cleanup_temporary_ios(void) {
 
     /*	This code should work, but ends up getting an error -1017...
     	s32 vers = get_title_version(1, temp_ios_slot);
-    	debug_printf("Detected version %d of IOS%d\n", vers, temp_ios_slot);
+    	gprintf("Detected version %d of IOS%d\n", vers, temp_ios_slot);
     	if (vers != 31337) {
-    		debug_printf("Error: we didn't make this version of IOS\n");
+    		gprintf("Error: we didn't make this version of IOS\n");
     		return -1;
     	} */
 

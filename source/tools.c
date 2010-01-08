@@ -8,13 +8,12 @@
 #include <sdcard/wiisd_io.h>
 #include <sys/dir.h>
 
+#include "gecko.h"
 #include "tools.h"
 #include "network.h"
+#include "video.h"
 
-static void *xfb = NULL;
-static GXRModeObj *rmode = NULL;
 static volatile u32 tickcount = 0;
-bool IsDebugging = false;
 
 static lwp_t spinnerThread = LWP_THREAD_NULL;
 static bool spinnerRunning = false;
@@ -54,42 +53,9 @@ void SpinnerStop()
 
 void ReturnToLoader() 
 {
-	printf("\n\nReturning To Loader");
+	gcprintf("\n\nReturning To Loader");
+	VIDEO_WaitVSync();
 	exit(0);
-}
-
-/*
-	Used if you have Gecko, however it's not tested since we don't have Gecko
-*/
-void gprintf(const char *fmt, ...) 
-{
-    char buf[1024];
-    u32 len;
-    va_list ap;
-    usb_flush(1);
-    va_start(ap, fmt);
-    len = vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-    if (len <= 0 || len > sizeof(buf)) printf("Error: len = %d\n", len);
-    else usb_sendbuffer(1, buf, len);
-}
-
-void debug_printf(const char *fmt, ...) 
-{
-	if (!IsDebugging) return;
-
-    char buf[1024];
-    int len;
-    va_list ap;
-    //usb_flush(1);
-    va_start(ap, fmt);
-	len = vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
- //   if (len <= 0 || len > sizeof(buf)) printf("Error: len = %d\n", len);
-	//else printf("DEBUG: %s", buf);
-    //else usb_sendbuffer(1, buf, len);
-	puts(buf);
-    //fflush(stdout);
 }
 
 void Reboot() 
@@ -101,46 +67,6 @@ void Reboot()
 void *AllocateMemory(u32 size)
 {
 	return memalign(32, (size+31)&(~31));
-}
-
-void Init_Console() 
-{
-    // Initialise the video system
-    VIDEO_Init();
-
-    // Obtain the preferred video mode from the system
-    // This will correspond to the settings in the Wii menu
-    rmode = VIDEO_GetPreferredMode(NULL);
-
-    // Allocate memory for the display in the uncached region
-    xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-
-    // Set up the video registers with the chosen mode
-    VIDEO_Configure(rmode);
-
-    // Tell the video hardware where our display memory is
-    VIDEO_SetNextFramebuffer(xfb);
-
-    // Make the display visible
-    VIDEO_SetBlack(FALSE);
-
-    // Flush the video register changes to the hardware
-    VIDEO_Flush();
-
-    // Wait for Video setup to complete
-    VIDEO_WaitVSync();
-    if (rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
-
-    // Set console parameters
-    int x = 24, y = 32, w, h;
-    w = rmode->fbWidth - (32);
-    h = rmode->xfbHeight - (48);
-
-    // Initialize the console - CON_InitEx works after VIDEO_ calls
-    CON_InitEx(rmode, x, y, w, h);
-
-    // Clear the garbage around the edges of the console
-    VIDEO_ClearFrameBuffer(rmode, xfb, COLOR_BLACK);
 }
 
 void Close_SD() 
@@ -217,6 +143,7 @@ This will shutdown the controllers, SD & USB then reload the IOS.
 
 int __reloadIos(int version, bool initWPAD)
 {
+	gprintf("Reloading IOS%d...", version);
 	int ret;
 	// The following needs to be shutdown before reload
 	Close_SD(); 
@@ -226,5 +153,6 @@ int __reloadIos(int version, bool initWPAD)
 
 	ret = IOS_ReloadIOS(version);
 	if (initWPAD) WPAD_Init();
+	gprintf("Done\n");
 	return ret;
 }

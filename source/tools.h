@@ -34,9 +34,6 @@ This will shutdown the controllers, SD & USB then reload the IOS.
 */
 int __reloadIos(int version, bool initWPAD);
 
-void debug_printf(const char *fmt, ...);
-void gprintf(const char *fmt, ...);
-
 #ifdef __cplusplus
 }
 #endif

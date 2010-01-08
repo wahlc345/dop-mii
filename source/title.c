@@ -7,7 +7,8 @@
 #include "title.h"
 
 
-s32 Title_GetList(u64 **outbuf, u32 *outlen) {
+s32 Title_GetList(u64 **outbuf, u32 *outlen) 
+{
     u64 *titles = NULL;
 
     u32 len, nb_titles;
@@ -15,21 +16,18 @@ s32 Title_GetList(u64 **outbuf, u32 *outlen) {
 
     /* Get number of titles */
     ret = ES_GetNumTitles(&nb_titles);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Calculate buffer lenght */
     len = round_up(sizeof(u64) * nb_titles, 32);
 
     /* Allocate memory */
     titles = memalign(32, len);
-    if (!titles)
-        return -1;
+    if (!titles) return -1;
 
     /* Get titles */
     ret = ES_GetTitles(titles, nb_titles);
-    if (ret < 0)
-        goto err;
+    if (ret < 0) goto err;
 
     /* Set values */
     *outbuf = titles;
@@ -39,13 +37,12 @@ s32 Title_GetList(u64 **outbuf, u32 *outlen) {
 
 err:
     /* Free memory */
-    if (titles)
-        free(titles);
-
+    if (titles) free(titles);
     return ret;
 }
 
-s32 Title_GetTicketViews(u64 tid, tikview **outbuf, u32 *outlen) {
+s32 Title_GetTicketViews(u64 tid, tikview **outbuf, u32 *outlen) 
+{
     tikview *views = NULL;
 
     u32 nb_views;
@@ -53,18 +50,15 @@ s32 Title_GetTicketViews(u64 tid, tikview **outbuf, u32 *outlen) {
 
     /* Get number of ticket views */
     ret = ES_GetNumTicketViews(tid, &nb_views);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Allocate memory */
     views = (tikview *)memalign(32, sizeof(tikview) * nb_views);
-    if (!views)
-        return -1;
+    if (!views) return -1;
 
     /* Get ticket views */
     ret = ES_GetTicketViews(tid, views, nb_views);
-    if (ret < 0)
-        goto err;
+    if (ret < 0) goto err;
 
     /* Set values */
     *outbuf = views;
@@ -74,13 +68,12 @@ s32 Title_GetTicketViews(u64 tid, tikview **outbuf, u32 *outlen) {
 
 err:
     /* Free memory */
-    if (views)
-        free(views);
-
+    if (views) free(views);
     return ret;
 }
 
-s32 Title_GetTMD(u64 tid, signed_blob **outbuf, u32 *outlen) {
+s32 Title_GetTMD(u64 tid, signed_blob **outbuf, u32 *outlen) 
+{
     void *p_tmd = NULL;
 
     u32 len;
@@ -88,18 +81,15 @@ s32 Title_GetTMD(u64 tid, signed_blob **outbuf, u32 *outlen) {
 
     /* Get TMD size */
     ret = ES_GetStoredTMDSize(tid, &len);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Allocate memory */
     p_tmd = memalign(32, round_up(len, 32));
-    if (!p_tmd)
-        return -1;
+    if (!p_tmd) return -1;
 
     /* Read TMD */
     ret = ES_GetStoredTMD(tid, p_tmd, len);
-    if (ret < 0)
-        goto err;
+    if (ret < 0) goto err;
 
     /* Set values */
     *outbuf = p_tmd;
@@ -109,13 +99,13 @@ s32 Title_GetTMD(u64 tid, signed_blob **outbuf, u32 *outlen) {
 
 err:
     /* Free memory */
-    if (p_tmd)
-        free(p_tmd);
+    if (p_tmd) free(p_tmd);
 
     return ret;
 }
 
-s32 Title_GetVersion(u64 tid, u16 *outbuf) {
+s32 Title_GetVersion(u64 tid, u16 *outbuf) 
+{
     signed_blob *p_tmd = NULL;
     tmd *tmd_data = NULL;
 
@@ -124,8 +114,7 @@ s32 Title_GetVersion(u64 tid, u16 *outbuf) {
 
     /* Get title TMD */
     ret = Title_GetTMD(tid, &p_tmd, &len);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Retrieve TMD info */
     tmd_data = (tmd *)SIGNATURE_PAYLOAD(p_tmd);
@@ -135,11 +124,11 @@ s32 Title_GetVersion(u64 tid, u16 *outbuf) {
 
     /* Free memory */
     free(p_tmd);
-
     return 0;
 }
 
-s32 Title_GetVersionNObuf(u64 tid) {
+s32 Title_GetVersionNObuf(u64 tid) 
+{
     signed_blob *p_tmd = NULL;
     tmd *tmd_data = NULL;
 
@@ -148,8 +137,7 @@ s32 Title_GetVersionNObuf(u64 tid) {
 
     /* Get title TMD */
     ret = Title_GetTMD(tid, &p_tmd, &len);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Retrieve TMD info */
     tmd_data = (tmd *)SIGNATURE_PAYLOAD(p_tmd);
@@ -159,11 +147,11 @@ s32 Title_GetVersionNObuf(u64 tid) {
 
     /* Free memory */
     free(p_tmd);
-
     return ret;
 }
 
-s32 Title_GetSysVersion(u64 tid, u64 *outbuf) {
+s32 Title_GetSysVersion(u64 tid, u64 *outbuf) 
+{
     signed_blob *p_tmd = NULL;
     tmd *tmd_data = NULL;
 
@@ -172,8 +160,7 @@ s32 Title_GetSysVersion(u64 tid, u64 *outbuf) {
 
     /* Get title TMD */
     ret = Title_GetTMD(tid, &p_tmd, &len);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Retrieve TMD info */
     tmd_data = (tmd *)SIGNATURE_PAYLOAD(p_tmd);
@@ -183,11 +170,11 @@ s32 Title_GetSysVersion(u64 tid, u64 *outbuf) {
 
     /* Free memory */
     free(p_tmd);
-
     return 0;
 }
 
-s32 Title_GetSize(u64 tid, u32 *outbuf) {
+s32 Title_GetSize(u64 tid, u32 *outbuf) 
+{
     signed_blob *p_tmd = NULL;
     tmd *tmd_data = NULL;
 
@@ -196,14 +183,14 @@ s32 Title_GetSize(u64 tid, u32 *outbuf) {
 
     /* Get title TMD */
     ret = Title_GetTMD(tid, &p_tmd, &len);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Retrieve TMD info */
     tmd_data = (tmd *)SIGNATURE_PAYLOAD(p_tmd);
 
     /* Calculate title size */
-    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) {
+    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) 
+	{
         tmd_content *content = &tmd_data->contents[cnt];
 
         /* Add content size */

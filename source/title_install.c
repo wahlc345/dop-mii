@@ -13,7 +13,8 @@
 #include "wiibasics.h"
 
 /* 'WAD header' struct */
-typedef struct {
+typedef struct 
+{
     /* Header length */
     u32 header_len;
 
@@ -24,7 +25,12 @@ typedef struct {
     u16 padding;
 
     /* Data length */
-    u32 certs_len, crl_len, tik_len, tmd_len, data_len, footer_len;
+    u32 certs_len;
+	u32 crl_len;
+	u32 tik_len;
+	u32 tmd_len;
+	u32 data_len;
+	u32 footer_len;
 } ATTRIBUTE_PACKED wad_header;
 
 /* Variables */
@@ -43,26 +49,23 @@ s32 __Title_ReadNetwork(u64 tid, const char *filename, void **outbuf, u32 *outle
 
     /* Request file */
     ret = Network_Request(netpath, &len);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Allocate memory */
     buffer = memalign(32, len);
-    if (!buffer)
-        return -1;
+    if (!buffer) return -1;
 
     /* Download file */
     ret = Network_Read(buffer, len);
-    if (ret != len) {
+    if (ret != len) 
+	{
         free(buffer);
         return -2;
     }
 
     /* Set values */
     *outbuf = buffer;
-    if (outlen)
-        *outlen = len;
-
+    if (outlen) *outlen = len;
     return 0;
 }
 
@@ -115,16 +118,13 @@ s32 __Title_DownloadContent(tik *p_tik, tmd_content *content) {
 
     /* Download content file */
     ret = __Title_ReadNetwork(p_tik->titleid, filename, (void *)&buffer, &len);
-    if (ret < 0)
-        return ret;
+    if (ret < 0) return ret;
 
     /* Save content */
     ret = __Title_SaveContent(p_tik, content, buffer, len);
 
     /* Free memory */
-    if (buffer)
-        free(buffer);
-
+    if (buffer) free(buffer);
     return ret;
 }
 
@@ -222,7 +222,8 @@ err:
     return ret;
 }
 
-s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
+s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) 
+{
     wad_header *header = (wad_header *)buffer;
     signed_blob *s_tik = NULL, *s_tmd = NULL;
 
@@ -242,9 +243,9 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
 
     /* Copy ticket */
     s_tik = (signed_blob *)memalign(32, header->tik_len);
-    if (!s_tik) {
+    if (!s_tik) 
+	{
         ret = -1;
-
         printf(" ERROR! (ret = %d)\n", ret);
         goto err;
     }
@@ -261,9 +262,9 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
 
     /* Copy TMD */
     s_tmd = (signed_blob *)memalign(32, header->tmd_len);
-    if (!s_tmd) {
+    if (!s_tmd) 
+	{
         ret = -1;
-
         printf(" ERROR! (ret = %d)\n", ret);
         goto err;
     }
@@ -281,13 +282,15 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
 
     /* Create temp dir */
     ret = Nand_CreateDir(tik_data->titleid);
-    if (ret < 0) {
+    if (ret < 0) 
+	{
         printf(" ERROR! (ret = %d)\n", ret);
         goto err;
     }
 
     /* Title contents */
-    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) {
+    for (cnt = 0; cnt < tmd_data->num_contents; cnt++) 
+	{
         tmd_content *content = &tmd_data->contents[cnt];
         u32 content_len = round_up(content->size, 64);
 
@@ -300,9 +303,9 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
 
         /* Allocate memory */
         p_content = memalign(32, content_len);
-        if (!p_content) {
+        if (!p_content) 
+		{
             ret = -1;
-
             printf(" ERROR! (ret = %d)\n", ret);
             goto err;
         }
@@ -312,9 +315,9 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
 
         /* Save content */
         ret = __Title_SaveContent(tik_data, content, p_content, content_len);
-        if (ret < 0) {
+        if (ret < 0) 
+		{
             free(p_content);
-
             printf(" ERROR! (ret = %d)\n", ret);
             goto err;
         }
@@ -339,11 +342,8 @@ s32 Title_ExtractWAD(u8 *buffer, signed_blob **p_tik, signed_blob **p_tmd) {
 
 err:
     /* Free memory */
-    if (s_tik)
-        free(s_tik);
-    if (s_tmd)
-        free(s_tmd);
-
+    if (s_tik) free(s_tik);
+    if (s_tmd) free(s_tmd);
     return ret;
 }
 

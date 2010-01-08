@@ -34,13 +34,12 @@ distribution.
 #include "wiibasics.h"
 #include "controller.h"
 #include "tools.h"
+#include "gecko.h"
+#include "video.h"
 
 //#include "id.h"
 
 #define MAX_WIIMOTES 4
-
-static void *xfb = NULL;
-static GXRModeObj *rmode = NULL;
 
 u16 be16(const u8 *p) {
     return (p[0] << 8) | p[1];
@@ -83,53 +82,14 @@ u64 getUIDTitleID(u32 uid) {
     return 0;
 }
 
-
 /* Basic init taken pretty directly from the libOGC examples */
-void basicInit(void) {
-    // Initialise the video system
-    VIDEO_Init();
-
-    // Obtain the preferred video mode from the system
-    // This will correspond to the settings in the Wii menu
-    rmode = VIDEO_GetPreferredMode(NULL);
-
-    //rmode->viWidth = 678;
-    //rmode->viXOrigin = (VI_MAX_WIDTH_PAL - 678)/2;
-
-    GX_AdjustForOverscan(rmode, rmode, 32, 24);
-
-    // Allocate memory for the display in the uncached region
-    xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-
-
-    // Initialise the console, required for printf
-    console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
-
-
-    // Set up the video registers with the chosen mode
-    VIDEO_Configure(rmode);
-
-    // Tell the video hardware where our display memory is
-    VIDEO_SetNextFramebuffer(xfb);
-
-    // Make the display visible
-    VIDEO_SetBlack(FALSE);
-
-    // Flush the video register changes to the hardware
-    VIDEO_Flush();
-
-    // Wait for Video setup to complete
-    VIDEO_WaitVSync();
-    if (rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
-
-
-
-
-    // The console understands VT terminal escape codes
-    // This positions the cursor on row 2, column 0
-    // we can use variables for this with format codes too
-    // e.g. printf ("\x1b[%d;%dH", row, column );
-    printf("\x1b[2;0H");
+void WiiInit() 
+{
+	InitGecko(); 
+	gprintf("\n\nInitializing Wii\n");
+	gprintf("- VideoInit\n"); VideoInit();  
+	gprintf("- WPAD_Init\n"); WPAD_Init();
+	gprintf("- PAD_Init\n"); PAD_Init();
 }
 
 void miscInit(void) {
@@ -190,29 +150,10 @@ void miscDeInit()
     ISFS_Deinitialize();
 }
 
-//u32 getButtons() 
-//{
-//    WPAD_ScanPads();
-//    PAD_ScanPads();
-//    return WPAD_ButtonsDown(0)||PAD_ButtonsDown(0);
-//}
-
-//u32 wait_key(u32 button) {
-//    u32 pressed;
-//    do {
-//        VIDEO_WaitVSync();
-//        pressed = getButtons();
-//        if (pressed & WPAD_BUTTON_HOME) ReturnToLoader();
-//    } while (!(pressed & button));
-//
-//    return pressed;
-//}
-
-char charASCII(u8 c) {
-    if (c < 0x20 || c > 0x7E)
-        return '.';
-    else
-        return (char)c;
+char charASCII(u8 c) 
+{
+    if (c < 0x20 || c > 0x7E) return '.';
+    else return (char)c;
 }
 
 void hex_print_array16(const u8 *array, u32 size) 
@@ -252,7 +193,7 @@ void hex_print_array16(const u8 *array, u32 size)
 
 bool PromptYesNo()
 {
-    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");	
+    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");
 
 	u32 button;
 	for (button = 0;;ScanPads(&button))

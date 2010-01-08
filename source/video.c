@@ -1,24 +1,25 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <ogcsys.h>
 
 #include "sys.h"
 #include "video.h"
+#include "gecko.h"
 
 /* Video variables */
-static void *framebuffer = NULL;
+static unsigned int *frontBuffer = NULL;
 static GXRModeObj *vmode = NULL;
-
-
-void Con_Init(u32 x, u32 y, u32 w, u32 h) {
-    /* Create console in the framebuffer */
-    CON_InitEx(vmode, x, y, w, h);
-}
+int ConsoleRows;
+int ConsoleCols;
+int ScreenWidth;
+int ScreenHeight;
 
 void ClearScreen() 
 {
     /* Clear console */
     printf("\x1b[2J");
-    fflush(stdout);
+	fflush(stdout);
 }
 
 void ClearLine() 
@@ -74,7 +75,8 @@ void Con_FillRow(u32 row, u32 color, u8 bold) {
     fflush(stdout);
 
     /* Fill row */
-    for (cnt = 0; cnt < cols; cnt++) {
+    for (cnt = 0; cnt < cols; cnt++) 
+	{
         printf(" ");
         fflush(stdout);
     }
@@ -88,47 +90,61 @@ void Con_FillRow(u32 row, u32 color, u8 bold) {
     Con_FgColor(7, 1);
 }
 
-void Video_Configure(GXRModeObj *rmode) {
-    /* Configure the video subsystem */
-    VIDEO_Configure(rmode);
-
-    /* Setup video */
-    VIDEO_SetBlack(FALSE);
-    VIDEO_Flush();
-    VIDEO_WaitVSync();
-
-    if (rmode->viTVMode & VI_NON_INTERLACE)
-        VIDEO_WaitVSync();
-}
-
-void Video_SetMode(void) {
-    /* Select preferred video mode */
-    vmode = VIDEO_GetPreferredMode(NULL);
-
-    /* Allocate memory for the framebuffer */
-    framebuffer = MEM_K0_TO_K1(SYS_AllocateFramebuffer(vmode));
-
-    /* Configure the video subsystem */
-    VIDEO_Configure(vmode);
-
-    /* Setup video */
-    VIDEO_SetNextFramebuffer(framebuffer);
-    VIDEO_SetBlack(FALSE);
-    VIDEO_Flush();
-    VIDEO_WaitVSync();
-
-    if (vmode->viTVMode & VI_NON_INTERLACE)
-        VIDEO_WaitVSync();
-
-    /* Clear the screen */
-    Video_Clear(COLOR_BLACK);
-}
-
-void Video_Clear(s32 color) {
-    VIDEO_ClearFrameBuffer(vmode, framebuffer, color);
-}
-
 //void Video_DrawPng(IMGCTX ctx, PNGUPROP imgProp, u16 x, u16 y) {
 //    PNGU_DECODE_TO_COORDS_YCbYCr(ctx, x, y, imgProp.imgWidth, imgProp.imgHeight, vmode->fbWidth, vmode->xfbHeight, framebuffer);
 //}
 
+void ConSetPosition(u8 row, u8 column)
+{
+    // The console understands VT terminal escape codes
+    // This positions the cursor on row 2, column 0
+    // we can use variables for this with format codes too
+    // e.g. printf ("\x1b[%d;%dH", row, column );
+    printf("\x1b[%u;%uH", row, column);
+}
+
+void VideoInit()
+{
+    // Initialise the video system
+    VIDEO_Init();
+
+    // Obtain the preferred video mode from the system
+    // This will correspond to the settings in the Wii menu
+    vmode = VIDEO_GetPreferredMode(NULL);
+	
+	GX_AdjustForOverscan(vmode, vmode, 0, 12);	
+	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
+	{
+		vmode->viWidth += 32;
+		vmode->viXOrigin = ((VI_MAX_WIDTH_NTSC - vmode->viWidth) / 2) + 2;
+	}
+
+    // Set up the video registers with the chosen mode
+    VIDEO_Configure(vmode);
+
+	ScreenWidth = vmode->viWidth;
+	ScreenHeight = vmode->viHeight;
+
+    // Allocate memory for the display in the uncached region
+    frontBuffer = (u32 *) MEM_K0_TO_K1(SYS_AllocateFramebuffer(vmode));	
+	
+	VIDEO_ClearFrameBuffer(vmode, frontBuffer, COLOR_BLACK);
+
+	// Tell the video hardware where our display memory is	
+    VIDEO_SetNextFramebuffer(frontBuffer);
+
+    // Make the display visible
+    VIDEO_SetBlack(FALSE);
+
+    // Flush the video register changes to the hardware
+    VIDEO_Flush();
+
+    // Wait for Video setup to complete
+	VIDEO_WaitVSync();
+    if (vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
+	else while (VIDEO_GetNextField()) VIDEO_WaitVSync();
+
+	// Initialise the console, required for printf
+	CON_InitEx(vmode, 0, 0, ScreenWidth, ScreenHeight);
+	CON_GetMetrics(&ConsoleCols, &ConsoleRows);
+}

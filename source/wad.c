@@ -71,15 +71,15 @@ s32 __Wad_ReadAlloc(FILE *fp, void **outbuf, u32 offset, u32 len) {
     return 0;
 }
 
-
-
-s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u32 revision) {
+s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u16 revision) 
+{
     s32 ret;
     FILE *fp = NULL;
     wadHeader *header  = NULL;
 
     ret = Init_IOS(ios);
-    if (ret < 0) {
+    if (ret < 0) 
+	{
         printf("Out of memory\n");
         goto err;
     }
@@ -113,13 +113,15 @@ s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u32 revision) {
     /* WAD certificates */
     (*ios)->certs_size = header->certs_len;
     ret = __Wad_ReadAlloc(fp, (void *)&(*ios)->certs, offset, header->certs_len);
-    if (ret < 0) {
+    if (ret < 0) 
+	{
         printf("Error reading the certs, ret = %d\n", ret);
         goto err;
-    } else
-        offset += round_up(header->certs_len, 64);
+    } 
+	else offset += round_up(header->certs_len, 64);
 
-    if (!IS_VALID_SIGNATURE((signed_blob *)(*ios)->certs)) {
+    if (!IS_VALID_SIGNATURE((signed_blob *)(*ios)->certs)) 
+	{
         printf("Error: Bad certs signature!\n");
         ret = -1;
         goto err;
@@ -127,16 +129,17 @@ s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u32 revision) {
 
     /* WAD crl */
     (*ios)->crl_size = header->crl_len;
-    if (header->crl_len) {
+    if (header->crl_len) 
+	{
         ret = __Wad_ReadAlloc(fp, (void *)&(*ios)->crl, offset, header->crl_len);
-        if (ret < 0) {
+        if (ret < 0) 
+		{
             printf("Error reading the crl, ret = %d\n", ret);
             goto err;
-        } else
-            offset += round_up(header->crl_len, 64);
-    } else {
-        (*ios)->crl = NULL;
-    }
+        } 
+		else offset += round_up(header->crl_len, 64);
+    } 
+	else (*ios)->crl = NULL;
 
     (*ios)->ticket_size = header->tik_len;
     /* WAD ticket */

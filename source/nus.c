@@ -1,33 +1,16 @@
-/*
 #include <stdio.h>
-#include <stdarg.h>
-#include <malloc.h>
-#include <stdlib.h>
-#include <errno.h>
-*/
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
-#include <ogcsys.h>
-#include <gccore.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <network.h>
-#include <sys/errno.h>
-#include <fat.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <stdlib.h>
+#include <ogc/es.h>
 
 #include "http.h"
 #include "tools.h"
 #include "network.h"
+#include "gecko.h"
 
 extern bool networkInitialized;
 
-int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **outbuf, u32 *outlen) 
+int GetNusObject(u32 titleid1, u32 titleid2, u16 *version, char *content, u8 **outbuf, u32 *outlen) 
 {
     char buf[200] = "";
 	char filename[256] = "";
@@ -35,16 +18,16 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
     uint httpStatus = 200;	
 	FILE *fp = NULL;
 	
-	snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%d/%s", titleid1, titleid2, version, content);
+	if (*version != 0) snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%u/%s", titleid1, titleid2, *version, content);
 	
-	debug_printf("\nNusGetObject:Init_SD...");
-    if (Init_SD()) 
+	gprintf("\nNusGetObject::Init_SD...");
+    if (*version != 0 && Init_SD()) 
 	{		
-		debug_printf("Complete\n");
+		gprintf("Done\n");
 		fp = fopen(filename, "rb");
 		if (fp) 
 		{
-			gprintf("\n\tLoading File = %s ", filename);
+			gprintf("Loading File = %s\n", filename);
 			fseek(fp, 0, SEEK_END);
 			*outlen = ftell(fp);
 			fseek(fp, 0, SEEK_SET);
@@ -59,8 +42,8 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
 			
 			if (ret == 0) 
 			{				
-				if (fread(*outbuf, *outlen, 1, fp) != 1) ret = -2; /* Failed to read the file so return an error */
-				else ret = 1; /* File successfully loaded so return */
+				if (fread(*outbuf, *outlen, 1, fp) != 1) ret = -2; // Failed to read the file so return an error
+				else ret = 1; // File successfully loaded so return
 			}
 			fclose(fp);
 			fp = NULL;				
@@ -69,19 +52,23 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
 		}
 
 		Close_SD();
-		gprintf("\n***%s not found on the SD card.\n*** Trying to download it from the internet...\n",filename);
+		gprintf("\n* %s not found on the SD card.", filename);
+		gprintf("\n* Trying to download it from the internet...\n");
 	}
+	else gprintf("No Card Found\n");
     	
-	debug_printf("NusGetObject:NetworkInit...");
+	gprintf("NusGetObject::NetworkInit...");
 	NetworkInit();
-	debug_printf("Completed\n");
+	gprintf("Done\n");
     
     snprintf(buf, 128, "http://nus.cdn.shop.wii.com/ccs/download/%08x%08x/%s", titleid1, titleid2, content);
+	gprintf("Attemping to download %s\n\n", buf);
 
 	int retry = 5;
 	while (1)
 	{				
 		ret = http_request(buf, (u32)(1 << 31));
+		//gprintf("http_request = %d\n", ret);
 		if (!ret) 
 		{
 			retry--;
@@ -93,12 +80,26 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
 		else break;
     }
     ret = http_get_result(&httpStatus, outbuf, outlen);
+	//gprintf("http_get_result = %d\n", ret);
 
-    if (Init_SD()) 
+	// if version = 0 and file is TMD file then lets extract the version and return it
+	// so that the rest of the files will save to the correct folder
+	if (strcmpi(content, "TMD") == 0 && *version == 0 && *outbuf != NULL && *outlen != 0)
+	{
+		gprintf("Getting Version from TMD File\n");
+
+		tmd *pTMD = (tmd *)SIGNATURE_PAYLOAD((signed_blob *)*outbuf);
+		*version = pTMD->title_version;
+		sprintf(content, "%s.%u", content, *version);
+		snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%u/%s", titleid1, titleid2, *version, content);
+		gprintf("New Filename = %s\n", filename);
+	}
+
+    if (*version != 0 && Init_SD()) 
 	{
 		char folder[300] = "";
-		snprintf(folder, sizeof(folder), "sd:/%08X/%08X/v%d", titleid1, titleid2, version);
-		gprintf("\n\tDEBUG: FolderCreateTree() = %s ", (FolderCreateTree(folder)?"true":"false"));
+		snprintf(folder, sizeof(folder), "sd:/%08X/%08X/v%u", titleid1, titleid2, *version);
+		gprintf("FolderCreateTree() = %s ", (FolderCreateTree(folder)? "True" : "False"));
 		
 		fp = fopen(filename, "wb");
 		if (fp) 
@@ -106,7 +107,7 @@ int GetNusObject(u32 titleid1, u32 titleid2, u32 version, char *content, u8 **ou
 		    fwrite(*outbuf, *outlen, 1, fp);
 			fclose(fp);
 		}
-		else gprintf("\n\tDEBUG: Could not write file %s to the SD Card. \n", filename);
+		else gprintf("\nCould not write file %s to the SD Card. \n", filename);
 		Close_SD();
     }
 

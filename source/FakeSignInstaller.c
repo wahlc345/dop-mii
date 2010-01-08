@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <gccore.h>
 
+#include "FakeSignInstaller.h"
 #include "../build/cert_sys.h"
 #include "controller.h"
 #include "tools.h"
@@ -8,7 +9,7 @@
 #include "signcheckfunctions.h"
 #include "IOSPatcher.h"
 #include "wiibasics.h"
-#include "FakeSignInstaller.h"
+#include "gecko.h"
 
 int FakeSignInstall()
 {	
@@ -36,13 +37,13 @@ int FakeSignInstall()
 	gprintf("\n");
 	
 	// Lets see if version is already fakesigned
-	debug_printf("Checking FakeSign on IOS36\n");
+	gprintf("Checking FakeSign on IOS36\n");
 	if (CheckFakeSign())
 	{
 		printf("\n\nIOS36 already has FakeSign applied.\n");
 		return -1;
 	}
-	debug_printf("CheckFakeSign = %d", ret);	
+	gprintf("CheckFakeSign = %d", ret);	
 
 	// Downgrade IOS 15
 	printf("*** Downgrading IOS15 to r257 ***\n");

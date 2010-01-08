@@ -6,7 +6,7 @@
 void patchmii_network_init(void);
 // Call with version = 0 to get the latest version
 // Set "patch" if you want to try to patch title contents
-s32 patchmii_install(u32 in_title_h, u32 in_title_l, u32 in_version, u32 out_title_h, u32 out_title_l, u32 out_version, bool patch, bool patch2);
+s32 patchmii_install(u32 in_title_h, u32 in_title_l, u16 in_version, u32 out_title_h, u32 out_title_l, u16 out_version, bool patch,bool patch2);
 s32 install_temporary_ios(u32 base_ios, u32 base_ver);
 s32 load_temporary_ios(void);
 s32 cleanup_temporary_ios(void);
