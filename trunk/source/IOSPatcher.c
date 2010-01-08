@@ -15,17 +15,18 @@
 #include "sha1.h"
 #include "tools.h"
 #include "video.h"
+#include "gecko.h"
 
-#define round_up(x,n)	(-(-(x) & -(n)))
-#define TITLE_UPPER(x)		( (u32)((x) >> 32) )
-#define TITLE_LOWER(x)		((u32)(x))
-
+#define round_up(x,n)  (-(-(x) & -(n)))
+#define TITLE_UPPER(x) ((u32)((x) >> 32))
+#define TITLE_LOWER(x) ((u32)(x))
 
 u8 commonkey[16] = { 0xeb, 0xe4, 0x2a, 0x22, 0x5e, 0x85, 0x93, 0xe4, 0x48, 0xd9, 0xc5, 0x45, 0x73, 0x81, 0xaa, 0xf7 };
 
 s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u32 revision);
 
-static void get_title_key(signed_blob *s_tik, u8 *key) {
+static void get_title_key(signed_blob *s_tik, u8 *key) 
+{
     static u8 iv[16] ATTRIBUTE_ALIGN(0x20);
     static u8 keyin[16] ATTRIBUTE_ALIGN(0x20);
     static u8 keyout[16] ATTRIBUTE_ALIGN(0x20);
@@ -80,45 +81,46 @@ static void change_tmd_title_id(signed_blob *s_tmd, u32 titleid1, u32 titleid2) 
 */
 
 
-static void zero_sig(signed_blob *sig) {
+static void zero_sig(signed_blob *sig) 
+{
     u8 *sig_ptr = (u8 *)sig;
     memset(sig_ptr + 4, 0, SIGNATURE_SIZE(sig)-4);
 }
 
-static s32 brute_tmd(tmd *p_tmd) {
+static s32 brute_tmd(tmd *p_tmd) 
+{
     u16 fill;
-    for (fill=0; fill<65535; fill++) {
+    for (fill=0; fill<65535; fill++) 
+	{
         p_tmd->fill3=fill;
         sha1 hash;
-        SHA1((u8 *)p_tmd, TMD_SIZE(p_tmd), hash);;
-
-        if (hash[0]==0) {
-            return 0;
-        }
+        SHA1((u8 *)p_tmd, TMD_SIZE(p_tmd), hash);
+        if (hash[0]==0) return 0;
     }
     return -1;
 }
 
-static s32 brute_tik(tik *p_tik) {
+static s32 brute_tik(tik *p_tik) 
+{
     u16 fill;
-    for (fill=0; fill<65535; fill++) {
+    for (fill=0; fill<65535; fill++) 
+	{
         p_tik->padding=fill;
         sha1 hash;
         SHA1((u8 *)p_tik, sizeof(tik), hash);
-
-        if (hash[0]==0) {
-            return 0;
-        }
+        if (hash[0]==0) return 0;
     }
     return -1;
 }
 
-static void forge_tmd(signed_blob *s_tmd) {
+static void forge_tmd(signed_blob *s_tmd) 
+{
     zero_sig(s_tmd);
     brute_tmd(SIGNATURE_PAYLOAD(s_tmd));
 }
 
-static void forge_tik(signed_blob *s_tik) {
+static void forge_tik(signed_blob *s_tik) 
+{
     zero_sig(s_tik);
     brute_tik(SIGNATURE_PAYLOAD(s_tik));
 }
@@ -151,13 +153,16 @@ int patch_hash_check(u8 *buf, u32 size)
     return match_count;
 }
 
-int patch_identify_check(u8 *buf, u32 size) {
+int patch_identify_check(u8 *buf, u32 size) 
+{
     u32 match_count = 0;
     u8 identify_check[] = { 0x28, 0x03, 0xD1, 0x23 };
     u32 i;
 
-    for (i = 0; i < size - 4; i++) {
-        if (!memcmp(buf + i, identify_check, sizeof identify_check)) {
+    for (i = 0; i < size - 4; i++) 
+	{
+        if (!memcmp(buf + i, identify_check, sizeof identify_check)) 
+		{
             buf[i+2] = 0;
             buf[i+3] = 0;
             i += 4;
@@ -187,8 +192,9 @@ int patch_patch_fsperms(u8 *buf, u32 size)
     }
     return match_count;
 }
-static void display_tag(u8 *buf) {
-    printf("Firmware version: %s      Builder: %s\n", buf, buf+0x30);
+static void display_tag(u8 *buf) 
+{
+    printf("Firmware version: %s Builder: %s\n", buf, buf+0x30);
 }
 
 static void display_ios_tags(u8 *buf, u32 size) {
@@ -221,86 +227,89 @@ bool contains_module(u8 *buf, u32 size, char *module) {
     u32 i;
     char *ios_version_tag = "$IOSVersion:";
 
-    for (i=0; i<(size-64); i++) {
-        if (!strncmp((char *)buf+i, ios_version_tag, 10)) {
+    for (i=0; i<(size-64); i++) 
+	{
+        if (!strncmp((char *)buf+i, ios_version_tag, 10)) 
+		{
             char version_buf[128];
             while (buf[i+strlen(ios_version_tag)] == ' ') i++; // skip spaces
             strlcpy(version_buf, (char *)buf + i + strlen(ios_version_tag), sizeof version_buf);
             i += 64;
-            if (strncmp(version_buf, module, strlen(module)) == 0) {
-                return true;
-            }
+            if (strncmp(version_buf, module, strlen(module)) == 0) return true;
         }
     }
     return false;
 }
 
-s32 module_index(IOS *ios, char *module) {
+s32 module_index(IOS *ios, char *module) 
+{
     int i;
-    for (i = 0; i < ios->content_count; i++) {
-        if (!ios->decrypted_buffer[i] || !ios->buffer_size[i]) {
-            return -1;
-        }
-
-        if (contains_module(ios->decrypted_buffer[i], ios->buffer_size[i], module)) {
-            return i;
-        }
+    for (i = 0; i < ios->content_count; i++) 
+	{
+        if (!ios->decrypted_buffer[i] || !ios->buffer_size[i]) return -1;
+        if (contains_module(ios->decrypted_buffer[i], ios->buffer_size[i], module)) return i;
     }
     return -1;
 }
 
-static void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
+static void decrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) 
+{
     static u8 iv[16];
     memset(iv, 0, 16);
     memcpy(iv, &index, 2);
     aes_decrypt(iv, source, dest, len);
 }
 
-static void encrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) {
+static void encrypt_buffer(u16 index, u8 *source, u8 *dest, u32 len) 
+{
     static u8 iv[16];
     memset(iv, 0, 16);
     memcpy(iv, &index, 2);
     aes_encrypt(iv, source, dest, len);
 }
 
-void decrypt_IOS(IOS *ios) {
+void decrypt_IOS(IOS *ios) 
+{
     u8 key[16];
     get_title_key(ios->ticket, key);
     aes_set_key(key);
 
     int i;
-    for (i = 0; i < ios->content_count; i++) {
+    for (i = 0; i < ios->content_count; i++) 
+	{
         decrypt_buffer(i, ios->encrypted_buffer[i], ios->decrypted_buffer[i], ios->buffer_size[i]);
     }
 }
 
-void encrypt_IOS(IOS *ios) {
+void encrypt_IOS(IOS *ios) 
+{
     u8 key[16];
     get_title_key(ios->ticket, key);
     aes_set_key(key);
 
     int i;
-    for (i = 0; i < ios->content_count; i++) {
+    for (i = 0; i < ios->content_count; i++) 
+	{
         encrypt_buffer(i, ios->decrypted_buffer[i], ios->encrypted_buffer[i], ios->buffer_size[i]);
     }
 }
 
-void display_tags(IOS *ios) {
+void display_tags(IOS *ios) 
+{
     int i;
-    for (i = 0; i < ios->content_count; i++) {
+    for (i = 0; i < ios->content_count; i++) 
+	{
         printf("Content %2u:  ", i);
-
         display_ios_tags(ios->decrypted_buffer[i], ios->buffer_size[i]);
     }
 }
 
-s32 Init_IOS(IOS **ios) {
-    if (ios == NULL)
-        return -1;
+s32 Init_IOS(IOS **ios) 
+{
+    if (ios == NULL) return -1;
 
     *ios = memalign(32, sizeof(IOS));
-    if (*ios == NULL)
-        return -1;
+    if (*ios == NULL) return -1;
 
     (*ios)->content_count = 0;
 
@@ -382,21 +391,23 @@ s32 install_IOS(IOS *ios, bool skipticket)
     if (!skipticket) 
 	{
         ret = ES_AddTicket(ios->ticket, ios->ticket_size, ios->certs, ios->certs_size, ios->crl, ios->crl_size);
-        if (ret < 0) {
-            printf("ES_AddTicket returned: %d\n", ret);
+        if (ret < 0) 
+		{
+            gcprintf("ES_AddTicket returned: %d\n", ret);
             ES_AddTitleCancel();
             return ret;
         }
     }
-    printf("\b..");
+    gcprintf("\b..");
 
     ret = ES_AddTitleStart(ios->tmd, ios->tmd_size, ios->certs, ios->certs_size, ios->crl, ios->crl_size);
-    if (ret < 0) {
-        printf("\nES_AddTitleStart returned: %d\n", ret);
+    if (ret < 0) 
+	{
+        gcprintf("\nES_AddTitleStart returned: %d\n", ret);
         ES_AddTitleCancel();
         return ret;
     }
-    printf("\b..");
+    gcprintf("\b..");
 
     tmd *tmd_data  = (tmd *)SIGNATURE_PAYLOAD(ios->tmd);
 
@@ -408,7 +419,7 @@ s32 install_IOS(IOS *ios, bool skipticket)
         cfd = ES_AddContentStart(tmd_data->title_id, content->cid);
         if (cfd < 0) 
 		{
-            printf("\nES_AddContentStart for content #%u cid %u returned: %d\n", i, content->cid, cfd);
+            gcprintf("\nES_AddContentStart for content #%u cid %u returned: %d\n", i, content->cid, cfd);
             ES_AddTitleCancel();
             return cfd;
         }
@@ -416,7 +427,7 @@ s32 install_IOS(IOS *ios, bool skipticket)
         ret = ES_AddContentData(cfd, ios->encrypted_buffer[i], ios->buffer_size[i]);
         if (ret < 0) 
 		{
-            printf("\nES_AddContentData for content #%u cid %u returned: %d\n", i, content->cid, ret);
+            gcprintf("\nES_AddContentData for content #%u cid %u returned: %d\n", i, content->cid, ret);
             ES_AddTitleCancel();
             return ret;
         }
@@ -424,47 +435,51 @@ s32 install_IOS(IOS *ios, bool skipticket)
         ret = ES_AddContentFinish(cfd);
         if (ret < 0) 
 		{
-            printf("\nES_AddContentFinish for content #%u cid %u returned: %d\n", i, content->cid, ret);
+            gcprintf("\nES_AddContentFinish for content #%u cid %u returned: %d\n", i, content->cid, ret);
             ES_AddTitleCancel();
             return ret;
         }
-        printf("\b..");
+        gcprintf("\b..");
     }
 
     ret = ES_AddTitleFinish();
-    if (ret < 0) {
-        printf("\nES_AddTitleFinish returned: %d\n", ret);
+    if (ret < 0) 
+	{
+        gcprintf("\nES_AddTitleFinish returned: %d\n", ret);
         ES_AddTitleCancel();
         return ret;
     }
-    printf("\b..");
+    gcprintf("\b..");
 
     return 0;
 }
 
 s32 GetCerts(signed_blob** Certs, u32* Length) 
 {
-    if (cert_sys_size != 2560) {
-        return -1;
-    }
+    if (cert_sys_size != 2560)  return -1;
     *Certs = memalign(32, 2560);
-    if (*Certs == NULL) {
+    
+	if (*Certs == NULL) 
+	{
         printf("Out of memory\n");
         return -1;
     }
     memcpy(*Certs, cert_sys, cert_sys_size);
     *Length = 2560;
-
     return 0;
 }
 
 
-s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
+s32 Download_IOS(IOS **ios, u32 iosnr, u16 revision) 
+{
     s32 ret;
 
+	u16 version = revision;
+
     ret = Init_IOS(ios);
-    if (ret < 0) {
-        printf("Out of memory\n");
+    if (ret < 0) 
+	{
+        gcprintf("Out of memory\n");
         goto err;
     }
 
@@ -474,51 +489,56 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
 
     printf("Loading certs...");
     ret = GetCerts(&((*ios)->certs), &((*ios)->certs_size));
-    if (ret < 0) {
-        printf ("Loading certs from nand failed, ret = %d\n", ret);
+    if (ret < 0) 
+	{
+        gcprintf ("Loading certs from nand failed, ret = %d\n", ret);
         goto err;
     }
 
-    if ((*ios)->certs == NULL || (*ios)->certs_size == 0) {
-        printf("certs error\n");
+    if ((*ios)->certs == NULL || (*ios)->certs_size == 0) 
+	{
+        gcprintf("certs error\n");
         ret = -1;
         goto err;
     }
 
     if (!IS_VALID_SIGNATURE((*ios)->certs)) {
-        printf("Error: Bad certs signature!\n");
+        gcprintf("Error: Bad certs signature!\n");
         ret = -1;
         goto err;
     }
 
-    printf("\nLoading TMD...");
-    sprintf(buf, "tmd.%u", revision);
+    gcprintf("\nLoading TMD...");
+    sprintf(buf, "tmd.%u", version);
     u8 *tmd_buffer = NULL;
-	//spinner();
-    ret = GetNusObject(1, iosnr, revision, buf, &tmd_buffer, &((*ios)->tmd_size));
-    if (ret < 0) {
-        printf("Loading tmd failed, ret = %u\n", ret);
+    ret = GetNusObject(1, iosnr, &version, buf, &tmd_buffer, &((*ios)->tmd_size));
+    if (ret < 0) 
+	{
+        gcprintf("Loading tmd failed, ret = %u\n", ret);
         goto err;
     }
 
-    if (tmd_buffer == NULL || (*ios)->tmd_size == 0) {
-        printf("TMD error\n");
+    if (tmd_buffer == NULL || (*ios)->tmd_size == 0) 
+	{
+		gcprintf("TMD error\n");
         ret = -1;
         goto err;
     }
 
     (*ios)->tmd_size = SIGNED_TMD_SIZE((signed_blob *)tmd_buffer);
     (*ios)->tmd = memalign(32, (*ios)->tmd_size);
-    if ((*ios)->tmd == NULL) {
-        printf("Out of memory\n");
+    if ((*ios)->tmd == NULL) 
+	{
+        gcprintf("Out of memory\n");
         ret = -1;
         goto err;
     }
     memcpy((*ios)->tmd, tmd_buffer, (*ios)->tmd_size);
     free(tmd_buffer);
 
-    if (!IS_VALID_SIGNATURE((*ios)->tmd)) {
-        printf("Error: Bad TMD signature!\n");
+    if (!IS_VALID_SIGNATURE((*ios)->tmd)) 
+	{
+        gcprintf("Error: Bad TMD signature!\n");
         ret = -1;
         goto err;
     }
@@ -526,18 +546,18 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
     printf("\nLoading ticket...");
     u8 *ticket_buffer = NULL;
 	SpinnerStart();
-    ret = GetNusObject(1, iosnr, revision, "cetk", &ticket_buffer, &((*ios)->ticket_size));
+    ret = GetNusObject(1, iosnr, &version, "cetk", &ticket_buffer, &((*ios)->ticket_size));
 	SpinnerStop();
     if (ret < 0) 
 	{
-        printf("Loading ticket failed, ret = %u\n", ret);
+        gcprintf("Loading ticket failed, ret = %u\n", ret);
         goto err;
     }
 	printf("\b.Done\n");
 
     if (ticket_buffer == NULL || (*ios)->ticket_size == 0) 
 	{
-        printf("ticket error\n");
+        gcprintf("ticket error\n");
         ret = -1;
         goto err;
     }
@@ -546,7 +566,7 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
     (*ios)->ticket = memalign(32, (*ios)->ticket_size);
     if ((*ios)->ticket == NULL) 
 	{
-        printf("Out of memory\n");
+        gcprintf("Out of memory\n");
         ret = -1;
         goto err;
     }
@@ -555,7 +575,7 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
 
     if (!IS_VALID_SIGNATURE((*ios)->ticket)) 
 	{
-        printf("Error: Bad ticket signature!\n");
+        gcprintf("Error: Bad ticket signature!\n");
         ret = -1;
         goto err;
     }
@@ -563,26 +583,29 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
     /* Get TMD info */
     tmd_data = (tmd *)SIGNATURE_PAYLOAD((*ios)->tmd);
 
-    printf("Checking titleid and revision...");
-    if (TITLE_UPPER(tmd_data->title_id) != 1 || TITLE_LOWER(tmd_data->title_id) != iosnr) {
-        printf("IOS has titleid: %08x%08x but expected was: %08x%08x\n", TITLE_UPPER(tmd_data->title_id), TITLE_LOWER(tmd_data->title_id), 1, iosnr);
+    gcprintf("Checking titleid and revision...");
+    if (TITLE_UPPER(tmd_data->title_id) != 1 || TITLE_LOWER(tmd_data->title_id) != iosnr) 
+	{
+        gcprintf("IOS has titleid: %08x%08x but expected was: %08x%08x\n", TITLE_UPPER(tmd_data->title_id), TITLE_LOWER(tmd_data->title_id), 1, iosnr);
         ret = -1;
         goto err;
     }
 
-    if (tmd_data->title_version != revision) {
-        printf("IOS has revision: %u but expected was: %u\n", tmd_data->title_version, revision);
+    if (tmd_data->title_version != version) 
+	{
+        gcprintf("IOS has revision: %u but expected was: %u\n", tmd_data->title_version, version);
         ret = -1;
         goto err;
     }
 
     ret = set_content_count(*ios, tmd_data->num_contents);
-    if (ret < 0) {
-        printf("Out of memory\n");
+    if (ret < 0) 
+	{
+        gcprintf("Out of memory\n");
         goto err;
     }
 
-    printf("\nLoading contents...");
+    gcprintf("\nLoading contents...");
 	
     for (cnt = 0; cnt < tmd_data->num_contents; cnt++) 
 	{
@@ -594,48 +617,51 @@ s32 Download_IOS(IOS **ios, u32 iosnr, u32 revision) {
         sprintf(buf, "%08x", content->cid);
 		
 		SpinnerStart();
-        ret = GetNusObject(1, iosnr, revision, buf, &((*ios)->encrypted_buffer[cnt]), &((*ios)->buffer_size[cnt]));
+        ret = GetNusObject(1, iosnr, &version, buf, &((*ios)->encrypted_buffer[cnt]), &((*ios)->buffer_size[cnt]));
 		SpinnerStop();
 
 		// SD Loading may have occured so let's not add a dot to the end
 		if (ret == 0) printf("\b. ");
 
-        if ((*ios)->buffer_size[cnt] % 16) {
-            printf("Content %u size is not a multiple of 16\n", cnt);
+        if ((*ios)->buffer_size[cnt] % 16) 
+		{
+            gcprintf("Content %u size is not a multiple of 16\n", cnt);
             ret = -1;
             goto err;
         }
 
-        if ((*ios)->buffer_size[cnt] < (u32)content->size) {
-            printf("Content %u size is too small\n", cnt);
+        if ((*ios)->buffer_size[cnt] < (u32)content->size) 
+		{
+            gcprintf("Content %u size is too small\n", cnt);
             ret = -1;
             goto err;
         }
 
         (*ios)->decrypted_buffer[cnt] = memalign(32, (*ios)->buffer_size[cnt]);
-        if (!(*ios)->decrypted_buffer[cnt]) {
-            printf("Out of memory\n");
+        if (!(*ios)->decrypted_buffer[cnt]) 
+		{
+            gcprintf("Out of memory\n");
             ret = -1;
             goto err;
         }	
     }
-    printf("\b.Done\n");
+    gcprintf("\b.Done\n");
 
-    printf("Reading file into memory complete.\n");
-    printf("Decrypting IOS...\n");
+    gcprintf("Reading file into memory complete.\n");
+    gcprintf("Decrypting IOS...\n");
     decrypt_IOS(*ios);
 
     tmd_content *p_cr = TMD_CONTENTS(tmd_data);
     sha1 hash;
     int i;
 
-    printf("Checking hashes...");
+    gcprintf("Checking hashes...");
     for (i=0;i < (*ios)->content_count;i++) 
 	{
         SHA1((*ios)->decrypted_buffer[i], (u32)p_cr[i].size, hash);
         if (memcmp(p_cr[i].hash, hash, sizeof hash) != 0) 
 		{
-            printf("Wrong hash for content #%u\n", i);
+            gcprintf("Wrong hash for content #%u\n", i);
             ret = -1;
             goto err;
         }
@@ -650,7 +676,7 @@ out:
     return ret;
 }
 
-s32 get_IOS(IOS **ios, u32 iosnr, u32 revision) 
+s32 get_IOS(IOS **ios, u32 iosnr, u16 revision) 
 {
     char buf[64];
 	u32 button;
@@ -669,6 +695,8 @@ s32 get_IOS(IOS **ios, u32 iosnr, u32 revision)
 
 		for (button = 0;;ScanPads(&button))
 		{
+			if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+
 			if (button&WPAD_BUTTON_LEFT)
 			{
 				if (selection > 0) selection--;
@@ -724,32 +752,31 @@ int IosInstallUnpatched(u32 iosVersion, u32 revision)
     int ret;
     IOS *ios;
 
-    printf("Getting IOS%u revision %u...\n", iosVersion, revision);
+    gcprintf("Getting IOS%u revision %u...\n", iosVersion, revision);
     ret = get_IOS(&ios, iosVersion, revision);
     if (ret < 0) 
 	{
-        printf("Error reading IOS into memory\n");
+        gcprintf("Error reading IOS into memory\n");
         return ret;
     }
-	printf("\b.Done\n");
+	gcprintf("\b.Done\n");
 
-    printf("Installing IOS%u Rev %u...", iosVersion, revision);
+    gcprintf("Installing IOS%u Rev %u...", iosVersion, revision);
 	SpinnerStart();
     ret = install_IOS(ios, false);
 	SpinnerStop();
     if (ret < 0) 
 	{
-        printf("Error: Could not install IOS%u Rev %u\n", iosVersion, revision);
+        gcprintf("Error: Could not install IOS%u Rev %u\n", iosVersion, revision);
         free_IOS(&ios);
 		sleep(5);
         return ret;
     }
-    printf("\b.Done\n");
+    gcprintf("\b.Done\n");
 
     free_IOS(&ios);
     return 0;
 }
-
 
 int IosInstall(u32 iosVersion, u32 iosRevision, bool esTruchaPatch, bool esIdentifyPatch, bool nandPatch) //, u32 location, u32 newrevision) 
 {
@@ -761,11 +788,11 @@ int IosInstall(u32 iosVersion, u32 iosRevision, bool esTruchaPatch, bool esIdent
     bool tmd_dirty = false;
     bool tik_dirty = false;
 
-    printf("Getting IOS%u revision %u...\n", iosVersion, iosRevision);
+    gcprintf("Getting IOS%u revision %u...\n", iosVersion, iosRevision);
     ret = get_IOS(&ios, iosVersion, iosRevision);
     if (ret < 0) 
 	{
-        printf("Error reading IOS into memory\n");
+        gcprintf("Error reading IOS into memory\n");
         return -1;
     }
 
@@ -777,7 +804,7 @@ int IosInstall(u32 iosVersion, u32 iosRevision, bool esTruchaPatch, bool esIdent
         index = module_index(ios, "ES:");
         if (index < 0) 
 		{
-            printf("Could not identify ES module\n");
+            gcprintf("Could not identify ES module\n");
             free_IOS(&ios);
             return -1;
         }
@@ -787,23 +814,23 @@ int IosInstall(u32 iosVersion, u32 iosRevision, bool esTruchaPatch, bool esIdent
 
         if (esTruchaPatch) 
 		{
-            printf("Patching trucha bug into ES module(#%u)...", index);
+            gcprintf("Patching trucha bug into ES module(#%u)...", index);
             trucha = patch_hash_check(ios->decrypted_buffer[index], ios->buffer_size[index]);
-            printf("patched %u hash check(s)\n", trucha);
+            gcprintf("patched %u hash check(s)\n", trucha);
         }
 
         if (esIdentifyPatch) 
 		{
-            printf("Patching ES_Identify in ES module(#%u)...", index);
+            gcprintf("Patching ES_Identify in ES module(#%u)...", index);
             identify = patch_identify_check(ios->decrypted_buffer[index], ios->buffer_size[index]);
-            printf("patch applied %u time(s)\n", identify);
+            gcprintf("patch applied %u time(s)\n", identify);
         }
 
         if (nandPatch)
 		{
-            printf("Patching nand permissions in ES module(#%u)...", index);
+            gcprintf("Patching nand permissions in ES module(#%u)...", index);
             nand = patch_patch_fsperms(ios->decrypted_buffer[index], ios->buffer_size[index]);
-            printf("patch applied %u time(s)\n", nand);
+            gcprintf("patch applied %u time(s)\n", nand);
         }
 
         if (trucha > 0 || identify > 0 || nand > 0) 
@@ -831,32 +858,22 @@ int IosInstall(u32 iosVersion, u32 iosRevision, bool esTruchaPatch, bool esIdent
 
     if (tmd_dirty) 
 	{
-        printf("Trucha signing the tmd...\n");
+        gcprintf("Trucha signing the tmd...\n");
         forge_tmd(ios->tmd);
     }
 
     if (tik_dirty) 
 	{
-        printf("Trucha signing the ticket..\n");
+        gcprintf("Trucha signing the ticket..\n");
         forge_tik(ios->ticket);
     }
 
-    printf("Encrypting IOS...\n");
+    gcprintf("Encrypting IOS...\n");
     encrypt_IOS(ios);
 
-    printf("Preparations complete\n\n");
-    /*printf("Press A to start the install...\n");
+    gcprintf("Preparations complete\n\n");
 
-    u32 pressed;
-    u32 pressedGC;
-    waitforbuttonpress(&pressed, &pressedGC);
-    if (pressed != WPAD_BUTTON_A && pressedGC != PAD_BUTTON_A) {
-        printf("Other button pressed\n");
-        free_IOS(&ios);
-        return -1;
-    }*/
-
-    printf("Installing...");
+    gcprintf("Installing...");
 	SpinnerStart();
     ret = install_IOS(ios, false);
 	SpinnerStop();
@@ -865,44 +882,44 @@ int IosInstall(u32 iosVersion, u32 iosRevision, bool esTruchaPatch, bool esIdent
         free_IOS(&ios);
         if (ret == -1017 || ret == -2011) 
 		{
-            printf("You need to use an IOS with trucha bug.\n");
-            printf("That's what the IOS15 downgrade is good for...\n");
+            gcprintf("You need to use an IOS with trucha bug.\n");
+            gcprintf("That's what the IOS15 downgrade is good for...\n");
         } 
 		else if (ret == -1035) 
 		{
-			printf("Has your installed IOS%u a higher revison than %u?\n", iosVersion, iosRevision);
+			gcprintf("Has your installed IOS%u a higher revison than %u?\n", iosVersion, iosRevision);
 		}
 
         return -1;
     }
-    printf("\b.Done\n");
+    gcprintf("\b.Done\n");
 
     free_IOS(&ios);
     return 0;
 }
 
 
-s32 Downgrade_TMD_Revision(void *ptmd, u32 tmd_size, void *certs, u32 certs_size) {
+s32 Downgrade_TMD_Revision(void *ptmd, u32 tmd_size, void *certs, u32 certs_size) 
+{
     // The revison of the tmd used as paramter here has to be >= the revision of the installed tmd
     s32 ret;
 
-    printf("Setting the revision to 0...\n");
+    gcprintf("Setting the revision to 0...\n");
 
     ret = ES_AddTitleStart(ptmd, tmd_size, certs, certs_size, NULL, 0);
 
-    if (ret < 0) {
-        if (ret == -1035) {
-            printf("Error: ES_AddTitleStart returned %d, maybe you need an updated Downgrader\n", ret);
-        } else {
-            printf("Error: ES_AddTitleStart returned %d\n", ret);
-        }
+    if (ret < 0) 
+	{
+        if (ret == -1035) gcprintf("Error: ES_AddTitleStart returned %d, maybe you need an updated Downgrader\n", ret);
+        else gcprintf("Error: ES_AddTitleStart returned %d\n", ret);
         ES_AddTitleCancel();
         return ret;
     }
 
     ret = ISFS_Initialize();
-    if (ret < 0) {
-        printf("Error: ISFS_Initialize returned %d\n", ret);
+    if (ret < 0) 
+	{
+        gcprintf("Error: ISFS_Initialize returned %d\n", ret);
         ES_AddTitleCancel();
         return ret;
     }
@@ -913,8 +930,9 @@ s32 Downgrade_TMD_Revision(void *ptmd, u32 tmd_size, void *certs, u32 certs_size
     ISFS_CreateFile(tmd_path, 0, 3, 3, 3);
 
     file = ISFS_Open(tmd_path, ISFS_OPEN_RW);
-    if (!file) {
-        printf("Error: ISFS_Open returned %d\n", file);
+    if (!file) 
+	{
+        gcprintf("Error: ISFS_Open returned %d\n", file);
         ES_AddTitleCancel();
         ISFS_Deinitialize();
         return -1;
@@ -925,8 +943,9 @@ s32 Downgrade_TMD_Revision(void *ptmd, u32 tmd_size, void *certs, u32 certs_size
     tmd[0x1dd] = 0;
 
     ret = ISFS_Write(file, (u8 *)ptmd, tmd_size);
-    if (!ret) {
-        printf("Error: ISFS_Write returned %d\n", ret);
+    if (!ret) 
+	{
+        gcprintf("Error: ISFS_Write returned %d\n", ret);
         ISFS_Close(file);
         ES_AddTitleCancel();
         ISFS_Deinitialize();
@@ -941,49 +960,37 @@ s32 Downgrade_TMD_Revision(void *ptmd, u32 tmd_size, void *certs, u32 certs_size
 
 s32 IosDowngrade(u32 iosVersion, u32 highRevision, u32 lowRevision) 
 {
-    printf("Preparing downgrade of IOS%u: Using %u to downgrade to %u\n", iosVersion, highRevision, lowRevision);
+	gcprintf("\n");
+    gcprintf("Preparing downgrade of IOS%u: Using %u to downgrade to %u\n", iosVersion, highRevision, lowRevision);
 
     int ret;
     IOS *highIos;
     IOS *lowIos;
 
-    printf("Getting IOS%u revision %u...\n", iosVersion, highRevision);
+    gcprintf("Getting IOS%u revision %u...\n", iosVersion, highRevision);
     ret = get_IOS(&highIos, iosVersion, highRevision);
     if (ret < 0) 
 	{
-        printf("Error reading IOS into memory\n");
+        gcprintf("Error reading IOS into memory\n");
         return ret;
     }
 
-	printf("Getting IOS%u revision %u...\n", iosVersion, lowRevision);
+	gcprintf("Getting IOS%u revision %u...\n", iosVersion, lowRevision);
 	ret = get_IOS(&lowIos, iosVersion, lowRevision);
 	if (ret < 0) 
 	{
-		printf("Error reading IOS into memory\n");
+		gcprintf("Error reading IOS into memory\n");
 		free_IOS(&highIos);
 		return ret;
 	}
 
-    printf("\n");
-    printf("Step 1: Set the revison to 0\n");
-    printf("Step 2: Install IOS with low revision\n");
-   /* printf("Preparations complete, press A to start step 1...\n");
-
-    u32 pressed;
-    u32 pressedGC;
-    waitforbuttonpress(&pressed, &pressedGC);
-    if (pressed != WPAD_BUTTON_A && pressedGC != PAD_BUTTON_A) {
-        printf("Other button pressed\n");
-        free_IOS(&highios);
-        free_IOS(&lowios);
-        return -1;
-    }*/
-
-    printf("Installing ticket...\n");
+    gcprintf("\n");
+    gcprintf("Step 1: Set the revison to 0\n");    
+    gcprintf("Installing ticket...\n");
     ret = ES_AddTicket(highIos->ticket, highIos->ticket_size, highIos->certs, highIos->certs_size, highIos->crl, highIos->crl_size);
     if (ret < 0) 
 	{
-        printf("ES_AddTicket returned: %d\n", ret);
+        gcprintf("ES_AddTicket returned: %d\n", ret);
         free_IOS(&highIos);
         free_IOS(&lowIos);
         ES_AddTitleCancel();
@@ -993,38 +1000,30 @@ s32 IosDowngrade(u32 iosVersion, u32 highRevision, u32 lowRevision)
     ret = Downgrade_TMD_Revision(highIos->tmd, highIos->tmd_size, highIos->certs, highIos->certs_size);
     if (ret < 0) 
 	{
-        printf("Error: Could not set the revision to 0\n");
+        gcprintf("Error: Could not set the revision to 0\n");
         free_IOS(&highIos);
         free_IOS(&lowIos);
         return ret;
     }
 
-    printf("Revision set to 0, step 1 complete.\n");
-    printf("\n");
-    /*printf("Pess A to start step 2...\n");
+    gcprintf("Revision set to 0, step 1 complete.\n");
+    gcprintf("\n");
+	gcprintf("Step 2: Install IOS with low revision\n");
 
-    waitforbuttonpress(&pressed, &pressedGC);
-    if (pressed != WPAD_BUTTON_A && pressedGC != PAD_BUTTON_A) {
-        printf("Other button pressed\n");
-        free_IOS(&highios);
-        free_IOS(&lowios);
-        return -1;
-    }*/
-
-    printf("Installing IOS%u Rev %u...", iosVersion, lowRevision);
+    gcprintf("Installing IOS%u Rev %u...", iosVersion, lowRevision);
 	SpinnerStart();
     ret = install_IOS(lowIos, true);
 	SpinnerStop();
     if (ret < 0) 
 	{
-        printf("Error: Could not install IOS%u Rev %u\n", iosVersion, lowRevision);
+        gcprintf("Error: Could not install IOS%u Rev %u\n", iosVersion, lowRevision);
         free_IOS(&highIos);
         free_IOS(&lowIos);
         return ret;
     }
-	printf("\b.Done\n");
+	gcprintf("\b.Done\n");
 
-    printf("IOS%u downgrade to revision: %u complete.\n", iosVersion, lowRevision);
+    gcprintf("IOS%u downgrade to revision: %u complete.\n", iosVersion, lowRevision);
     free_IOS(&highIos);
     free_IOS(&lowIos);
 

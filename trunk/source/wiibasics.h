@@ -43,8 +43,8 @@ u32 be32(const u8 *p);
 u64 be64(const u8 *p);
 u64 be34(const u8 *p);
 
-// Do basic Wii init: Video, console, WPAD
-void basicInit(void);
+/* Do basic Wii init: Video, WPAD, GC PAD */
+void WiiInit();
 
 // Do our custom init: Identify and initialized ISFS driver
 void miscInit(void);

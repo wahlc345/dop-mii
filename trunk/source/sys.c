@@ -3,6 +3,7 @@
 #include <ogcsys.h>
 
 #include "sys.h"
+#include "tools.h"
 
 /* Constants */
 #define CERTS_LEN 0x280
@@ -58,8 +59,7 @@ void Sys_LoadMenu(void) {
     u32 *stub = (u32 *)0x80001800;
 
     /* Homebrew Channel stub */
-    if (*stub)
-        exit(0);
+    if (*stub) ReturnToLoader();
 
     /* Return to the Wii system menu */
     SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);

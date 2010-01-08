@@ -31,6 +31,7 @@
 
 #include "http.h"
 #include "tools.h"
+#include "gecko.h"
 
 char *http_host;
 u16 http_port;
@@ -42,24 +43,28 @@ u32 http_status;
 u32 content_length;
 u8 *http_data;
 
-s32 tcp_socket (void) {
+s32 tcp_socket (void) 
+{
 	s32 s, res;
 
 	s = net_socket (PF_INET, SOCK_STREAM, 0);
-	if (s < 0) {
+	if (s < 0) 
+	{
 		printf ("net_socket failed: %d\n", s);
 		return s;
 	}
 
 	res = net_fcntl (s, F_GETFL, 0);
-	if (res < 0) {
+	if (res < 0) 
+	{
 		printf ("F_GETFL failed: %d\n", res);
 		net_close (s);
 		return res;
 	}
 
 	res = net_fcntl (s, F_SETFL, res | 4);
-	if (res < 0) {
+	if (res < 0) 
+	{
 		printf ("F_SETFL failed: %d\n", res);
 		net_close (s);
 		return res;
@@ -68,15 +73,17 @@ s32 tcp_socket (void) {
 	return s;
 }
 
-s32 tcp_connect (char *host, const u16 port) {
+s32 tcp_connect (char *host, const u16 port) 
+{
 	struct hostent *hp;
 	struct sockaddr_in sa;
 	s32 s, res;
 	s64 t;
 
 	hp = net_gethostbyname (host);
-	if (!hp || !(hp->h_addrtype == PF_INET)) {
-		printf ("net_gethostbyname failed: %d\n", errno);
+	if (!hp || !(hp->h_addrtype == PF_INET)) 
+	{
+		gprintf("net_gethostbyname failed: %d\n", errno);
 		return errno;
 	}
 
@@ -91,31 +98,29 @@ s32 tcp_connect (char *host, const u16 port) {
 	memcpy ((char *) &sa.sin_addr, hp->h_addr_list[0], hp->h_length);
 
 	t = gettime ();
-	while (true) {
-		if (ticks_to_millisecs (diff_ticks (t, gettime ())) >
-				TCP_CONNECT_TIMEOUT) {
-			printf ("tcp_connect timeout\n");
+	while (1) 
+	{
+		if (ticks_to_millisecs (diff_ticks (t, gettime ())) > TCP_CONNECT_TIMEOUT) 
+		{
+			gprintf ("tcp_connect timeout\n");
 			net_close (s);
-
 			return -ETIMEDOUT;
 		}
 
-		res = net_connect (s, (struct sockaddr *) &sa,
-							sizeof (struct sockaddr_in));
+		res = net_connect (s, (struct sockaddr *) &sa, sizeof (struct sockaddr_in));
 
-		if (res < 0) {
-			if (res == -EISCONN)
-				break;
+		if (res < 0) 
+		{
+			if (res == -EISCONN) break;
 
-			if (res == -EINPROGRESS || res == -EALREADY) {
+			if (res == -EINPROGRESS || res == -EALREADY) 
+			{
 				usleep (20 * 1000);
-
 				continue;
 			}
 
 			printf ("net_connect failed: %d\n", res);
 			net_close (s);
-
 			return res;
 		}
 
@@ -125,7 +130,8 @@ s32 tcp_connect (char *host, const u16 port) {
 	return s;
 }
 
-char * tcp_readln (const s32 s, const u16 max_length, const u64 start_time, const u16 timeout) {
+char * tcp_readln (const s32 s, const u16 max_length, const u64 start_time, const u16 timeout) 
+{
 	char *buf;
 	u16 c;
 	s32 res;
@@ -135,21 +141,21 @@ char * tcp_readln (const s32 s, const u16 max_length, const u64 start_time, cons
 
 	c = 0;
 	ret = NULL;
-	while (true) {
-		if (ticks_to_millisecs (diff_ticks (start_time, gettime ())) > timeout)
-			break;
+	while (1) 
+	{
+		if (ticks_to_millisecs (diff_ticks (start_time, gettime ())) > timeout) break;
 
 		res = net_read (s, &buf[c], 1);
 
-		if ((res == 0) || (res == -EAGAIN)) {
+		if ((res == 0) || (res == -EAGAIN)) 
+		{
 			usleep (20 * 1000);
-
 			continue;
 		}
 
-		if (res < 0) {
+		if (res < 0) 
+		{
 			printf ("tcp_readln failed: %d\n", res);
-
 			break;
 		}
 
@@ -175,7 +181,8 @@ char * tcp_readln (const s32 s, const u16 max_length, const u64 start_time, cons
 	return ret;
 }
 
-bool tcp_read (const s32 s, u8 **buffer, const u32 length) {
+bool tcp_read (const s32 s, u8 **buffer, const u32 length)
+{
 	u8 *p;
 	u32 step, left, block, received;
 	s64 t;
@@ -187,29 +194,28 @@ bool tcp_read (const s32 s, u8 **buffer, const u32 length) {
 	received = 0;
 
 	t = gettime ();
-	while (left) {
-		if (ticks_to_millisecs (diff_ticks (t, gettime ())) >
-				TCP_BLOCK_RECV_TIMEOUT) {
-			printf ("tcp_read timeout\n");
-
+	while (left) 
+	{
+		if (ticks_to_millisecs (diff_ticks (t, gettime ())) > TCP_BLOCK_RECV_TIMEOUT) 
+		{
+			gprintf("tcp_read timeout\n");
 			break;
 		}
 
 		block = left;
-		if (block > 2048)
-			block = 2048;
+		if (block > 2048) block = 2048;
 
 		res = net_read (s, p, block);
 
-		if ((res == 0) || (res == -EAGAIN)) {
+		if ((res == 0) || (res == -EAGAIN)) 
+		{
 			usleep (20 * 1000);
-
 			continue;
 		}
 
-		if (res < 0) {
+		if (res < 0) 
+		{
 			printf ("net_read failed: %d\n", res);
-
 			break;
 		}
 
@@ -217,7 +223,8 @@ bool tcp_read (const s32 s, u8 **buffer, const u32 length) {
 		left -= res;
 		p += res;
 
-		if ((received / TCP_BLOCK_SIZE) > step) {
+		if ((received / TCP_BLOCK_SIZE) > step) 
+		{
 			t = gettime ();
 			step++;
 		}
@@ -276,22 +283,16 @@ bool tcp_write (const s32 s, const u8 *buffer, const u32 length)
 
 	return left == 0;
 }
-bool http_split_url (char **host, char **path, const char *url) {
+bool http_split_url (char **host, char **path, const char *url) 
+{
 	const char *p;
 	char *c;
-
-	if (strncasecmp (url, "http://", 7))
-		return false;
-
+	if (strncasecmp (url, "http://", 7)) return false;
 	p = url + 7;
 	c = strchr (p, '/');
-
-	if (c[0] == 0)
-		return false;
-
+	if (c[0] == 0) return false;
 	*host = strndup (p, c - p);
 	*path = strdup (c);
-
 	return true;
 }
 
@@ -308,7 +309,7 @@ bool http_request (const char *url, const u32 max_size)
 	http_data = NULL;
 
 	int s = tcp_connect (http_host, http_port);
-//	printf("tcp_connect(%s, %hu) = %d\n", http_host, http_port, s);
+	//gprintf("tcp_connect(%s, %hu) = %d\n", http_host, http_port, s);
 	if (s < 0) 
 	{
 		result = HTTPR_ERR_CONNECT;
@@ -321,29 +322,26 @@ bool http_request (const char *url, const u32 max_size)
 	r += sprintf (r, "Host: %s\r\n", http_host);
 	r += sprintf (r, "Cache-Control: no-cache\r\n\r\n");
 
-//	printf("request = %s\n", request);
+	//gprintf("request = %s\n", request);
 
 	bool b = tcp_write (s, (u8 *) request, strlen (request));
-//	printf("tcp_write returned %d\n", b);
+	//gprintf("tcp_write returned %d\n", b);
 
 	free (request);
 	linecount = 0;
 
 	for (linecount=0; linecount < 32; linecount++) 
 	{
-	  char *line = tcp_readln (s, 0xff, gettime(), (u16)HTTP_TIMEOUT);
-//		printf("tcp_readln returned %p (%s)\n", line, line?line:"(null)");
-		if (!line) {
+		char *line = tcp_readln (s, 0xff, gettime(), (u16)HTTP_TIMEOUT);
+		//gprintf("tcp_readln returned %p (%s)\n", line, line?line:"(null)");
+		if (!line) 
+		{
 			http_status = 404;
 			result = HTTPR_ERR_REQUEST;
 			break;
 		}
 
-		if (strlen (line) < 1) {
-			free (line);
-			line = NULL;
-			break;
-		}
+		if (strlen (line) < 1) break;
 
 		sscanf (line, "HTTP/1.%*u %u", &http_status);
 		sscanf (line, "Content-Length: %u", &content_length);
@@ -352,7 +350,7 @@ bool http_request (const char *url, const u32 max_size)
 		line = NULL;
 
 	}
-//	printf("content_length = %d, status = %d, linecount = %d\n", content_length, http_status, linecount);
+	//gprintf("content_length = %d, status = %d, linecount = %d\n", content_length, http_status, linecount);
 	if (linecount == 32 || !content_length) http_status = 404;
 	if (http_status != 200) 
 	{
@@ -398,10 +396,8 @@ bool http_get_result (u32 *_http_status, u8 **content, u32 *length)
 		*content = NULL;
 		*length = 0;
 	}
-
 	free (http_host);
 	free (http_path);
-
 	return true;
 }
 
