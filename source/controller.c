@@ -19,7 +19,7 @@ void ScanPads(u32 *button)
 
 	if (pressed || pressedGC)
 	{
-		if (pressedGC) usleep(5000);
+		if (pressedGC) usleep(20000);
 		if (pressed&WPAD_BUTTON_A || pressed&WPAD_CLASSIC_BUTTON_A || pressedGC&PAD_BUTTON_A) *button = WPAD_BUTTON_A;
 		if (pressed&WPAD_BUTTON_B || pressed&WPAD_CLASSIC_BUTTON_B || pressedGC&PAD_BUTTON_B) *button = WPAD_BUTTON_B;
 		if (pressed&WPAD_BUTTON_LEFT || pressed&WPAD_CLASSIC_BUTTON_LEFT || pressedGC&PAD_BUTTON_LEFT) *button = WPAD_BUTTON_LEFT;
