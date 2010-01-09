@@ -112,15 +112,12 @@ void VideoInit()
     // This will correspond to the settings in the Wii menu
     vmode = VIDEO_GetPreferredMode(NULL);
 
-	GX_AdjustForOverscan(vmode, vmode, 0, 20);	
+	gprintf("tvmode = %u\n", vmode->viTVMode);
 
-	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-	{
-		vmode->viWidth += 16;
-		vmode->fbWidth = vmode->viWidth;
-		vmode->viXOrigin = ((VI_MAX_WIDTH_NTSC - vmode->viWidth) / 2);		
-	}
-	
+	// Fixes Screen Resolution
+	if( vmode->viTVMode == VI_NTSC || CONF_GetEuRGB60() || CONF_GetProgressiveScan() )
+		GX_AdjustForOverscan(vmode, vmode, 0, (u16)(vmode->viWidth * 0.026));
+
     // Set up the video registers with the chosen mode
     VIDEO_Configure(vmode);
 
@@ -148,5 +145,5 @@ void VideoInit()
 
 	// Initialise the console, required for printf
 	CON_InitEx(vmode, 0, 0, ScreenWidth, ScreenHeight);
-	CON_GetMetrics(&ConsoleCols, &ConsoleRows);
+	CON_GetMetrics(&ConsoleCols, &ConsoleRows);	
 }
