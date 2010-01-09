@@ -111,15 +111,16 @@ void VideoInit()
     // Obtain the preferred video mode from the system
     // This will correspond to the settings in the Wii menu
     vmode = VIDEO_GetPreferredMode(NULL);
-	
-	GX_AdjustForOverscan(vmode, vmode, 0, 16);	
+
+	GX_AdjustForOverscan(vmode, vmode, 0, 20);	
 
 	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 	{
 		vmode->viWidth += 16;
-		vmode->viXOrigin = ((VI_MAX_WIDTH_NTSC - vmode->viWidth) / 2) + 2;
+		vmode->fbWidth = vmode->viWidth;
+		vmode->viXOrigin = ((VI_MAX_WIDTH_NTSC - vmode->viWidth) / 2);		
 	}
-
+	
     // Set up the video registers with the chosen mode
     VIDEO_Configure(vmode);
 
