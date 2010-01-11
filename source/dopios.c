@@ -540,9 +540,14 @@ void InstallTheChosenChannel(int region, int channel) {
     if (channel == 0) 
 	{
         printf("\n\nInstalling the Shop Channel...");
-		if (region != 3) ret = patchmii_install(0x10002, 0x48414241, 0, 0x10002, 0x48414241, 0, false, false);		
-		else  ret = patchmii_install(0x10002, 0x4841424B, 0, 0x10002, 0x4841424B, 0, false, false);
-        if (ret < 0) printf("\nError: %d", ret);
+		// For All Systems
+		ret = patchmii_install(0x10002, 0x48414241, 0, 0x10002, 0x48414241, 0, false, false);		
+		if (ret >= 0)
+		{
+			// Korea has an additional download
+			if (region == 3) ret = patchmii_install(0x10002, 0x4841424B, 0, 0x10002, 0x4841424B, 0, false, false);        
+		}
+		if (ret < 0) printf("\nError: %d", ret);
         else printf("\nShop Channel successfully installed!");
     }
 
@@ -559,8 +564,14 @@ void InstallTheChosenChannel(int region, int channel) {
     if (channel == 2) 
 	{
         printf("\n\nInstalling the Photo Channel 1.1...");
-		if (region != 3) ret = patchmii_install(0x10002, 0x48415941, 0, 0x10002, 0x48415941, 0, false, false);
-		else ret = patchmii_install(0x10002, 0x4841594B, 0, 0x10002, 0x4841594B, 0, false, false);
+		// All Systems
+		ret = patchmii_install(0x10002, 0x48415941, 0, 0x10002, 0x48415941, 0, false, false); 
+		
+		if (ret >= 0)
+		{		
+			// Korea has an additonal download
+			if (region == 3) ret = patchmii_install(0x10002, 0x4841594B, 0, 0x10002, 0x4841594B, 0, false, false); 
+		}
         if (ret < 0) printf("\nError: %d", ret);
         else printf("\nPhoto Channel 1.1 successfully installed!");
     }
@@ -591,11 +602,15 @@ void InstallTheChosenChannel(int region, int channel) {
     if (channel == 5) 
 	{
         printf("\n\nInstalling the News Channel...");
+		// First step is for All Systems
         ret = patchmii_install(0x10002, 0x48414741, 0, 0x10002, 0x48414741, 0, false, false);
-        if (region == 0) ret = patchmii_install(0x10002,0x48414745,0,0x10002,0x48414745,0,false, false);
-        if (region == 1) ret = patchmii_install(0x10002,0x48414750,0,0x10002,0x48414750,0,false, false);
-        if (region == 2) ret = patchmii_install(0x10002,0x4841474a,0,0x10002,0x4841474a,0,false, false);
-        if (region == 3) ret = patchmii_install(0x10002,0x4841474b,0,0x10002,0x4841474b,0,false, false);
+		if (ret >= 0)
+		{
+			if (region == 0) ret = patchmii_install(0x10002,0x48414745,0,0x10002,0x48414745,0,false, false);
+			if (region == 1) ret = patchmii_install(0x10002,0x48414750,0,0x10002,0x48414750,0,false, false);
+			if (region == 2) ret = patchmii_install(0x10002,0x4841474a,0,0x10002,0x4841474a,0,false, false);
+			if (region == 3) ret = patchmii_install(0x10002,0x4841474b,0,0x10002,0x4841474b,0,false, false);
+		}
         if (ret < 0) printf("\nError: %d", ret);
         else printf("\nNews Channel successfully installed!");
     }
@@ -605,10 +620,13 @@ void InstallTheChosenChannel(int region, int channel) {
 	{
         printf("\n\nInstalling the Weather Channel...");
         ret = patchmii_install(0x10002, 0x48414641, 0, 0x10002, 0x48414641, 0, false, false);
-        if (region == 0) ret = patchmii_install(0x10002,0x48414645,0,0x10002,0x48414645,0,false, false);
-        if (region == 1) ret = patchmii_install(0x10002,0x48414650,0,0x10002,0x48414650,0,false, false);
-        if (region == 2) ret = patchmii_install(0x10002,0x4841464a,0,0x10002,0x4841464a,0,false, false);
-        if (region == 3) ret = patchmii_install(0x10002,0x4841464b,0,0x10002,0x4841464b,0,false, false);
+		if (ret >= 0)
+		{
+			if (region == 0) ret = patchmii_install(0x10002,0x48414645,0,0x10002,0x48414645,0,false, false);
+			if (region == 1) ret = patchmii_install(0x10002,0x48414650,0,0x10002,0x48414650,0,false, false);
+			if (region == 2) ret = patchmii_install(0x10002,0x4841464a,0,0x10002,0x4841464a,0,false, false);
+			if (region == 3) ret = patchmii_install(0x10002,0x4841464b,0,0x10002,0x4841464b,0,false, false);
+		}
         if (ret < 0) printf("\nError: %d", ret);
         else printf("\nWeather Channel successfully installed!");
     }
