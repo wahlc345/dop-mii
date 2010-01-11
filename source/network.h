@@ -1,6 +1,10 @@
 #ifndef _NETWORK_H_
 #define _NETWORK_H_
 
+#define NusHostname "nus.cdn.shop.wii.com"
+#define NusPath "/ccs/download/"
+#define NusPort 80
+
 /* Prototypes */
 char *Network_GetIP(void);
 

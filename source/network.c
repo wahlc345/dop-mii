@@ -5,14 +5,13 @@
 #include <ogcsys.h>
 #include <network.h>
 
+#include "network.h"
 #include "tools.h"
 
 /* Constants */
 #define BLOCK_SIZE 100
 
-#define NETWORK_HOSTNAME "nus.cdn.shop.wii.com"
-#define NETWORK_PATH "/ccs/download/"
-#define NETWORK_PORT 80
+
 
 /* Network variables */
 static char hostip[16];
@@ -49,13 +48,13 @@ s32 Network_Connect(void)
     if (sockfd < 0) return sockfd;
 
     /* Get host by name */
-    he = net_gethostbyname(NETWORK_HOSTNAME);
+    he = net_gethostbyname(NusHostname);
     if (!he) return -1;
 
     /* Setup socket */
     memcpy(&sa.sin_addr, he->h_addr_list[0], he->h_length);
     sa.sin_family = AF_INET;
-    sa.sin_port = htons(NETWORK_PORT);
+    sa.sin_port = htons(NusPort);
 
     ret = net_connect(sockfd, (struct sockaddr *)&sa, sizeof(sa));
     if (ret < 0) return ret;
@@ -70,7 +69,7 @@ s32 Network_Request(const char *filepath, u32 *len) {
     s32 ret;
 
     /* Generate HTTP request */
-    sprintf(request, "GET " NETWORK_PATH "%s HTTP/1.1\r\nHost: " NETWORK_HOSTNAME "\r\nConnection: close\r\n\r\n", filepath);
+    sprintf(request, "GET " NusPath "%s HTTP/1.1\r\nHost: " NusHostname "\r\nConnection: close\r\n\r\n", filepath);
 
     /* Connect to server */
     ret = Network_Connect();

@@ -2,14 +2,15 @@
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
-#include "tools.h"
 
-void ScanPads(u32 *button)
+#include "tools.h"
+#include "dopios.h"
+
+int ScanPads(u32 *button)
 {
+	*button = 0;
 	u32 pressed;
 	u16 pressedGC;
-
-	*button = 0;
 
 	WPAD_ScanPads();
 	pressed =  WPAD_ButtonsDown(WPAD_CHAN_0) | WPAD_ButtonsDown(WPAD_CHAN_1) | WPAD_ButtonsDown(WPAD_CHAN_2) | WPAD_ButtonsDown(WPAD_CHAN_3);
@@ -30,12 +31,17 @@ void ScanPads(u32 *button)
 		if (pressed&WPAD_BUTTON_MINUS || pressed&WPAD_CLASSIC_BUTTON_MINUS || pressedGC&PAD_TRIGGER_L) *button = WPAD_BUTTON_MINUS;
 		if (pressed&WPAD_BUTTON_PLUS || pressed&WPAD_CLASSIC_BUTTON_PLUS || pressedGC&PAD_TRIGGER_R) *button = WPAD_BUTTON_PLUS;
 	}
+
+	return 1;
 }
 
 void WaitAnyKey()
 {
 	u32 button;
-	for (button = 0;;ScanPads(&button)) { if (button) return; }
+	for (button = 0;;ScanPads(&button)) 
+	{ 
+		if (button || ExitMainThread) return; 
+	}
 }
 
 u32 WaitKey(u32 button)
@@ -44,6 +50,7 @@ u32 WaitKey(u32 button)
 	
 	do
 	{
+		if (ExitMainThread) return 0;
 		VIDEO_WaitVSync();
 		ScanPads(&pressed);
 		if (pressed&WPAD_BUTTON_HOME) ReturnToLoader();

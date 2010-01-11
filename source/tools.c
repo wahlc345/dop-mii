@@ -6,12 +6,13 @@
 #include <stdarg.h>
 #include <fat.h>
 #include <sdcard/wiisd_io.h>
-#include <sys/dir.h>
 
 #include "gecko.h"
 #include "tools.h"
 #include "network.h"
 #include "video.h"
+#include "controller.h"
+#include "sys.h"
 
 static volatile u32 tickcount = 0;
 
@@ -38,7 +39,7 @@ void SpinnerStart()
 {
 	if (spinnerThread != LWP_THREAD_NULL) return;
 	spinnerRunning = true;
-	LWP_CreateThread(&spinnerThread, spinner, NULL, NULL, 0, LWP_PRIO_IDLE);
+	LWP_CreateThread(&spinnerThread, spinner, NULL, NULL, 0, 80);
 }
 
 void SpinnerStop()
@@ -53,7 +54,11 @@ void SpinnerStop()
 
 void ReturnToLoader() 
 {
-	gcprintf("\n\nReturning To Loader");
+	gprintf("\nReturning to Loader");
+	Console_SetPosition(ConsoleRows-1, 0);	
+	ClearLine();
+	printf("Returning To Loader");
+	fflush(stdout);
 	VIDEO_WaitVSync();
 	exit(0);
 }
@@ -107,36 +112,6 @@ void set_highlight(bool highlight)
     }
 }
 
-bool FolderCreateTree(const char *fullpath) 
-{    
-    char dir[300];
-    char *pch = NULL;
-    u32 len;
-    struct stat st;
-
-    strlcpy(dir, fullpath, sizeof(dir));
-    len = strlen(dir);
-    if (len && len< sizeof(dir)-2 && dir[len-1] != '/');
-    {
-        dir[len++] = '/';
-        dir[len] = '\0';
-    }
-    if (stat(dir, &st) != 0) // fullpath not exist?
-	{ 
-        while (len && dir[len-1] == '/') dir[--len] = '\0';	// remove all trailing /
-        pch = strrchr(dir, '/');
-        if (pch == NULL) return false;
-        *pch = '\0';
-        if (FolderCreateTree(dir)) 
-		{
-            *pch = '/';
-            if (mkdir(dir, 0777) == -1) return false;
-        } 
-		else return false;
-    }
-    return true;
-}
-
 /*
 This will shutdown the controllers, SD & USB then reload the IOS.
 */
@@ -145,14 +120,38 @@ int __reloadIos(int version, bool initWPAD)
 {
 	gprintf("Reloading IOS%d...", version);
 	int ret;
-	// The following needs to be shutdown before reload
-	Close_SD(); 
-	Close_USB();
-	WPAD_Shutdown();
-	NetworkShutdown();
+	// The following needs to be shutdown before reload	
+	System_Deinit();
 
 	ret = IOS_ReloadIOS(version);
 	if (initWPAD) WPAD_Init();
 	gprintf("Done\n");
 	return ret;
+}
+
+bool PromptYesNo()
+{
+    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");
+
+	u32 button;
+	for (button = 0;;ScanPads(&button))
+	{
+		if (button&WPAD_BUTTON_A) return true;
+		if (button&WPAD_BUTTON_B) return false;
+		if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+	}
+}
+
+bool PromptContinue() 
+{
+    printf("Are you sure you want to continue?\n");
+    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");	
+
+	u32 button;
+	for (button = 0;;ScanPads(&button))
+	{
+		if (button&WPAD_BUTTON_A) return true;
+		if (button&WPAD_BUTTON_B) return false;
+		if (button&WPAD_BUTTON_HOME) ReturnToLoader();
+	}
 }

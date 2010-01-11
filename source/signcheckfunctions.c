@@ -78,10 +78,8 @@ int CheckEsIdentify()
 /* Misc stuff. */
  
 char* CheckRegion()
-{
-	s32 region = CONF_GetRegion();
-	 
-	switch (region)
+{	 
+	switch (CONF_GetRegion())
 	{
 		case CONF_REGION_JP: return "Japan";
 		case CONF_REGION_EU: return "Europe";

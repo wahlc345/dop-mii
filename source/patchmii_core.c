@@ -396,7 +396,7 @@ void brute_tmd(tmd *p_tmd) {
 	{
         p_tmd->fill3=fill;
         sha1 hash;
-        gprintf("SHA1(%p, %x, %p)\n", p_tmd, TMD_SIZE(p_tmd), hash);
+        //gprintf("SHA1(%p, %x, %p)\n", p_tmd, TMD_SIZE(p_tmd), hash);
         SHA1((u8 *)p_tmd, TMD_SIZE(p_tmd), hash);;
 
         if (hash[0]==0) 
@@ -426,14 +426,14 @@ void brute_tik(tik *p_tik)
 
 static void forge_tmd(signed_blob *s_tmd) 
 {
-	gprintf("forging tmd sig");
+	gprintf("forging tmd sig\n");
     zero_sig(s_tmd);
     brute_tmd(SIGNATURE_PAYLOAD(s_tmd));
 }
 
 static void forge_tik(signed_blob *s_tik) 
 {
-	gprintf("forging tik sig");
+	gprintf("forging tik sig\n");
     zero_sig(s_tik);
     brute_tik(SIGNATURE_PAYLOAD(s_tik));
 }

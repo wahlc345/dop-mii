@@ -7,6 +7,7 @@
 #include "wad.h"
 #include "IOSPatcher.h"
 #include "tools.h"
+#include "gecko.h"
 
 #define BLOCK_SIZE 2048
 #define round_up(x,n)	(-(-(x) & -(n)))
@@ -85,7 +86,8 @@ s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u16 revision)
     }
 
     fp = fopen(filename, "rb");
-    if (!fp) {
+    if (!fp) 
+	{
         printf("Could not open file: %s\n", filename);
         ret = -1;
         goto err;
@@ -175,21 +177,23 @@ s32 Wad_Read_into_memory(char *filename, IOS **ios, u32 iosnr, u16 revision)
     tmd_data = (tmd *)SIGNATURE_PAYLOAD((*ios)->tmd);
 
     printf("Checking titleid and revision...\n");
-    if (TITLE_UPPER(tmd_data->title_id) != 1 || TITLE_LOWER(tmd_data->title_id) != iosnr) {
-        printf("IOS wad has titleid: %08x%08x but expected was: %08x%08x\n", TITLE_UPPER(tmd_data->title_id), TITLE_LOWER(tmd_data->title_id), 1, iosnr);
+    if (TITLE_UPPER(tmd_data->title_id) != 1 || TITLE_LOWER(tmd_data->title_id) != iosnr) 
+	{
+        gcprintf("IOS wad has titleid: %08x%08x but expected was: %08x%08x\n", TITLE_UPPER(tmd_data->title_id), TITLE_LOWER(tmd_data->title_id), 1, iosnr);
         ret = -1;
         goto err;
     }
 
     if (tmd_data->title_version != revision) {
-        printf("IOS wad has revision: %u but expected was: %u\n", tmd_data->title_version, revision);
+        gcprintf("IOS wad has revision: %u but expected was: %u\n", tmd_data->title_version, revision);
         ret = -1;
         goto err;
     }
 
     ret = set_content_count(*ios, tmd_data->num_contents);
-    if (ret < 0) {
-        printf("Out of memory\n");
+    if (ret < 0) 
+	{
+        gcprintf("Out of memory\n");
         goto err;
     }
 
