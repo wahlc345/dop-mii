@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "Error.h"
 #include "patchmii_core.h"
 #include "sha1.h"
 #include "debug.h"
@@ -201,17 +202,18 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
     cfd = ES_AddContentStart(p_tmd->title_id, p_cr[index].cid);
     if (cfd < 0) 
 	{
-        printf(":\nES_AddContentStart(%016llx, %x) failed: %d\n", p_tmd->title_id, index, cfd);
+		gcprintf("\nERROR: ES_AddContentStart(%016llx, %x) failed: %s\n", p_tmd->title_id, index, EsErrorCodeString(cfd));
         ES_AddTitleCancel();
         return -1;
     }
 // gprintf("\b (cfd %d): ",cfd);
-    for (i=0; i<p_cr[index].size;) {
-        u32 numbytes = ((p_cr[index].size-i) < 1024)?p_cr[index].size-i:1024;
-        //spinner();
+    for (i=0; i<p_cr[index].size;) 
+	{
+        u32 numbytes = ((p_cr[index].size-i) < 1024)?p_cr[index].size-i:1024;   
         numbytes = ALIGN(numbytes, 32);
         retval = ISFS_Read(fd, bounce_buf1, numbytes);
-        if (retval < 0) {
+        if (retval < 0) 
+		{
             gprintf("ISFS_Read(%d, %p, %d) returned %d at offset %d\n", fd, bounce_buf1, numbytes, retval, i);
             ES_AddContentFinish(cfd);
             ES_AddTitleCancel();
@@ -221,8 +223,9 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
 
         encrypt_buffer(bounce_buf1, bounce_buf2, sizeof(bounce_buf1));
         ret = ES_AddContentData(cfd, bounce_buf2, retval);
-        if (ret < 0) {
-            gprintf("ES_AddContentData(%d, %p, %d) returned %d\n", cfd, bounce_buf2, retval, ret);
+        if (ret < 0) 
+		{
+			gcprintf("ERROR: ES_AddContentData(%d, %p, %d) returned %s\n", cfd, bounce_buf2, retval, EsErrorCodeString(ret));
             ES_AddContentFinish(cfd);
             ES_AddTitleCancel();
             ISFS_Close(fd);
@@ -233,8 +236,9 @@ s32 install_nus_object (tmd *p_tmd, u16 index)
 
 // gprintf("\b  done! (0x%x bytes)\n",i);
     ret = ES_AddContentFinish(cfd);
-    if (ret < 0) {
-        printf("ES_AddContentFinish failed: %d\n",ret);
+    if (ret < 0) 
+	{
+        gcprintf("ERROR ES_AddContentFinish failed: %s\n", EsErrorCodeString(ret));
         ES_AddTitleCancel();
         ISFS_Close(fd);
         return -1;
@@ -461,8 +465,6 @@ s32 install(const signed_blob *s_tmd, const signed_blob *s_certs, u32 certs_len)
 //  gprintf("Adding title...\n");
 
     ret = ES_AddTitleStart(s_tmd, SIGNED_TMD_SIZE(s_tmd), s_certs, certs_len, NULL, 0);
-
-    //spinner();
     if (ret < 0) 
 	{
         gprintf("ES_AddTitleStart failed: %d\n",ret);
@@ -502,7 +504,7 @@ void patchmii_download(u32 titleid1, u32 titleid2, u16 *version, bool patch, boo
 
     if (ISFS_Initialize() || create_temp_dir()) 
 	{
-        perror("Failed to create temp dir: ");
+        gcprintf("Failed to create temp dir: ");
         ReturnToLoader();
     }
     
@@ -545,7 +547,8 @@ void patchmii_download(u32 titleid1, u32 titleid2, u16 *version, bool patch, boo
     memcpy(tikbuf, temp_tikbuf, MIN(ticketsize, sizeof(tikbuf)));
 
     s_tik = (signed_blob *)tikbuf;
-    if (!IS_VALID_SIGNATURE(s_tik)) {
+    if (!IS_VALID_SIGNATURE(s_tik)) 
+	{
         gprintf("Bad tik signature!\n");
         ReturnToLoader();
     }
@@ -731,8 +734,8 @@ s32 patchmii_install(u32 in_title_h, u32 in_title_l, u16 in_version, u32 out_tit
 	SpinnerStop();
 //	gprintf("\b..hacks..\b");
 
-    if (retval) printf("install returned %d\n", retval);
-    printf("\bInstallation complete!\n");
+    if (retval) gprintf("\b\ninstall returned %d\n", retval);
+    else printf("\bInstallation complete!\n");
     return retval;
 }
 
