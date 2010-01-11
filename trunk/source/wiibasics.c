@@ -36,6 +36,7 @@ distribution.
 #include "tools.h"
 #include "gecko.h"
 #include "video.h"
+#include "sys.h"
 
 //#include "id.h"
 
@@ -82,74 +83,6 @@ u64 getUIDTitleID(u32 uid) {
     return 0;
 }
 
-/* Basic init taken pretty directly from the libOGC examples */
-void WiiInit() 
-{
-	InitGecko(); 
-	gprintf("\n\nInitializing Wii\n");
-	gprintf("- VideoInit\n"); VideoInit();  
-	gprintf("- WPAD_Init\n"); WPAD_Init();
-	gprintf("- PAD_Init\n"); PAD_Init();
-}
-
-void miscInit(void) {
-    int ret;
-
-    // This function initialises the attached controllers
-    WPAD_Init();
-
-    // snip!
-    //Identify_SU();
-
-    printf("Initializing Filesystem driver...");
-    fflush(stdout);
-
-    ret = ISFS_Initialize();
-    if (ret < 0) 
-	{
-        printf("\nError! ISFS_Initialize (ret = %d)\n", ret);
-		WaitAnyKey();
-        ReturnToLoader();
-    } 
-	else printf("OK!\n");
-
-    //IdentSysMenu();
-}
-
-void IdentSysMenu(void) {
-    int ret;
-
-    // snip!
-    //Identify_SysMenu();
-
-    ret = ES_SetUID(TITLE_ID(1, 2));
-    if (ret < 0) 
-	{
-        printf("SetUID fail %d", ret);
-		WaitAnyKey();
-		ReturnToLoader();
-    }
-
-    printf("Initializing Filesystem driver...");
-    fflush(stdout);
-
-    ISFS_Deinitialize();
-    ret = ISFS_Initialize();
-    if (ret < 0) 
-	{
-        printf("\nError! ISFS_Initialize (ret = %d)\n", ret);
-		WaitAnyKey();
-		ReturnToLoader();
-    } 
-	else printf("OK!\n");
-}
-
-void miscDeInit() 
-{
-    fflush(stdout);
-    ISFS_Deinitialize();
-}
-
 char charASCII(u8 c) 
 {
     if (c < 0x20 || c > 0x7E) return '.';
@@ -189,33 +122,6 @@ void hex_print_array16(const u8 *array, u32 size)
 			}
         }
     }
-}
-
-bool PromptYesNo()
-{
-    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");
-
-	u32 button;
-	for (button = 0;;ScanPads(&button))
-	{
-		if (button&WPAD_BUTTON_A) return true;
-		if (button&WPAD_BUTTON_B) return false;
-		if (button&WPAD_BUTTON_HOME) ReturnToLoader();
-	}
-}
-
-bool PromptContinue() 
-{
-    printf("Are you sure you want to continue?\n");
-    printf("      [A] Yes        [B] NO    [HOME|START] Exit\n");	
-
-	u32 button;
-	for (button = 0;;ScanPads(&button))
-	{
-		if (button&WPAD_BUTTON_A) return true;
-		if (button&WPAD_BUTTON_B) return false;
-		if (button&WPAD_BUTTON_HOME) ReturnToLoader();
-	}
 }
 
 /* Reads a file from ISFS to an array in memory */

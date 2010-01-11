@@ -24,77 +24,46 @@ void ClearScreen()
 
 void ClearLine() 
 {
-    s32 cols, rows;
-    u32 cnt;
-
-    printf("\r");
-    fflush(stdout);
-
-    /* Get console metrics */
-    CON_GetMetrics(&cols, &rows);
-
-    /* Erase line */
-    for (cnt = 1; cnt < cols; cnt++) {
-        printf(" ");
-        fflush(stdout);
-    }
-
-    printf("\r");
-    fflush(stdout);
+	printf("\r\x1b[2K\r");
+	fflush(stdout);
 }
 
-void Con_FgColor(u32 color, u8 bold) {
-    /* Set foreground color */
-    printf("\x1b[%u;%um", color + 30, bold);
-    fflush(stdout);
+void PrintCenter(char *text, int width)
+{
+	int textLen = strlen(text);
+	int leftPad = (width - textLen) / 2;
+	int rightPad = (width - textLen) - leftPad;
+	printf("%*s%s%*s", leftPad, " ", text, rightPad, " ");
 }
 
-void Con_BgColor(u32 color, u8 bold) {
-    /* Set background color */
-    printf("\x1b[%u;%um", color + 40, bold);
-    fflush(stdout);
+void Console_SetFgColor(u8 color, u8 bold) 
+{
+    printf("\x1b[%u;%dm", color + 30, bold);
 }
 
-void Con_FillRow(u32 row, u32 color, u8 bold) {
-    s32 cols, rows;
-    u32 cnt;
+void Console_SetBgColor(u8 color, u8 bold) 
+{
+    printf("\x1b[%u;%dm", color + 40, bold);
+}
 
-    /* Set color */
-    printf("\x1b[%u;%um", color + 40, bold);
-    fflush(stdout);
+int Console_GetCurrentRow()
+{
+	int col, row;
+	CON_GetPosition(&col, &row);
+	return row;
+}
 
-    /* Get console metrics */
-    CON_GetMetrics(&cols, &rows);
-
-    /* Save current row and col */
-    printf("\x1b[s");
-    fflush(stdout);
-
-    /* Move to specified row */
-    printf("\x1b[%u;0H", row);
-    fflush(stdout);
-
-    /* Fill row */
-    for (cnt = 0; cnt < cols; cnt++) 
-	{
-        printf(" ");
-        fflush(stdout);
-    }
-
-    /* Load saved row and col */
-    printf("\x1b[u");
-    fflush(stdout);
-
-    /* Set default color */
-    Con_BgColor(0, 0);
-    Con_FgColor(7, 1);
+void Console_SetColors(u8 bgColor, u8 bgBold, u8 fgColor, u8 fgBold)
+{
+	Console_SetBgColor(bgColor, bgBold);
+	Console_SetFgColor(fgColor, fgBold);
 }
 
 //void Video_DrawPng(IMGCTX ctx, PNGUPROP imgProp, u16 x, u16 y) {
 //    PNGU_DECODE_TO_COORDS_YCbYCr(ctx, x, y, imgProp.imgWidth, imgProp.imgHeight, vmode->fbWidth, vmode->xfbHeight, framebuffer);
 //}
 
-void ConSetPosition(u8 row, u8 column)
+void Console_SetPosition(u8 row, u8 column)
 {
     // The console understands VT terminal escape codes
     // This positions the cursor on row 2, column 0
@@ -103,7 +72,7 @@ void ConSetPosition(u8 row, u8 column)
     printf("\x1b[%u;%uH", row, column);
 }
 
-void VideoInit()
+void Video_Init()
 {
     // Initialise the video system
     VIDEO_Init();
@@ -111,8 +80,6 @@ void VideoInit()
     // Obtain the preferred video mode from the system
     // This will correspond to the settings in the Wii menu
     vmode = VIDEO_GetPreferredMode(NULL);
-
-	gprintf("tvmode = %u\n", vmode->viTVMode);
 
 	// Fixes Screen Resolution
 	if( vmode->viTVMode == VI_NTSC || CONF_GetEuRGB60() || CONF_GetProgressiveScan() )
@@ -146,4 +113,6 @@ void VideoInit()
 	// Initialise the console, required for printf
 	CON_InitEx(vmode, 0, 0, ScreenWidth, ScreenHeight);
 	CON_GetMetrics(&ConsoleCols, &ConsoleRows);	
+
+	gprintf("Console Metrics: Cols = %u, Rows = %u\n", ConsoleCols, ConsoleRows);
 }

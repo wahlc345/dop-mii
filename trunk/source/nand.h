@@ -1,8 +1,7 @@
 #ifndef _NAND_H_
 #define _NAND_H_
 
-/* Prototypes */
-s32 Nand_Init(void);
+int Nand_Init();
 s32 Nand_CreateDir(u64);
 s32 Nand_CreateFile(u64, const char *);
 s32 Nand_OpenFile(u64, const char *, u8);

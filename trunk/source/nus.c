@@ -7,61 +7,69 @@
 #include "tools.h"
 #include "network.h"
 #include "gecko.h"
+#include "FileSystem.h"
 
 extern bool networkInitialized;
 
 int GetNusObject(u32 titleid1, u32 titleid2, u16 *version, char *content, u8 **outbuf, u32 *outlen) 
 {
-    char buf[200] = "";
+	
+	char buf[200] = "";
 	char filename[256] = "";
     int ret = 0;	
     uint httpStatus = 200;	
 	FILE *fp = NULL;
+
+	void _extractTmdVersion()
+	{
+		gprintf("Getting Version from TMD File\n");
+
+		tmd *pTMD = (tmd *)SIGNATURE_PAYLOAD((signed_blob *)*outbuf);
+		*version = pTMD->title_version;
+		sprintf(content, "%s.%u", content, *version);
+		snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%u/%s", titleid1, titleid2, *version, content);
+		gprintf("New Filename = %s\n", filename);
+	}
 	
-	if (*version != 0) snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%u/%s", titleid1, titleid2, *version, content);
-	
-	gprintf("\nNusGetObject::Init_SD...");
-    if (*version != 0 && Init_SD()) 
-	{		
-		gprintf("Done\n");
-		fp = fopen(filename, "rb");
-		if (fp) 
+	gprintf("\nTitleID1 = %08X, TitleID2 = %08X, Content = %s, Version = %u\n", titleid1, titleid2, content, *version);
+
+	// If version is = 0, check for existence sd:/XXX/XXX/tmd
+	// This is used for NUS offline mode
+	if (strcmpi(content, "TMD") == 0 && *version == 0 && Init_SD())
+	{
+		snprintf(filename, sizeof(filename), "sd:/%08X/%08X/tmd", titleid1, titleid2);
+		gprintf("Looking on SD card for (%s).\n", filename);
+		if (FileExists(filename))
 		{
-			gprintf("Loading File = %s\n", filename);
-			fseek(fp, 0, SEEK_END);
-			*outlen = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-
-			*outbuf = AllocateMemory(*outlen);
-
-			if (*outbuf == NULL) 
-			{
-				printf("\nOut of memory: Size %d ", *outlen);
-				ret = -1;
-			}		
-			
-			if (ret == 0) 
-			{				
-				if (fread(*outbuf, *outlen, 1, fp) != 1) ret = -2; // Failed to read the file so return an error
-				else ret = 1; // File successfully loaded so return
-			}
-			fclose(fp);
-			fp = NULL;				
-			Close_SD();
-			return ret;	
+			ret = FileReadBinary(filename, outbuf, outlen);
+			_extractTmdVersion();
+			if (ret > 0) return ret;
 		}
+		else gprintf("File (%s) not found.\n", filename);
 
 		Close_SD();
+	}
+	//else gprintf("No Card Found or content != TMD or Version != 0\n");
+
+	// If Version != 0 then we know what version of a file we want
+	// so continue normal operations
+	snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%u/%s", titleid1, titleid2, *version, content);
+
+    if (*version != 0 && Init_SD()) 
+	{		
+		ret = FileReadBinary(filename, outbuf, outlen);
+		Close_SD();
+		if (ret > 0) return ret; 
 		gprintf("\n* %s not found on the SD card.", filename);
 		gprintf("\n* Trying to download it from the internet...\n");
 	}
-	else gprintf("No Card Found\n");
+	//else gprintf("No Card Found or Version == 0\n");
     	
 	gprintf("NusGetObject::NetworkInit...");
 	NetworkInit();
 	gprintf("Done\n");
     
-    snprintf(buf, 128, "http://nus.cdn.shop.wii.com/ccs/download/%08x%08x/%s", titleid1, titleid2, content);
+    snprintf(buf, 128, "http://%s%s%08x%08x/%s", NusHostname, NusPath, titleid1, titleid2, content);
 	gprintf("Attemping to download %s\n\n", buf);
 
 	int retry = 5;
@@ -86,13 +94,7 @@ int GetNusObject(u32 titleid1, u32 titleid2, u16 *version, char *content, u8 **o
 	// so that the rest of the files will save to the correct folder
 	if (strcmpi(content, "TMD") == 0 && *version == 0 && *outbuf != NULL && *outlen != 0)
 	{
-		gprintf("Getting Version from TMD File\n");
-
-		tmd *pTMD = (tmd *)SIGNATURE_PAYLOAD((signed_blob *)*outbuf);
-		*version = pTMD->title_version;
-		sprintf(content, "%s.%u", content, *version);
-		snprintf(filename, sizeof(filename), "sd:/%08X/%08X/v%u/%s", titleid1, titleid2, *version, content);
-		gprintf("New Filename = %s\n", filename);
+		_extractTmdVersion();
 	}
 
     if (*version != 0 && Init_SD()) 
@@ -101,6 +103,8 @@ int GetNusObject(u32 titleid1, u32 titleid2, u16 *version, char *content, u8 **o
 		snprintf(folder, sizeof(folder), "sd:/%08X/%08X/v%u", titleid1, titleid2, *version);
 		gprintf("FolderCreateTree() = %s ", (FolderCreateTree(folder)? "True" : "False"));
 		
+		gprintf("\nWriting File (%s)\n", filename);
+
 		fp = fopen(filename, "wb");
 		if (fp) 
 		{
