@@ -693,31 +693,36 @@ s32 patchmii_install(u32 in_title_h, u32 in_title_l, u16 in_version, u32 out_tit
     else gcprintf("Downloading Title %08x-%08x.....\n", in_title_h, in_title_l);
 
     patchmii_download(in_title_h, in_title_l, &version, patch,patch2);
-    if (in_title_h != out_title_h || in_title_l != out_title_l ) 
-	{
-        change_ticket_title_id(s_tik, out_title_h, out_title_l);
-        change_tmd_title_id(s_tmd, out_title_h, out_title_l);
-        tmd_dirty = 1;
-        tik_dirty = 1;
-    }
-    if (version != out_version) 
-	{
-        change_tmd_version(s_tmd, out_version);
-        tmd_dirty = 1;
-        tik_dirty = 1;
-    }
 
-    if (tmd_dirty) 
+	if (in_version != 0)
 	{
-        forge_tmd(s_tmd);
-        tmd_dirty = 0;
-    }
+		if (in_title_h != out_title_h || in_title_l != out_title_l ) 
+		{
+			change_ticket_title_id(s_tik, out_title_h, out_title_l);
+			change_tmd_title_id(s_tmd, out_title_h, out_title_l);
+			tmd_dirty = 1;
+			tik_dirty = 1;
+		}
 
-    if (tik_dirty) 
-	{
-        forge_tik(s_tik);
-        tik_dirty = 0;
-    }
+		if (version != out_version) 
+		{
+			change_tmd_version(s_tmd, out_version);
+			tmd_dirty = 1;
+			tik_dirty = 1;
+		}
+
+		if (tmd_dirty) 
+		{
+			forge_tmd(s_tmd);
+			tmd_dirty = 0;
+		}
+
+		if (tik_dirty) 
+		{
+			forge_tik(s_tik);
+			tik_dirty = 0;
+		}
+	}
 
     if (out_version) gcprintf("\bDownload complete. Installing to Title %08x-%08x v%u...\n", out_title_h, out_title_l, out_version);
     else gcprintf("\bDownload complete. Installing to Title %08x-%08x...\n", out_title_h, out_title_l);
