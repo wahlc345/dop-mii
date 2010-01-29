@@ -123,8 +123,13 @@ int __reloadIos(int version, bool initWPAD)
 	// The following needs to be shutdown before reload	
 	System_Deinit();
 
-	ret = IOS_ReloadIOS(version);
-	if (initWPAD) WPAD_Init();
+	ret = IOS_ReloadIOS(version);	
+
+	// IOS Crashes sometimes if we don't wait a second
+	// I think Nintendo has reloading threaded which can cause problems.
+	sleep(1);
+
+	if (initWPAD)  WPAD_Init();
 	gprintf("Done\n");
 	return ret;
 }

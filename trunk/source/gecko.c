@@ -1,9 +1,10 @@
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+
 
 #ifndef NO_DEBUG
-#include <stdarg.h>
 
 bool geckoinit = false;
 
@@ -19,6 +20,17 @@ void gprintf(const char *fmt, ...)
 	usb_sendbuffer_safe( 1, astr, strlen(astr) );
 } 
 
+void InitGecko()
+{
+	if (usb_isgeckoalive(EXI_CHANNEL_1))
+	{
+		usb_flush(EXI_CHANNEL_1);
+		geckoinit = true;
+	}
+}
+
+#endif /* NO_DEBUG */
+
 void gcprintf(const char *fmt, ...)
 {
 	char astr[4096];
@@ -31,13 +43,3 @@ void gcprintf(const char *fmt, ...)
 	printf(astr);	
 }
 
-void InitGecko()
-{
-	if (usb_isgeckoalive(EXI_CHANNEL_1))
-	{
-		usb_flush(EXI_CHANNEL_1);
-		geckoinit = true;
-	}
-}
-
-#endif /* NO_DEBUG */

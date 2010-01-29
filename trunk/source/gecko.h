@@ -9,6 +9,8 @@ extern "C" {
 
 void gcprintf(const char *fmt, ...);
 
+#define NO_DEBUG
+
 #ifndef NO_DEBUG
 	//use this just like printf();
 	void gprintf(const char *fmt, ...);

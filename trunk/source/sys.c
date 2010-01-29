@@ -32,7 +32,9 @@ void __Sys_PowerCallback()
 void System_Init() 
 {
     /* Initialize video subsytem */
-	InitGecko(); 
+#ifndef NO_DEBUG
+	InitGecko();
+#endif
 	gprintf("\n\nDOP-IOS MOD (r%s)\n", SVN_REV_STR);
 	gprintf("Initializing Wii\n");
 	gprintf("VideoInit\n"); Video_Init();  
