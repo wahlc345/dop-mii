@@ -55,8 +55,8 @@ int CheckFakeSign()
 	gprintf("CheckFakeSign::ES_AddTitleStart = ");
 	int ret = ES_AddTitleStart((signed_blob*)tmd_dat, tmd_dat_size, (signed_blob *)certs_sys, sizeof certs_sys, NULL, 0);
 	gprintf("%d\n", ret);
-	if (ret >= 0) ES_AddTitleCancel();	
-	if (ret == ES_ERROR_1028) return 1;
+	if (ret > -1) ES_AddTitleCancel();
+	if (ret > -1 || ret == -1028) return 1;
 	return 0;
 }
 
