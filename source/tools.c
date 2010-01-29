@@ -14,6 +14,7 @@
 #include "controller.h"
 #include "sys.h"
 
+extern void udelay(int us);
 static volatile u32 tickcount = 0;
 
 static lwp_t spinnerThread = LWP_THREAD_NULL;
@@ -123,11 +124,9 @@ int __reloadIos(int version, bool initWPAD)
 	// The following needs to be shutdown before reload	
 	System_Deinit();
 
+	udelay(5000);
 	ret = IOS_ReloadIOS(version);	
-
-	// IOS Crashes sometimes if we don't wait a second
-	// I think Nintendo has reloading threaded which can cause problems.
-	sleep(1);
+	udelay(5000);	
 
 	if (initWPAD)  WPAD_Init();
 	gprintf("Done\n");

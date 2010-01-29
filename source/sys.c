@@ -16,6 +16,7 @@
 /* Variables */
 static const char certs_fs[] ATTRIBUTE_ALIGN(32) = "/sys/cert.sys";
 bool Shutdown = false;
+extern void udelay(int us);
 
 void __Sys_ResetCallback() 
 {
@@ -49,6 +50,7 @@ void System_Init()
 
 void System_Deinit()
 {
+	WPAD_Shutdown();
 	Close_SD();
 	Close_USB();
 	WPAD_Shutdown();
