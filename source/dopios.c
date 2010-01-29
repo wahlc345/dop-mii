@@ -213,7 +213,7 @@ void PrintBanner()
 	
 	//Console_BlinkSlow(WHITE);
 	char text[ConsoleCols];
-	sprintf(text, "DOP-IOS MOD v11 (SVN r%s)", SVN_REV_STR);
+	sprintf(text, "DOP-IOS MOD v11.1 (SVN r%s)", SVN_REV_STR);
 	PrintCenter(text, ConsoleCols);
 
 	printf("Cooooolllll");
@@ -970,7 +970,7 @@ void MainThread_Execute()
 			printf("%3s System Menu\n", (menuSelection == 2 ? "-->" : " "));
 			printf("%3s Remove stubbed IOSs\n", (menuSelection == 3 ? "-->" : " "));
 			printf("%3s Display boot2 information\n", (menuSelection == 4 ? "-->" : " "));
-			printf("%3s Scan the Wii's internals (signcheck)", (menuSelection == 5 ? "-->" : " "));
+			printf("%3s Scan the Wii's internals (SysCheck)", (menuSelection == 5 ? "-->" : " "));
 
             printf("\n\n\n\n\n[UP]/[DOWN]       Change Selection\n");
             printf("[A]               Select\n");
@@ -1238,9 +1238,7 @@ void MainThread_Execute()
             strcat(logBuffer, tmp);
             sprintf(tmp, "\n");
             strcat(logBuffer, tmp);
-            sprintf(tmp, "%s, %s, %s, %s, %s, %s\n", "\"IOS number\"", "\"FakeSign\"", "\"ES_Identify\"", "\"Flash access\"", "\"Boot2 access\"", "\"Usb2.0 IOS tree\"");
-            strcat(logBuffer, tmp);
-            sprintf(tmp, "\n");
+            sprintf(tmp, "%s, %s, %s, %s, %s, %s\n", "IOS Version", "FakeSign", "ES_Identify", "NAND", "Flash", "USB 2.0");
             strcat(logBuffer, tmp);
 						
 			PrintBanner();
@@ -1262,7 +1260,7 @@ void MainThread_Execute()
 				sprintf(iosString, "%d (r%d)", iosTable[iosToTest], IOS_GetRevision());
 				gprintf("\nTesting IOS %s\n", iosString);
 				printf("%-13s ", iosString);
-				printf("%-10s ", (reportResults[1] = CheckFakeSign()) ? "Enabled" : "Disabled");
+				printf("%-10s ", (reportResults[0] = CheckFakeSign()) ? "Enabled" : "Disabled");
 				printf("%-11s ", (reportResults[1] = CheckEsIdentify()) ? "Enabled" : "Disabled");
 				printf("%-10s ", (reportResults[2] = CheckFlashAccess()) ? "Enabled" : "Disabled");
 				printf("%-10s ", (reportResults[3] = CheckBoot2Access()) ? "Enabled" : "Disabled");
@@ -1270,7 +1268,16 @@ void MainThread_Execute()
 				printf("\n");
 				VIDEO_WaitVSync();
  
-				addLogEntry(iosTable[iosToTest], IOS_GetRevision(), reportResults[1], reportResults[2], reportResults[3], reportResults[4]);
+				// Add Log Entry
+				sprintf(tmp, "\"%s\", %s, %s, %s, %s, %s\n"
+					, iosString
+					, (reportResults[0] ? "Enabled" : "Disabled")
+					, (reportResults[1] ? "Enabled" : "Disabled")
+					, (reportResults[2] ? "Enabled" : "Disabled")
+					, (reportResults[3] ? "Enabled" : "Disabled")
+					, (reportResults[4] ? "Enabled" : "Disabled")
+				);
+				strcat(logBuffer, tmp);
  
 				if ((iosToTestCnt % (ConsoleRows - 7)) == 0) 
 				{

@@ -158,10 +158,19 @@ s32 Network_Write(void *buf, u32 len) {
 void NetworkInit() 
 {
 	if (networkInitialized) return;
+	int retryCount = 0;
 
-    int ret;
+    int ret = 0;
     printf("\nInitializing Network...");
     fflush(stdout);
+
+	ret = if_config(hostip, NULL, NULL, true);
+	if (ret < 0) 
+	{
+		printf("\n>> ERROR! Failed to Initialize the network: ErrorCode (%d)\n", ret);
+		return;
+	}
+
 	SpinnerStart();
     while (1) 
 	{
@@ -170,18 +179,24 @@ void NetworkInit()
 		{
             if (ret != -EAGAIN) 
 			{
+				retryCount++;
                 printf("net_init failed trying again: %d\n", ret);
-				//printf("I need a network to download IOS, sorry :(\n)");
 				sleep(3);
-                //ReturnToLoader();
             }
         }
+		if (retryCount > 4) break;
         if (!ret) break;
 		sleep(1);
         printf(".");
         fflush(stdout);
     }
 	SpinnerStop();
+
+	if (ret < 0 || retryCount != 0)
+	{
+		printf("\n>> ERROR! Failed to Initialize the network: ErrorCode (%d)\n", ret);
+		return;
+	}
 
     printf("\b.Done\n");
 	networkInitialized = true;
