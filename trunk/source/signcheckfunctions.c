@@ -11,6 +11,7 @@
 #include "signcheckfunctions.h"
 #include "tools.h"
 #include "gecko.h"
+#include "nand.h"
 
 #define ES_ERROR_1028 -1028 // No ticket installed 
 #define ES_ERROR_1035 -1035 // Title with a higher version is already installed 
@@ -58,6 +59,16 @@ int CheckFakeSign()
 	if (ret > -1) ES_AddTitleCancel();
 	if (ret > -1 || ret == -1028) return 1;
 	return 0;
+}
+
+bool CheckNandAccess()
+{
+	gprintf("CheckNandPermissions::Nand::OpenReadWrite(/title/00000001/00000002/content/title.tmd) = ");
+	int ret = IOS_Open("/title/00000001/00000002/content/title.tmd", 1);
+	gprintf("%d\n", ret);
+	if (ret < 0) return false;
+	IOS_Close(ret);
+	return true;
 }
 
 int CheckEsIdentify()

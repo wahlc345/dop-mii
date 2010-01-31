@@ -211,13 +211,9 @@ void PrintBanner()
 	
 	printf("%*s", ConsoleCols, " ");	
 	
-	//Console_BlinkSlow(WHITE);
 	char text[ConsoleCols];
-	sprintf(text, "DOP-IOS MOD v11.3 (SVN r%s)", SVN_REV_STR);
+	sprintf(text, "DOP-IOS MOD v11.4 (SVN r%s)", SVN_REV_STR);
 	PrintCenter(text, ConsoleCols);
-
-	printf("Cooooolllll");
-	ClearLine();
 
     printf("%*s", ConsoleCols, " ");
 	
@@ -1244,7 +1240,7 @@ void MainThread_Execute()
 			PrintBanner();
 			printf("\x1b[2;0H\n\n"); // Move Cursor
 			Console_SetFgColor(WHITE, 1);
-			printf("%-13s %-10s %-11s %-10s %-10s %-10s\n", "IOS Version", "FakeSign", "ES_Identify", "Flash", "Boot2", "USB 2.0");
+			printf("%-13s %-10s %-11s %-10s %-10s %-10s\n", "IOS Version", "FakeSign", "ES_Identify", "NAND", "Flash", "USB 2.0");
 			Console_SetFgColor(WHITE, 0);
 
 			WPAD_Shutdown();
@@ -1262,8 +1258,8 @@ void MainThread_Execute()
 				printf("%-13s ", iosString);
 				printf("%-10s ", (reportResults[0] = CheckFakeSign()) ? "Enabled" : "Disabled");
 				printf("%-11s ", (reportResults[1] = CheckEsIdentify()) ? "Enabled" : "Disabled");
-				printf("%-10s ", (reportResults[2] = CheckFlashAccess()) ? "Enabled" : "Disabled");
-				printf("%-10s ", (reportResults[3] = CheckBoot2Access()) ? "Enabled" : "Disabled");
+				printf("%-10s ", (reportResults[2] = CheckNandAccess()) ? "Enabled" : "Disabled");
+				printf("%-10s ", (reportResults[3] = CheckFlashAccess()) ? "Enabled" : "Disabled");
 				printf("%-10s ", (reportResults[4] = CheckUsb2Module()) ? "Enabled" : "Disabled");
 				printf("\n");
 				VIDEO_WaitVSync();
