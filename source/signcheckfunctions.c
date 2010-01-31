@@ -51,9 +51,9 @@ int CheckBoot2Access()
 int CheckFakeSign()
 {
 	// We are expecting an error here, but depending on the error it will mean
-	// that it is valid for fakesign. If we get -2011 it is definately not patched with fakesign.
-	gprintf("CheckFakeSign::ES_AddTitleStart = ");
-	int ret = ES_AddTitleStart((signed_blob*)tmd_dat, tmd_dat_size, (signed_blob *)certs_sys, sizeof certs_sys, NULL, 0);
+	// that it is valid for fakesign. If we get -2011 it is definately not patched with fakesign.	
+	gprintf("CheckFakeSign::ES_AddTicket = ");
+	int ret = ES_AddTicket((signed_blob*)ticket_dat, ticket_dat_size, (signed_blob*)certs_sys, sizeof(certs_sys), 0, 0);
 	gprintf("%d\n", ret);
 	if (ret > -1) ES_AddTitleCancel();
 	if (ret > -1 || ret == -1028) return 1;
