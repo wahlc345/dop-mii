@@ -12,6 +12,7 @@ int CheckUsb2Module();
 int CheckFlashAccess();
 int CheckBoot2Access();
 int CheckEsIdentify();
+bool CheckNandAccess();
 char* CheckRegion();
 int sortCallback(const void * first, const void * second);
 int GetCert();
