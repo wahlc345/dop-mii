@@ -12,6 +12,7 @@
 #include "tools.h"
 #include "gecko.h"
 #include "nand.h"
+#include "title_install.h"
 
 #define ES_ERROR_1028 -1028 // No ticket installed 
 #define ES_ERROR_1035 -1035 // Title with a higher version is already installed 
@@ -49,6 +50,34 @@ int CheckBoot2Access()
 	return 1;
 }
  
+int RemoveBogusTicket()
+{
+	tikview *viewdata = NULL;
+	u64 titleId = 0x100000000LL;
+
+	u32 cnt, views;
+	s32 ret;
+
+	/* Get number of ticket views */
+	ret = ES_GetNumTicketViews(titleId, &views);
+	if (ret < 0) return ret;
+
+	if (!views) return 1;
+	else if (views > 16) return -1;
+	
+	/* Get ticket views */
+	viewdata = (tikview*)memalign(32, sizeof(tikview) * views);
+	ret = ES_GetTicketViews(titleId, viewdata, views);
+	if (ret < 0) return ret;
+
+	/* Remove tickets */
+	for (cnt = 0; cnt < views; cnt++) {
+		ret = ES_DeleteTicket(&viewdata[cnt]);
+		if (ret < 0) return ret;
+	}
+	return ret;
+}
+
 int CheckFakeSign()
 {
 	// We are expecting an error here, but depending on the error it will mean
@@ -56,7 +85,7 @@ int CheckFakeSign()
 	gprintf("CheckFakeSign::ES_AddTicket = ");
 	int ret = ES_AddTicket((signed_blob*)ticket_dat, ticket_dat_size, (signed_blob*)certs_sys, sizeof(certs_sys), 0, 0);
 	gprintf("%d\n", ret);
-	if (ret > -1) ES_AddTitleCancel();
+	if (ret > -1) RemoveBogusTicket();
 	if (ret > -1 || ret == -1028) return 1;
 	return 0;
 }
