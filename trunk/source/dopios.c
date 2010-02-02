@@ -212,7 +212,7 @@ void PrintBanner()
 	printf("%*s", ConsoleCols, " ");	
 	
 	char text[ConsoleCols];
-	sprintf(text, "DOP-IOS MOD v11.4 (SVN r%s)", SVN_REV_STR);
+	sprintf(text, "DOP-IOS MOD v11.5 (SVN r%s)", SVN_REV_STR);
 	PrintCenter(text, ConsoleCols);
 
     printf("%*s", ConsoleCols, " ");
