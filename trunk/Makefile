@@ -19,27 +19,27 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data  
-INCLUDES	:=
+INCLUDES	:=  include
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
 CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
-CXXFLAGS	=	$(CFLAGS)
+CXXFLAGS = $(CFLAGS) -std=gnu++0x
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003F00
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lwiiuse -lfat -lbte -logc -lm
+LIBS	:= -lwiiuse -lfat -lbte -logc -lm -lmxml
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=
+LIBDIRS	:= ../libs/mxml
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -63,6 +63,9 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+XMLFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.xml)))
+WADFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.wad)))
+PNGFILES	:=  $(foreach dir,%(DATA),$(notdir $(wildcard $(dir)/*.png)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -74,6 +77,9 @@ else
 endif
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
+					$(PNGFILES:.png=.png.o) \
+					$(XMLFILES:.xml=.xml.o) \
+					$(WADFILES:.wad=.wad.o) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o)
 
@@ -98,27 +104,55 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 #lets see what OS we are on and then create svnref file
 UNAME := $(shell uname)
 #and now make the build list
+
 $(BUILD):
 ifeq ($(UNAME),Linux)
-	chmod 555 ./tools/makesvnrev.sh
-	chmod +x ./tools/makesvnrev.sh
-	./tools/makesvnrev.sh
+	chmod 555 ./tools/MakeSvnRev.sh
+	chmod +x ./tools/MakeSvnRev.sh
+	./tools/MakeSvnRev.sh
 else
-	./tools/SubWCRev.exe "." "./tools/svnrev_template.h" "./source/svnrev.h"
+	SubWCRev.exe "." "./templates/svnrev_template.h" "./include/svnrev.h"
 endif
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@./tools/BuildType.sh
+	@./PreBuild.sh
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
+	@./PostBuild.sh $(OUTPUT)
 
+#---------------------------------------------------------------------------------
+debug:
+ifeq ($(UNAME),Linux)
+	chmod 555 ./tools/MakeSvnRev.sh
+	chmod +x ./tools/MakeSvnRev.sh
+	./tools/MakeSvnRev.sh
+else
+	SubWCRev.exe "." "./templates/svnrev_template.h" "./include/svnrev.h"
+endif
+	@[ -d build ] || mkdir -p build
+	@./tools/BuildType.sh DEBUG
+	@./PreBuild.sh
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
+	@./PostBuild.sh $(OUTPUT)
+#---------------------------------------------------------------------------------
+remake:
+	@[ -d build ] || mkdir -p build		
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
-
 #---------------------------------------------------------------------------------
 run:
-	wiiload $(TARGET).dol
+	wiiload $(TARGET).dol		
 
+runelf:
+	wiiload $(TARGET).elf
 
+release:
+	make clean
+	make
+	cp -f $(OUTPUT).dol "./hbc/apps/DOP-Mii/boot.dol"
+	
 #---------------------------------------------------------------------------------
 else
 
@@ -131,10 +165,9 @@ $(OUTPUT).dol: $(OUTPUT).elf
 $(OUTPUT).elf: $(OFILES)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .jpg extension
+# This rule links in binary data with the .xxx extension
 #---------------------------------------------------------------------------------
 %.wad.o	:	%.wad
-#---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)
 
@@ -157,6 +190,16 @@ $(OUTPUT).elf: $(OFILES)
 %.tik.o : %.tik
 	@echo $(notdir $<)
 	$(bin2o)
+	
+%.xml.o : %.xml
+	@echo $(notdir $<)
+	$(bin2o)		
+
+%.png.o : %.png
+	@echo $(notdir $<)
+	$(bin2o)		
+
+#---------------------------------------------------------------------------------
 
 -include $(DEPENDS)
 
