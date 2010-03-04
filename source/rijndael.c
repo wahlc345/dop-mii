@@ -326,7 +326,8 @@ void decrypt(unsigned char *buff) {
     return;
 }
 
-void aes_set_key(u8 *key) {
+void aes_set_key(u8 *key) 
+{
     gentables();
     gkey(4, 4, key);
 }
@@ -340,7 +341,8 @@ void aes_decrypt(u8 *iv, u8 *inbuf, u8 *outbuf, unsigned long long len) {
 
     for (blockno = 0; blockno <= (len / sizeof(block)); blockno++) {
         unsigned int fraction;
-        if (blockno == (len / sizeof(block))) { // last block
+        if (blockno == (len / sizeof(block))) // last block
+		{ 
             fraction = len % sizeof(block);
             if (fraction == 0) break;
             memset(block, 0, sizeof(block));
