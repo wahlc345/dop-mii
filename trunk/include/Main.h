@@ -52,6 +52,9 @@ private:
 	
 	void ShowSysMenusMenu();
 	SysMenuMatrix* InitSysMenuMatrix();
+	
+	void ShowSaveMenu(s32 mode);
+	void ShowSaveList(s32 mode, s32 device);
 
 	void BuildSysCheckTable();
 	void RunSysCheck();
