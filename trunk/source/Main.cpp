@@ -50,6 +50,7 @@ distribution.
 #include "nus.h"
 #include "Boot2.h"
 #include "Settings.h"
+#include "Savegame.h"
 #include "Main.h"
 
 using namespace IO;
@@ -424,7 +425,7 @@ void Main::ShowMainMenu()
 {
 	u32 button = 0;
 	int selection = 0;
-	const u8 menuMax = 4;
+	const u8 menuMax = 6;
 
 	while (System::State == SystemState::Running)
 	{
@@ -433,8 +434,10 @@ void Main::ShowMainMenu()
 		printf("%sIOS, BC, MIOS%s\n", (selection == 0 ? AnsiSelection : ""), AnsiNormal);
 		printf("%sChannels%s\n", (selection == 1 ? AnsiSelection : ""), AnsiNormal);
 		printf("%sSystem Menu%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
-		printf("%sBoot2%s\n", (selection == 3 ? AnsiSelection : ""), AnsiNormal);
-		printf("%sScan the Wii's internals (SysCheck)%s", (selection == 4 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sExtract Saves%s\n", (selection == 3 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sInstall Saves%s\n", (selection == 4 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sBoot2%s\n", (selection == 5 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sScan the Wii's internals (SysCheck)%s", (selection == 6 ? AnsiSelection : ""), AnsiNormal);
 
 		Console::SetRowPosition(Console::Rows-8);
 		Console::PrintSolidLine();
@@ -461,8 +464,10 @@ void Main::ShowMainMenu()
 					case 0: ShowIosMenu(); break;
 					case 1: ShowChannelsMenu(); break;
 					case 2: ShowSysMenusMenu(); break;
-					case 3: ShowBoot2Menu(); break;
-					case 4: RunSysCheck(); break;
+					case 3: ShowSaveMenu(0); break;
+					case 4: ShowSaveMenu(1); break;
+					case 5: ShowBoot2Menu(); break;
+					case 6: RunSysCheck(); break;
 				}
 			}
 			if (button == WPAD_BUTTON_DOWN) selection++;
@@ -977,6 +982,165 @@ SysMenuMatrix* Main::InitSysMenuMatrix()
 	}
 }
 
+void Main::ShowSaveMenu(s32 mode)
+{
+
+	    Console::ClearScreen();	
+
+		/* Select device */
+		s32 device = Menu_Device();
+		
+		ISFS_Initialize();
+
+		/* Show savegame lsit */
+		Main::ShowSaveList(mode, device);
+		
+		ISFS_Deinitialize();
+	
+		return;
+}
+
+void Main::ShowSaveList(s32 mode, s32 device)
+{
+	struct savegame *saveList = NULL;
+	u32              saveCnt;
+
+	s32 selected = 0, start = 0;
+	s32 ret;
+	
+	u32 buttons;
+
+	/* Retrieve savegames */
+	ret = __Menu_RetrieveList(&saveList, &saveCnt, mode, device);
+	if (ret < 0) {
+		printf("[+] ERROR: Could not retrieve any savegames! (ret = %d)\n", ret);
+		goto err;
+	}
+
+	for (;;) {
+		u32 cnt = 0;
+		s32 index = 0;
+
+		Console::ClearScreen();
+		
+		/** Print entries **/
+		printf("[+] Select a savegame from the list:\n\n");
+
+		for (cnt = start; cnt < saveCnt; cnt++) {
+			struct savegame *save = &saveList[cnt];
+
+			/* Entry limit reached */
+			if ((cnt - start) >= ENTRIES_PER_PAGE)
+				break;
+
+			/* Print entry */
+			printf("\t%2s \"%s\"\n", (cnt == selected) ? ">>" : "  ", save->name);
+	
+		}
+		
+		if(mode == 0)
+		printf("\n\nIf you don't see any saves, quit and load a different IOS next time.");
+		if(mode == 1)
+		printf("\n\nIf you don't see any saves, check your storage device.");
+		printf("\nUP/DOWN: Navigate");
+		printf("\nA: Select Savegame");
+		printf("\nB: Back");
+		printf("\nHOME: Quit");
+
+		/** Controls **/
+		Controller::WaitAnyKey();
+
+		/* UP/DOWN buttons */
+		if (buttons & WPAD_BUTTON_UP) {
+			if ((--selected) <= -1)
+				selected = (saveCnt - 1);
+		}
+		if (buttons & WPAD_BUTTON_DOWN) {
+			if ((++selected) >= saveCnt)
+				selected = 0;
+		}
+
+		/* HOME button */
+		if (buttons & WPAD_BUTTON_HOME)
+			exit(0);
+
+		/* A button */
+		if (buttons & WPAD_BUTTON_A){
+			
+			
+				fatDevice *dev = &deviceList[device];
+
+	            char devpath[128];
+	            s32  ret;
+				struct savegame *save = &saveList[cnt];
+
+
+                Console::ClearScreen();
+
+	            printf("[+] Are you sure you want to %s this savegame?\n\n", (mode) ? "install" : "extract");
+
+	            printf("    Title Name : %s\n",          save->name);
+	            printf("    Title ID   : %08X-%08X\n\n", (u32)(save->tid >> 32), (u32)(save->tid & 0xFFFFFFFF));
+
+	            printf("    Press A button to continue.\n");
+	            printf("    Press B button to go back to the menu.\n\n\n");
+
+	                for (;;) {
+		                Controller::WaitAnyKey();
+
+		                /* A button */
+		               if (buttons & WPAD_BUTTON_A)
+			           break;
+
+		               /* B button */
+		               if (buttons & WPAD_BUTTON_B)
+			           return;
+	                }
+
+	                printf("[+] %s savegame, please wait...", (mode) ? "Installing" : "Extracting");
+	                fflush(stdout);
+
+	                /* Generate device/file path */
+	                sprintf(devpath,  "%s:" SAVES_DIRECTORY "/%016llx", dev->mount, save->tid);
+
+	                /* Manage savegame */
+	               ret = Savegame_Manage(save->tid, mode, devpath);
+	               if (ret < 0)
+		               printf(" ERROR! (ret = %d)\n", ret);
+	               else
+		              printf(" OK!\n");
+
+	               printf("\n");
+	               printf("    Press any button to continue...\n");
+				   Controller::WaitAnyKey();
+   }
+
+		/* B button */
+		if (buttons & WPAD_BUTTON_B)
+			break;
+
+		/** Scrolling **/
+		/* List scrolling */
+		index = (selected - start);
+
+		if (index >= ENTRIES_PER_PAGE)
+			start += index - (ENTRIES_PER_PAGE - 1);
+		if (index <= -1)
+			start += index;
+	}
+
+	/* Free memory */
+	free(saveList);
+
+	return;
+
+err:
+	printf("\n");
+	printf("    Press any button to continue...\n");
+
+	Controller::WaitAnyKey();
+}
+
 void Main::ShowSysMenusMenu()
 {
 	u32 button = 0;
@@ -1048,7 +1212,7 @@ void Main::ShowSysMenusMenu()
 		printf("[Home]       Exit");
 		Console::PrintSolidLine();
 		printf("Current IOS: %s", CurrentIOS->Name.c_str());
-		VIDEO_WaitVSync();			
+        VIDEO_WaitVSync();			
 
 		while (Controller::ScanPads(&button))
 		{
