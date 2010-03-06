@@ -984,24 +984,6 @@ SysMenuMatrix* Main::InitSysMenuMatrix()
 
 void Main::ShowSaveMenu(s32 mode)
 {
-
-	    Console::ClearScreen();	
-
-		/* Select device */
-		s32 device = Menu_Device();
-		
-		ISFS_Initialize();
-
-		/* Show savegame lsit */
-		Main::ShowSaveList(mode, device);
-		
-		ISFS_Deinitialize();
-	
-		return;
-}
-
-void Main::ShowSaveList(s32 mode, s32 device)
-{
 	struct savegame *saveList = NULL;
 	u32              saveCnt;
 
@@ -1009,6 +991,13 @@ void Main::ShowSaveList(s32 mode, s32 device)
 	s32 ret;
 	
 	u32 buttons;
+	
+	Console::ClearScreen();	
+	
+	ISFS_Initialize();
+	
+	/* Select external device */
+	s32 device = Menu_Device();
 
 	/* Retrieve savegames */
 	ret = __Menu_RetrieveList(&saveList, &saveCnt, mode, device);
@@ -1131,6 +1120,9 @@ void Main::ShowSaveList(s32 mode, s32 device)
 
 	/* Free memory */
 	free(saveList);
+	
+	/* Deinitialize the NAND */
+	ISFS_Deinitialize();
 
 	return;
 
@@ -1139,6 +1131,10 @@ err:
 	printf("    Press any button to continue...\n");
 
 	Controller::WaitAnyKey();
+	
+	/* Deinitialize the NAND */
+	ISFS_Deinitialize();
+
 }
 
 void Main::ShowSysMenusMenu()

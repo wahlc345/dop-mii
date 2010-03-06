@@ -11,6 +11,7 @@
 
 #include "Controller.h"
 #include "FileSystem.h"
+#include "Title.h"
 #include "Savegame.h"
 
 #define round_up(x,n)	(-(-(x) & -(n)))
@@ -535,7 +536,6 @@ s32 __Menu_GetDeviceSaves(struct savegame **outbuf, u32 *outlen, s32 device)
 
 	return 0;
 }
-
 
 s32 __Menu_EntryCmp(const void *p1, const void *p2)
 {
