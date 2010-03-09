@@ -541,6 +541,45 @@ int Title::Get(u16 revision, const char* wadFileName)
 	return 0;
 }
 
+s32 Title::Title_GetList(u64 **outbuf, u32 *outlen)
+{
+	u64 *titles;
+
+	u32 len, nb_titles;
+	s32 ret;
+
+	/* Get number of titles */
+	ret = ES_GetNumTitles(&nb_titles);
+	if (ret < 0)
+		return ret;
+
+	/* Calculate buffer lenght */
+	len = round_up(sizeof(u64) * nb_titles, 32);
+
+	/* Allocate memory */
+	titles = memalign(32, len);
+	if (!titles)
+		return -1;
+
+	/* Get titles */
+	ret = ES_GetTitles(titles, nb_titles);
+	if (ret < 0)
+		goto err;
+
+	/* Set values */
+	*outbuf = titles;
+	*outlen = nb_titles;
+
+	return 0;
+
+err:
+	/* Free memory */
+	if (titles)
+		free(titles);
+
+	return ret;
+}
+
 int Title::Download(u16 revision) 
 {
 	s32 ret;

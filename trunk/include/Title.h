@@ -66,7 +66,6 @@ private:
 	static void DisplayInstallStatus(int status, Title *title);
 	static int  GetAlternateIosSlot();
 
-	Title(u64 titleId);
 	Title(u32 titleId1, u32 TitleId2);
 public:
 	u64 TitleId;
@@ -88,8 +87,10 @@ public:
 	u32 *BufferSize;
 	u32 ContentCount;
 public:
+    Title(u64 titleId);
 	~Title();
-	static void GetTitleKey(signed_blob *signedTicket, u8 *key);	
+	static void GetTitleKey(signed_blob *signedTicket, u8 *key);
+    s32  GetList(u64 **outbuf, u32 *outlen);	
 	static int Install(IosRevisionIterator iosRevision);
 	static int Install(IosRevisionIterator iosRevision, bool useAltSlot);
 	static int Install(IosRevisionIterator iosRevision, signed_blob *storedTMD);
