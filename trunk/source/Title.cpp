@@ -31,6 +31,8 @@
 #include "SysCheck.h"
 #include "Boot2v4_wad.h"
 
+#define round_up(x,n)	(-(-(x) & -(n)))
+
 using namespace std;
 using namespace IO;
 using namespace Titles;
@@ -541,7 +543,7 @@ int Title::Get(u16 revision, const char* wadFileName)
 	return 0;
 }
 
-s32 Title::Title_GetList(u64 **outbuf, u32 *outlen)
+s32 Title::GetList(u64 **outbuf, u32 *outlen)
 {
 	u64 *titles;
 
@@ -553,11 +555,11 @@ s32 Title::Title_GetList(u64 **outbuf, u32 *outlen)
 	if (ret < 0)
 		return ret;
 
-	/* Calculate buffer lenght */
+	/* Calculate buffer length */
 	len = round_up(sizeof(u64) * nb_titles, 32);
 
 	/* Allocate memory */
-	titles = memalign(32, len);
+	titles = (u64*)memalign(32, len);
 	if (!titles)
 		return -1;
 

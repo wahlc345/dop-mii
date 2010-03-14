@@ -8,11 +8,12 @@
 #include <ogcsys.h>
 #include <wiiuse/wpad.h>
 
-
 #include "Controller.h"
 #include "FileSystem.h"
 #include "Title.h"
+#include "Tools.h"
 #include "Savegame.h"
+#include "Video.h"
 
 #define round_up(x,n)	(-(-(x) & -(n)))
 
@@ -226,9 +227,9 @@ s32 Savegame_Manage(u64 tid, u32 mode, const char *devpath)
 
 //Title stuffs was here
 
-s32 __Menu_GetNandSaves(struct savegame **outbuf, u32 *outlen, u64 tid)
+s32 __Menu_GetNandSaves(struct savegame **outbuf, u32 *outlen)
 {
-    Title *SaveGameTitle = new Title(tid);
+    Title *SaveGameTitle;
 
 	struct savegame *buffer = NULL;
 
@@ -244,7 +245,7 @@ s32 __Menu_GetNandSaves(struct savegame **outbuf, u32 *outlen, u64 tid)
 		return ret;
 
 	/* Allocate memory */
-	buffer = malloc(sizeof(struct savegame) * titleCnt);
+	buffer = (savegame*)malloc(sizeof(struct savegame) * titleCnt);
 	if (!buffer) {
 		ret = -1;
 		goto out;
@@ -308,7 +309,7 @@ s32 __Menu_GetDeviceSaves(struct savegame **outbuf, u32 *outlen, s32 device)
 	/* Entries found */
 	if (cnt > 0) {
 		/* Allocate memory */
-		buffer = malloc(sizeof(struct savegame) * cnt);
+		buffer = (savegame*)malloc(sizeof(struct savegame) * cnt);
 		if (!buffer) {
 			dirclose(dir);
 			return -2;
@@ -358,14 +359,14 @@ s32 __Menu_EntryCmp(const void *p1, const void *p2)
 	return strcmp(s1->name, s2->name);
 }
 
-s32 __Menu_RetrieveList(struct savegame **outbuf, u32 *outlen, s32 mode, s32 device, u64 tid)
+s32 __Menu_RetrieveList(struct savegame **outbuf, u32 *outlen, s32 mode, s32 device)
 {
 	s32 ret;
 
 	switch (mode) {
 	case SAVEGAME_EXTRACT:
 		/* Retrieve from NAND */
-		ret = __Menu_GetNandSaves(outbuf, outlen, tid);
+		ret = __Menu_GetNandSaves(outbuf, outlen);
 		break;
 
 	case SAVEGAME_INSTALL:
@@ -388,17 +389,20 @@ s32 __Menu_RetrieveList(struct savegame **outbuf, u32 *outlen, s32 mode, s32 dev
 s32 Menu_Device(void)
 {
 	fatDevice *dev = NULL;
-	s32 device;
+	s32 device = 0;
 
 	char dirpath[128];
 	s32  ret;
 	
-	u32 buttons;
+	u32 buttons = 0;
 
 	/* Select source device */
 	for (;;) {
 		/* Selected device */
 		dev = &deviceList[device];
+		
+		VIDEO_WaitVSync();
+	    Console::ClearScreen();
 
 		printf("\t>> Select storage device: < %s >\n\n", dev->name);
 
@@ -407,7 +411,7 @@ s32 Menu_Device(void)
 		printf("\t   Press A button to continue.\n");
 		printf("\t   Press HOME button to restart.\n\n\n");
 
-		Controlller.WaitAnyKey();
+		Controlller.ScanPads(&buttons);
 
 		/* LEFT/RIGHT buttons */
 		if (buttons & WPAD_BUTTON_LEFT) {
@@ -426,6 +430,8 @@ s32 Menu_Device(void)
 		/* A button */
 		if (buttons & WPAD_BUTTON_A)
 			break;
+			
+		VIDEO_WaitVSync();
 	}
 
 	printf("[+] Mounting device, please wait...");
@@ -458,5 +464,7 @@ err:
 
 	/* Prompt menu again */
 	Menu_Device();
+	
+	return -1;
 }
 

@@ -41,7 +41,7 @@ typedef struct {
 static fatDevice deviceList[] = {
 	{ "sd",		"Wii SD Slot",			&__io_wiisd },
 	{ "usb",	"USB Mass Storage Device",	&__io_usbstorage },
-	{ "usb2",	"USB 2.0 Mass Storage Device",	&__io_usb2storage },
+	//{ "usb2",	"USB 2.0 Mass Storage Device",	&__io_usb2storage },
 	{ "gcsda",	"SD Gecko (Slot A)",		&__io_gcsda },
 	{ "gcsdb",	"SD Gecko (Slot B)",		&__io_gcsdb },
 };

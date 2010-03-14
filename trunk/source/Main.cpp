@@ -1010,6 +1010,7 @@ void Main::ShowSaveMenu(s32 mode)
 		u32 cnt = 0;
 		s32 index = 0;
 
+        VIDEO_WaitVSync();
 		Console::ClearScreen();
 		
 		/** Print entries **/
@@ -1031,13 +1032,15 @@ void Main::ShowSaveMenu(s32 mode)
 		printf("\n\nIf you don't see any saves, quit and load a different IOS next time.");
 		if(mode == 1)
 		printf("\n\nIf you don't see any saves, check your storage device.");
+		
 		printf("\nUP/DOWN: Navigate");
 		printf("\nA: Select Savegame");
 		printf("\nB: Back");
 		printf("\nHOME: Quit");
+		VIDEO_WaitVSync();
 
 		/** Controls **/
-		Controller::WaitAnyKey();
+		Controller::ScanPads(&buttons);
 
 		/* UP/DOWN buttons */
 		if (buttons & WPAD_BUTTON_UP) {
@@ -1075,7 +1078,7 @@ void Main::ShowSaveMenu(s32 mode)
 	            printf("    Press B button to go back to the menu.\n\n\n");
 
 	                for (;;) {
-		                Controller::WaitAnyKey();
+		                Controller::ScanPads(&buttons);
 
 		                /* A button */
 		               if (buttons & WPAD_BUTTON_A)
@@ -1372,6 +1375,8 @@ void Main::RunSysCheck()
 	}
 	
 	System::ReloadIOS(CurrentIOS->Id);
+	
+	WPAD_Init();
 		
 	if (System::State != SystemState::Running) goto final;
 

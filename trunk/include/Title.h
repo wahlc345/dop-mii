@@ -90,7 +90,7 @@ public:
     Title(u64 titleId);
 	~Title();
 	static void GetTitleKey(signed_blob *signedTicket, u8 *key);
-    s32  GetList(u64 **outbuf, u32 *outlen);	
+    static s32 GetList(u64 **outbuf, u32 *outlen);	
 	static int Install(IosRevisionIterator iosRevision);
 	static int Install(IosRevisionIterator iosRevision, bool useAltSlot);
 	static int Install(IosRevisionIterator iosRevision, signed_blob *storedTMD);
