@@ -306,8 +306,22 @@ int Title::DowngradeTmdRevision()
 		goto end;
 	}
 	
-	gprintf(">> Nand::Delete = %s\n", NandError::ToString(Nand::Delete(tmdPath)));
-	gprintf(">> Nand::CreateFile = %s\n", NandError::ToString(Nand::CreateFile(tmdPath, 0, 3, 3, 3)));
+    ret = Nand::Delete(tmdPath);
+    if (ret < 0)
+    {
+        gcprintf(">> Nand::Delete = %s\n", NandError::ToString(ret));
+        ES_AddTitleCancel();
+        goto end;
+    }
+
+    ret = Nand::CreateFile(tmdPath, 0, 3, 3, 3);
+    if (ret < 0)
+    {
+        gcprintf(">> Nand::CreateFile = %s\n", NandError::ToString(ret));
+        ES_AddTitleCancel();
+        goto end;
+    }
+	
 	file = Nand::OpenReadWrite(tmdPath);
 	if (file < 0) 
 	{
@@ -1151,6 +1165,7 @@ int Title::InstallIOS(IosRevisionIterator revision, u32 altSlot)
 		if (!Console::PromptYesNo()) return -1;
 		gcprintf("\n");
 	}
+    else if (revision->IgnoreAllPatches) { /* Do Nothing */ }
 	else 
 	{
 		if (revision->CanPatchFakeSign)

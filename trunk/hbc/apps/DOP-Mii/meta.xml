@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <app version="1">
-	<name>DOP-Mii (v12)</name>
-	<version>v12</version>
-	<release_date>20100303</release_date>
+	<name>DOP-Mii (v12.1 Beta 1)</name>
+	<version>v12beta1</version>
+	<release_date>20100705</release_date>
 	<coder>2 Devs</coder>
 	<short_description>DOP-Mii</short_description>
 	<long_description>A tool that will let you install IOSs, channels, system menus, and more!
