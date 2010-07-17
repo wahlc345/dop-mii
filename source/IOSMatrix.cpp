@@ -36,6 +36,9 @@ IosRevision::IosRevision(u64 titleId, mxml_node_t *node)
 	const char* xCanPatchNandPermissions = mxmlElementGetAttr(node, "canPatchNandPermissions");
 	this->CanPatchNandPermissions = (xCanPatchNandPermissions && !strcmpi(xCanPatchNandPermissions, "true")); 
 
+    const char* xDowngradeBlocked = mxmlElementGetAttr(node, "downgradeBlocked");
+    this->DowngradeBlocked = (xDowngradeBlocked && !strcmpi(xDowngradeBlocked, "true"));
+
 	const char* xNusAvailable = mxmlElementGetAttr(node, "nus");
 	this->NusAvailable = (!xNusAvailable || !strcmpi(xNusAvailable, "true"));
 
@@ -61,6 +64,7 @@ void IosRevision::ResetApplyPatchFlags()
 	this->ApplyFakeSignPatch = false;
 	this->ApplyEsIdentifyPatch = false;
 	this->ApplyNandPermissionsPatch = false;
+    this->IgnoreAllPatches = false;
 }
 
 /* IosRevisionList */

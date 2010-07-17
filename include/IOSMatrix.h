@@ -22,14 +22,12 @@ namespace Titles
 		bool CanPatchFakeSign;
 		bool CanPatchEsIdentify;
 		bool CanPatchNandPermissions;
+        bool DowngradeBlocked;
 
-		/* Values For Below */
-		/* 0 = Do Not Patch */
-		/* 1 = Prompt For Patch */
-		/* 2 = Bypass Prompt */
 		bool ApplyFakeSignPatch;
 		bool ApplyEsIdentifyPatch;
 		bool ApplyNandPermissionsPatch;
+        bool IgnoreAllPatches;
 	public: // Methods
 		void ResetApplyPatchFlags();
 		IosRevision(u64 titleId, mxml_node_t *node);

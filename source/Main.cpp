@@ -87,17 +87,153 @@ int Main::InstallFakeSignIOS36()
 	int ret = 0;
 	signed_blob *stmd = NULL;
 	IosRevisionIterator rev;
+    
+    int iosVersion = 0;
+	int iosToUse = 0;
 
-	// Let's see if we are already on IOS36, if not then reload to IOS36
-	if (IOS_GetVersion() != 36) 
+    // Check to see if IOS 41 | 43 | 45 | 46 is currently installed
+    // If it is installed see if it is a version that is supported, if so move on
+    // if not move onto the next IOS
+
+    // Check IOS36
+    gcprintf("Checking IOS36 Version...");
+    iosVersion = SysTitle::GetVersion(0x100000024ull);
+    if (iosVersion <= 3351 && iosVersion > 0) 
+    {        
+        gcprintf("Version Usable. Starting Downgrade.\n");
+        iosToUse = 36;
+    } else gcprintf("Not Usable.\n");
+
+    // Check IOS41
+    if (iosToUse == 0)
+    {
+        gcprintf("Checking IOS41 Version...");
+        iosVersion = SysTitle::GetVersion(0x100000029ull);    
+        if (iosVersion == 0)
+        {
+            gcprintf("IOS41 v3348 not installed. Installing now.\n\n");
+            rev = IosMatrix->Item(41u)->Revisions.Item(3348);
+            rev->IgnoreAllPatches = true;
+            ret = Title::Install(rev);
+            if (ret > 0) iosToUse = 41;
+        }
+        else if (iosVersion <= 3348) 
+        {
+            gcprintf("Version Usable. Starting Downgrade.\n");
+            iosToUse = 41;
+        }
+        else gcprintf("Not Usable.\n");
+    }
+
+    // Check IOS43
+    if (iosToUse == 0)
+    {
+        gcprintf("Checking IOS43 Version...");
+        iosVersion = SysTitle::GetVersion(0x10000002Bull);
+        if (iosVersion == 0)
+        {
+            gcprintf("IOS43 v3348 not installed. Installing now.\n\n");
+            rev = IosMatrix->Item(43u)->Revisions.Item(3348);
+            rev->IgnoreAllPatches = true;
+            ret = Title::Install(rev);
+            if (ret > 0) iosToUse = 43;
+        }
+        else if (iosVersion <= 3348)
+        {
+            gcprintf("Version Usable. Starting Downgrade.\n");
+            iosToUse = 43;
+        }
+        else gcprintf("Not Usable.\n");
+    }
+
+    // Check IOS45
+    if (iosToUse == 0)
+    {
+        gcprintf("Checking IOS45 Version...");
+        iosVersion = SysTitle::GetVersion(0x10000002Dull);
+        if (iosVersion == 0)
+        {
+            gcprintf("IOS45 v3091 not installed. Installing now.\n\n");
+            rev = IosMatrix->Item(45u)->Revisions.Item(3091);
+            rev->IgnoreAllPatches = true;
+            ret = Title::Install(rev);
+            if (ret > 0) iosToUse = 45;
+        }
+        else if (iosVersion <= 3091)
+        {
+            gcprintf("Version Usable. Starting Downgrade.\n");
+            iosToUse = 45;
+        }
+        else gcprintf("Not Usable.\n");        
+    }
+
+    // Check IOS46
+    if (iosToUse == 0)
+    {
+        gcprintf("Checking IOS46 Version...");
+        iosVersion = SysTitle::GetVersion(0x10000002Eull);
+        if (iosVersion == 0)
+        {
+            gcprintf("IOS46 v3350 not installed. Installing now.\n\n");
+            rev = IosMatrix->Item(46u)->Revisions.Item(3350);
+            rev->IgnoreAllPatches = true;
+            ret = Title::Install(rev);
+            if (ret > 0) iosToUse = 46;
+        }
+        else if (iosVersion <= 3350)
+        {
+            gcprintf("Version Usable. Starting Downgrade.\n");
+            iosToUse = 46;
+        }
+        else gcprintf("Not Usable.\n");        
+    }
+
+    // Check IOS52
+    if (iosToUse == 0)
+    {
+        gcprintf("Checking IOS52 Version...");
+        iosVersion = SysTitle::GetVersion(0x100000034ull);
+        if (iosVersion == 0)
+        {
+            gcprintf("IOS52 v5661 not installed. Installing now.\n\n");
+            rev = IosMatrix->Item(52u)->Revisions.Item(5661);
+            rev->IgnoreAllPatches = true;
+            ret = Title::Install(rev);
+            if (ret > 0) iosToUse = 52;
+        }
+        else if (iosVersion <= 5661)
+        {
+            gcprintf("Version Usable. Starting Downgrade.\n");
+            iosToUse = 52;
+        }
+        else gcprintf("Not Usable.\n");        
+    }
+
+    if (iosToUse == 0)
+    {
+        gcprintf("\n\n>> ERROR! No Useable IOSes found to downgrade IOS15.\n");
+        ret = -1;
+        goto error;
+    }
+
+    // Let's see if we are already on IOS36, if not then reload to IOS36
+	if (IOS_GetVersion() != iosToUse) 
 	{
-		gcprintf("Current IOS is not 36. Loading IOS36...\n\n");
-		ret = System::ReloadIOS(36);
+		gcprintf("Current IOS is not %d. Loading IOS%d...\n\n", iosToUse, iosToUse);
+		ret = System::ReloadIOS(iosToUse);
 		if (ret < 0)
 		{
-			gcprintf("\n>> ERROR! Failed to load IOS36: ErrorCode (%d)", ret);
+			gcprintf("\n>> ERROR! Failed to load IOS%d: ErrorCode (%d)", iosToUse, ret);
 			goto error;
 		}
+	}
+
+	// snag stored TMD on IOS36 before reloading to IOS15	
+	ret = SysTitle::GetTMD(0x100000024ull, &stmd);
+	if (ret < 0)
+	{
+		gcprintf("\n>>ERROR! Failed to Stored TMD for IOS36: %s\n", EsError::ToString(ret));
+		goto error;
 	}
 	
 	if (SysTitle::GetVersion(0x10000000Full) != 257)
@@ -109,14 +245,6 @@ int Main::InstallFakeSignIOS36()
 			gcprintf("\n>> ERROR! Failed To Downgrade IOS15 to v257\n");
 			goto error;
 		}
-	}
-
-	// snag stored TMD on IOS36 before reloading to IOS15	
-	ret = SysTitle::GetTMD(0x100000024ull, &stmd);
-	if (ret < 0)
-	{
-		gcprintf("\n>>ERROR! Failed to Stored TMD for IOS36: %s\n", EsError::ToString(ret));
-		goto error;
 	}
 
 	Console::PrintSolidLine(false);
@@ -146,14 +274,14 @@ int Main::InstallFakeSignIOS36()
 		gcprintf("\n>> ERROR! Failed to reload IOS15: ErrorCode (%d)\n", ret);
 		goto error;
 	}
-	gcprintf("Would you like to restore IOS15 to v523?\n");
+	gcprintf("Would you like to restore IOS15 to 1031?\n");
 	if (Console::PromptYesNo())
 	{	
-		gcprintf("\n*** Restoring IOS15 to v523 ***\n");
-		ret = Title::Install(IosMatrix->Item(15u)->Revisions.Item(523));
+		gcprintf("\n*** Restoring IOS15 to v1031 ***\n");
+		ret = Title::Install(IosMatrix->Item(15u)->Revisions.Item(1031));
 		if (ret < 0)
 		{
-			gcprintf("\n>> ERROR! Failed To Restore IOS36 to v3551\n");
+			gcprintf("\n>> ERROR! Failed To Restore IOS15 to v1031\n");
 			goto error;
 		}
 	}
@@ -588,13 +716,19 @@ void Main::ShowIosMenu()
 				}
 				if (rev->CanPatchFakeSign) printf("Can patch FakeSign (Trucha)\n");
 				if (rev->CanPatchEsIdentify) printf("Can patch ES_Identify\n");
-				if (rev->CanPatchNandPermissions) printf("Can patch NAND Permissions\n");			
+				if (rev->CanPatchNandPermissions) printf("Can patch NAND Permissions\n");
 				if (!rev->NusAvailable)
 				{
 					Console::SetFgColor(Color::Yellow, Bold::On);
 					printf("Not Available on NUS!");
 					Console::ResetColors();
 				}
+                if (rev->DowngradeBlocked)
+                {
+                    Console::SetFgColor(Color::Yellow, Bold::On);
+                    printf("Version cannot downgrade other IOSes\n");
+                    Console::ResetColors();
+                }
 				if (rev->Note.size() > 0) 
 				{
 					Console::SetFgColor(Color::Yellow, Bold::On);
