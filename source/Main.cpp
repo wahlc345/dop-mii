@@ -71,7 +71,7 @@ extern "C" s32 __IOS_LoadStartupIOS()
 	sort(list.rbegin(), list.rend());	
 	for (u32Iterator version = list.begin(); version < list.end(); ++version)
 	{
-		if (*version < 71) // Currently latest IOS starts at 70
+		if (*version < 81) // Currently latest IOS starts at 80
 		{
 			ret = __IOS_LaunchNewIOS(*version);
 			if (ret > -1) break;
