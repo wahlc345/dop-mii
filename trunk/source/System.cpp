@@ -113,9 +113,9 @@ void System::Initialize()
 	InitGecko(); 
 	gprintf("\n\nDOP-Mii (r%s)\n", SVN_REV_STR);
 	gprintf("Initializing Wii\n");
-	gprintf("VideoInit\n"); Video::Initialize();  
-	gprintf("WPAD_Init\n"); WPAD_Init();
-	gprintf("PAD_Init\n"); PAD_Init();	
+	gprintf("VideoInit\n"); Video::Initialize();
+    gprintf("PAD_Init\n"); PAD_Init();
+	gprintf("WPAD_Init\n"); WPAD_Init();	
 	USB::Startup(); // Wake Up USB Drive
 	Settings::Instance().Load();
 
