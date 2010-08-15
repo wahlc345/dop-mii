@@ -82,229 +82,6 @@ extern "C" s32 __IOS_LoadStartupIOS()
 	return 0;
 }
 
-int Main::InstallFakeSignIOS36()
-{
-	int ret = 0;
-	signed_blob *stmd = NULL;
-	IosRevisionIterator rev;
-    
-    int iosVersion = 0;
-	int iosToUse = 0;
-
-    // Check to see if IOS 41 | 43 | 45 | 46 is currently installed
-    // If it is installed see if it is a version that is supported, if so move on
-    // if not move onto the next IOS
-
-    // Check IOS36
-    gcprintf("Checking IOS36 Version...");
-    iosVersion = SysTitle::GetVersion(0x100000024ull);
-    if (iosVersion <= 3351 && iosVersion > 0) 
-    {        
-        gcprintf("Version Usable. Starting Downgrade.\n");
-        iosToUse = 36;
-    } else gcprintf("Not Usable.\n");
-
-    // Check IOS41
-    if (iosToUse == 0)
-    {
-        gcprintf("Checking IOS41 Version...");
-        iosVersion = SysTitle::GetVersion(0x100000029ull);    
-        if (iosVersion == 0)
-        {
-            gcprintf("IOS41 v3348 not installed. Installing now.\n\n");
-            rev = IosMatrix->Item(41u)->Revisions.Item(3348);
-            rev->IgnoreAllPatches = true;
-            ret = Title::Install(rev);
-            if (ret > 0) iosToUse = 41;
-        }
-        else if (iosVersion <= 3348) 
-        {
-            gcprintf("Version Usable. Starting Downgrade.\n");
-            iosToUse = 41;
-        }
-        else gcprintf("Not Usable.\n");
-    }
-
-    // Check IOS43
-    if (iosToUse == 0)
-    {
-        gcprintf("Checking IOS43 Version...");
-        iosVersion = SysTitle::GetVersion(0x10000002Bull);
-        if (iosVersion == 0)
-        {
-            gcprintf("IOS43 v3348 not installed. Installing now.\n\n");
-            rev = IosMatrix->Item(43u)->Revisions.Item(3348);
-            rev->IgnoreAllPatches = true;
-            ret = Title::Install(rev);
-            if (ret > 0) iosToUse = 43;
-        }
-        else if (iosVersion <= 3348)
-        {
-            gcprintf("Version Usable. Starting Downgrade.\n");
-            iosToUse = 43;
-        }
-        else gcprintf("Not Usable.\n");
-    }
-
-    // Check IOS45
-    if (iosToUse == 0)
-    {
-        gcprintf("Checking IOS45 Version...");
-        iosVersion = SysTitle::GetVersion(0x10000002Dull);
-        if (iosVersion == 0)
-        {
-            gcprintf("IOS45 v3091 not installed. Installing now.\n\n");
-            rev = IosMatrix->Item(45u)->Revisions.Item(3091);
-            rev->IgnoreAllPatches = true;
-            ret = Title::Install(rev);
-            if (ret > 0) iosToUse = 45;
-        }
-        else if (iosVersion <= 3091)
-        {
-            gcprintf("Version Usable. Starting Downgrade.\n");
-            iosToUse = 45;
-        }
-        else gcprintf("Not Usable.\n");        
-    }
-
-    // Check IOS46
-    if (iosToUse == 0)
-    {
-        gcprintf("Checking IOS46 Version...");
-        iosVersion = SysTitle::GetVersion(0x10000002Eull);
-        if (iosVersion == 0)
-        {
-            gcprintf("IOS46 v3350 not installed. Installing now.\n\n");
-            rev = IosMatrix->Item(46u)->Revisions.Item(3350);
-            rev->IgnoreAllPatches = true;
-            ret = Title::Install(rev);
-            if (ret > 0) iosToUse = 46;
-        }
-        else if (iosVersion <= 3350)
-        {
-            gcprintf("Version Usable. Starting Downgrade.\n");
-            iosToUse = 46;
-        }
-        else gcprintf("Not Usable.\n");        
-    }
-
-    // Check IOS52
-    if (iosToUse == 0)
-    {
-        gcprintf("Checking IOS52 Version...");
-        iosVersion = SysTitle::GetVersion(0x100000034ull);
-        if (iosVersion == 0)
-        {
-            gcprintf("IOS52 v5661 not installed. Installing now.\n\n");
-            rev = IosMatrix->Item(52u)->Revisions.Item(5661);
-            rev->IgnoreAllPatches = true;
-            ret = Title::Install(rev);
-            if (ret > 0) iosToUse = 52;
-        }
-        else if (iosVersion <= 5661)
-        {
-            gcprintf("Version Usable. Starting Downgrade.\n");
-            iosToUse = 52;
-        }
-        else gcprintf("Not Usable.\n");        
-    }
-
-    if (iosToUse == 0)
-    {
-        gcprintf("\n\n>> ERROR! No Useable IOSes found to downgrade IOS15.\n");
-        ret = -1;
-        goto error;
-    }
-
-    // Let's see if we are already on IOS36, if not then reload to IOS36
-	if (IOS_GetVersion() != iosToUse) 
-	{
-		gcprintf("Current IOS is not %d. Loading IOS%d...\n\n", iosToUse, iosToUse);
-		ret = System::ReloadIOS(iosToUse);
-		if (ret < 0)
-		{
-			gcprintf("\n>> ERROR! Failed to load IOS%d: ErrorCode (%d)", iosToUse, ret);
-			goto error;
-		}
-	}
-
-	// snag stored TMD on IOS36 before reloading to IOS15	
-	ret = SysTitle::GetTMD(0x100000024ull, &stmd);
-	if (ret < 0)
-	{
-		gcprintf("\n>>ERROR! Failed to Stored TMD for IOS36: %s\n", EsError::ToString(ret));
-		goto error;
-	}
-	
-	if (SysTitle::GetVersion(0x10000000Full) != 257)
-	{
-		gcprintf("*** Downgrading IOS15 to v257 ***\n");
-		ret = Title::Install(IosMatrix->Item(15u)->Revisions.Item(257));
-		if (ret < 0)
-		{
-			gcprintf("\n>> ERROR! Failed To Downgrade IOS15 to v257\n");
-			goto error;
-		}
-	}
-
-	Console::PrintSolidLine(false);
-	gcprintf("*** Reloading IOS15 (v257) ***\n");
-	ret = System::ReloadIOS(15);
-	if (ret < 0)
-	{
-		gcprintf("\n>> ERROR! Failed to reload IOS15: ErrorCode (%d)\n", ret);
-		goto error;
-	}
-
-	gcprintf("*** Restoring IOS36 to v3351 ***\n\n");
-	rev = IosMatrix->Item(36u)->Revisions.Item(3351);
-	rev->ApplyFakeSignPatch = true;
-	ret = Title::Install(rev, stmd);
-	if (ret < 0)
-	{
-		gcprintf("\n>> ERROR! Failed To Restore IOS36 to v3551\n");
-		goto error;
-	}
-
-	Console::PrintSolidLine(false);
-	gcprintf("*** Reloading IOS36 (v3351) ***\n\n");
-	ret = System::ReloadIOS(36);
-	if (ret < 0)
-	{
-		gcprintf("\n>> ERROR! Failed to reload IOS15: ErrorCode (%d)\n", ret);
-		goto error;
-	}
-	gcprintf("Would you like to restore IOS15 to 1031?\n");
-	if (Console::PromptYesNo())
-	{	
-		gcprintf("\n*** Restoring IOS15 to v1031 ***\n");
-		ret = Title::Install(IosMatrix->Item(15u)->Revisions.Item(1031));
-		if (ret < 0)
-		{
-			gcprintf("\n>> ERROR! Failed To Restore IOS15 to v1031\n");
-			goto error;
-		}
-	}
-
-	if (ret > -1)
-	{
-		Console::ClearScreen();
-		gcprintf("Installation of IOS36 (v3351) w/FakeSign was completed successfully!!!\n");
-		gcprintf("You may now use IOS36 to install anything else.\n\n");
-		gcprintf("Press any key to continue.\n");
-		VIDEO_WaitVSync();
-		Controller::WaitAnyKey();
-		goto final;
-	}
-
-error:
-	gcprintf("\nPress any key to return to the menu.\n");
-	Controller::WaitAnyKey();
-
-final:
-	delete stmd; stmd = NULL;
-	return ret;
-}
 
 int Main::InstallIOS(IosMatrixIterator ios, IosRevisionIterator revision) 
 {
@@ -377,6 +154,11 @@ void Main::ShowBoot2Menu()
 		{
 			printf("Your Boot2 is eligable to be upgraded to v%d.", MaxBoot2Version);
 			printf("\n\n");
+#if 1
+			printf("However, due to issues involving the inclusion of the Boot2v4 WAD\n");
+			printf("this version of Dop-Mii cannot install Boot2v4, until it has been\n");
+			printf("recoded to download said file from the Nintendo Update Service.\n\n");
+#else
 			Console::SetFgColor(Color::Yellow, Bold::On);
 			printf("!!! IMPORTANT READ BELOW VERY CAREFULLY!!!\n");
 			Console::ResetColors();
@@ -393,6 +175,7 @@ void Main::ShowBoot2Menu()
 			printf("\n");
 			printf("As a safety precaution, when you start the upgrade process you will be\n");
 			printf("prompted 4 times to confirm that you truely want to upgrade your Boot2.\n");
+#endif
 		} 
 		else if (version == MaxBoot2Version)
 		{
@@ -420,16 +203,19 @@ void Main::ShowBoot2Menu()
 			if (System::State != SystemState::Running) return;
 			if (button == WPAD_BUTTON_B) return;
 
+#if 0
 			if (button == WPAD_BUTTON_PLUS && version && version < MaxBoot2Version) 
 			{
 				if (UpgradeBoot2() > -1) ES_GetBoot2Version(&version);				
 			}
+#endif
 
 			if (button) break;
 		}
 	}
 }
 
+#if 0
 int Main::UpgradeBoot2()
 {
 	int ret = 0;
@@ -470,6 +256,7 @@ int Main::UpgradeBoot2()
 	
 	return ret;
 }
+#endif
 
 void Main::BuildSysCheckTable()
 {
@@ -534,8 +321,13 @@ void Main::ShowWelcomeScreen()
 	printf("Website       : http://dop-mii.googlecode.com\n");
 	printf("Forums        : http://groups.google.com/group/dop-mii\n");
 	printf("Blog          : http://arikadosblog.blogspot.com\n");
-	printf("Developers    : Lunatik, Arikado\n");
+	printf("Developers    : Lunatik, Arikado (& lukegb kinda)\n");
 	printf("Other Credits : giantpune, SifJar, PheonixTank, Bushing\n\n");
+	Console::PrintSolidLine(false);
+	printf("This is the WIIBREW BUILD of Dop-Mii. As such, certain functions\n");
+	printf("may be missing or disabled. For more details, see the website (URL above)\n");
+	printf("and http://hackmii.com/2010/08/the-usb2-release/\n\n");
+	Console::PrintSolidLine(false);
 	printf("Press A to continue. Press [Home] to exit.");		
 	VIDEO_WaitVSync();
 
@@ -698,8 +490,7 @@ void Main::ShowIosMenu()
 		{
 			if 
 			(
-				rev->Id > 0 && (rev->Description.size() > 0 || rev->Note.size() > 0 || rev->IsStub || !rev->NusAvailable ||
-				rev->CanPatchFakeSign || rev->CanPatchEsIdentify || rev->CanPatchNandPermissions)
+				rev->Id > 0 && (rev->Description.size() > 0 || rev->Note.size() > 0 || rev->IsStub || !rev->NusAvailable)
 			)
 			{
 				Console::SetPosition(9, 0);
@@ -714,9 +505,6 @@ void Main::ShowIosMenu()
 					printf("Version is a STUB!\n");
 					Console::ResetColors();
 				}
-				if (rev->CanPatchFakeSign) printf("Can patch FakeSign (Trucha)\n");
-				if (rev->CanPatchEsIdentify) printf("Can patch ES_Identify\n");
-				if (rev->CanPatchNandPermissions) printf("Can patch NAND Permissions\n");
 				if (!rev->NusAvailable)
 				{
 					Console::SetFgColor(Color::Yellow, Bold::On);
@@ -765,8 +553,6 @@ void Main::ShowIosMenu()
 		else allowInstall = false;
 
 		printf("\n[Home] Exit   [B] Back     ");
-
-		if (allowInstall) printf("[Hold A, Press +] Install Into Another Slot");
 
 		Console::PrintSolidLine();
 		printf("Current IOS: %s", CurrentIOS->Name.c_str());
@@ -1408,7 +1194,7 @@ void Main::ShowInitialMenu()
 	int selection = 0;
 	u32List iosList;
 	u32Iterator menuIOS;
-	u8 maxMenu = 3;
+	u8 maxMenu = 2;
 
 	/* Get IOS versions */
 	System::GetInstalledIosIdList(iosList);
@@ -1434,9 +1220,8 @@ void Main::ShowInitialMenu()
 		Console::ClearScreen();
 		printf("Which IOS would you like to use to install other IOSes?\n");
 		printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
-		printf("%sInstall IOS36 (v%d) w/FakeSign%s\n", (selection == 1 ? AnsiSelection : ""), IOS36Version, AnsiNormal);
-		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
-		printf("%sExit%s", (selection == 3 ? AnsiSelection : ""), AnsiNormal);	
+		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 1 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sExit%s", (selection == 2 ? AnsiSelection : ""), AnsiNormal);	
 
 		Console::SetRowPosition(Console::Rows-7);
 		Console::PrintSolidLine();
@@ -1481,38 +1266,14 @@ void Main::ShowInitialMenu()
 						CurrentIOS = IosMatrix->Item(*menuIOS);
 						System::ReloadIOS(CurrentIOS);
 
-						if (!SysCheck::CheckFakeSign())
-						{
-							printf("\n\n>> ERROR! Choose an IOS that accepts fake signing! Press A to continue.");
-									
-							u32 button;
-							while (Controller::ScanPads(&button))
-							{
-								if (button == WPAD_BUTTON_HOME) System::Exit();
-								if (System::State != SystemState::Running) goto end;
-								if (button == WPAD_BUTTON_A) break;
-							}
-						}
-						else 
-						{
-							ShowMainMenu(); 
-							if (System::State != SystemState::Running) goto end;
-							selection = 0;
-						}
+						ShowMainMenu(); 
+						if (System::State != SystemState::Running) goto end;
+						selection = 0;
 						break;
 					case 1:
-						VIDEO_WaitVSync();
-						Console::ClearScreen();
-						if (!Console::PromptContinue()) break;
-
-						VIDEO_WaitVSync();
-						Console::ClearScreen();
-						if (InstallFakeSignIOS36() > -1) selection = 0;
-						break;
-					case 2:
 						RunSysCheck(); 
 						break;
-					case 3:
+					case 2:
 						VIDEO_WaitVSync();
 						Console::ClearScreen();
 						printf("Are you sure you want to exit?\n");

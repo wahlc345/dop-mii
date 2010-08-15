@@ -7,7 +7,6 @@
 #include "Error.h"
 #include "gecko.h"
 #include "Boot2.h"
-#include "Boot2v4_wad.h"
 #include "tools.h"
 #include "wad.h"
 #include "rijndael.h"
@@ -15,6 +14,8 @@
 #include "title.h"
 
 #define ALIGN(a,b) ((((a)+(b)-1)/(b))*(b))
+
+#if 0
 
 int Boot2::Install(u16 version)
 {
@@ -206,3 +207,5 @@ signed_blob* Boot2::FindCert(signed_blob *certs, u32 certsSize, const char *matc
 
 	return NULL;
 }
+
+#endif

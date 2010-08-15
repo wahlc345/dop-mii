@@ -39,7 +39,7 @@ LIBS	:= -lwiiuse -lfat -lbte -logc -lm -lmxml
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= ../libs/mxml
+LIBDIRS	:= c:/devkitpro/mxml
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
