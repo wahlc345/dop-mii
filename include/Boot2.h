@@ -2,7 +2,7 @@
 #define _BOOT2_H_
 
 #define MaxBoot2Version 4
-
+#if 0
 class Boot2
 {
 private:
@@ -11,5 +11,6 @@ private:
 public:
 	static int Install(u16 version);
 };
+#endif
 
 #endif

@@ -22,14 +22,12 @@
 #include "nus.h"
 #include "video.h"
 #include "tools.h"
-#include "Patcher.h"
 #include "Titles_xml.h"
 #include "title.h"
 #include "wad.h"
 #include "SysMenuMatrix.h"
 #include "SysTitle.h"
 #include "SysCheck.h"
-#include "Boot2v4_wad.h"
 
 using namespace std;
 using namespace IO;
@@ -1148,139 +1146,15 @@ int Title::RemoveTitleContents()
 
 int Title::InstallIOS(IosRevisionIterator revision, u32 altSlot)
 {
-	int ret = 0;	
-	bool tikDirty = false;
-	bool tmdDirty = false;
-	bool applyFakeSignPatch = false;
-	bool applyEsIdentifyPatch = false;
-	bool applyNandPermissionPatch = false;	
-
-	// Prompt for Patches
-	if (revision->IsStub)
-	{
-		Console::SetFgColor(Color::Yellow, Bold::On);
-		gcprintf("!!! This version is a Stub. !!!\n");
-		Console::ResetColors();
-		gcprintf("Are you sure you want to continue?\n");
-		if (!Console::PromptYesNo()) return -1;
-		gcprintf("\n");
-	}
-    else if (revision->IgnoreAllPatches) { /* Do Nothing */ }
-	else 
-	{
-		if (revision->CanPatchFakeSign)
-		{
-			if (!(applyFakeSignPatch = revision->ApplyFakeSignPatch))
-			{
-				gcprintf("Apply FakeSign (Trucha) patch to %s?\n", Name.c_str());
-				applyFakeSignPatch = Console::PromptYesNo();
-				gcprintf("\n");
-			}
-		}
-
-		if (revision->CanPatchEsIdentify)
-		{
-			if (!(applyEsIdentifyPatch = revision->ApplyEsIdentifyPatch))
-			{
-				gcprintf("Apply ES_Identify patch to %s?\n", Name.c_str());
-				applyEsIdentifyPatch = Console::PromptYesNo();
-				gcprintf("\n");
-			}
-		}
-
-		if (revision->CanPatchNandPermissions)
-		{
-			if (!(applyNandPermissionPatch = revision->ApplyNandPermissionsPatch))
-			{
-				gcprintf("Apply NAND Permissions Patch?\n");
-				applyNandPermissionPatch = Console::PromptYesNo();
-				gcprintf("\n");
-			}
-		}
-	}	
-
-	revision->ResetApplyPatchFlags();
+	int ret = 0;
 
 	gcprintf("Loading %s v%u into memory\n", Name.c_str(), revision->Id);
-	
+
 	ret = this->Get(revision->Id);
 	if (ret < 0)
 	{
 		if (ret != (int)TitleError::Cancelled) gcprintf("\n>> ERROR! Title->Get: %d\n", ret);
 		return ret;
-	}
-
-	tmd_content *p_cr = TMD_CONTENTS((tmd*)SIGNATURE_PAYLOAD(this->Tmd));
-
-	if (applyFakeSignPatch || applyEsIdentifyPatch || applyNandPermissionPatch)
-	{
-		int index = ModuleIndex((char*)"ES:");
-		if (index < 0)
-		{
-			gcprintf("\n>> ERROR! Could not identify ES Module.\n");
-			return -1;
-		}
-
-		int fakeSignPatchCount = 0;
-		if (applyFakeSignPatch)
-		{
-			gcprintf("Patching FakeSign (Trucha) bug into ES Module(#%u)...", index);
-			fakeSignPatchCount = Patcher::PatchFakeSign(DecryptedBuffer[index], BufferSize[index]);
-			gcprintf("\n\t- patched %u hash check(s)\n", fakeSignPatchCount);
-		}
-
-		int esIdentifyPatchCount = 0;
-		if (applyEsIdentifyPatch)
-		{
-			gcprintf("Patching ES_Identify in ES module(#%u)...", index);
-			esIdentifyPatchCount = Patcher::PatchEsIdentity(DecryptedBuffer[index], BufferSize[index]);
-			gcprintf("\n\t- patch applied %u time(s)\n", esIdentifyPatchCount);
-		}
-
-		int nandPermissionPatchCount = 0;
-		if (applyNandPermissionPatch)
-		{
-			gcprintf("Patching nand permissions in ES module(#%u)...", index);
-			nandPermissionPatchCount = Patcher::PatchNandPermissions(DecryptedBuffer[index], BufferSize[index]);
-			gcprintf("\n\t- patch applied %u time(s)\n", nandPermissionPatchCount);
-		}
-
-		if (fakeSignPatchCount > 0 || esIdentifyPatchCount > 0 || nandPermissionPatchCount > 0)
-		{
-			sha1 hash;
-			SHA1(DecryptedBuffer[index], (u32)p_cr[index].size, hash);
-			memcpy(p_cr[index].hash, hash, sizeof(hash));
-			memset(hash, 0, sizeof(hash));
-			tmdDirty = true;
-		}		
-	}
-
-	if (altSlot)
-	{
-		u64 newTitleId = TITLEID(1,altSlot);
-
-		ChangeTicketTitleId(newTitleId);
-		ChangeTmdTitleId(newTitleId);
-		this->TitleId = newTitleId;
-		tmdDirty = tikDirty = true;
-	}
-
-
-	if (tmdDirty || tikDirty)
-	{
-		if (tikDirty) 
-		{
-			Patcher::ForgeTicket(this->Ticket);
-			gcprintf("Ticket was Forged\n");
-		}
-		if (tmdDirty) 
-		{
-			Patcher::ForgeTMD(this->Tmd);
-			gcprintf("TMD was Forged...\n");
-		}
-		gcprintf("Encrypting IOS...\n");
-		Encrypt();
-		gcprintf("Preparations complete\n\n");
 	}
 
 	ret = PerformInstall();
@@ -1523,99 +1397,13 @@ int Title::Install(IosRevisionIterator iosRevision, signed_blob *storedTMD)
 	return Install(iosRevision, storedTMD, false);
 }
 
-int Title::GetAlternateIosSlot()
-{
-	int ret = -1;
-	u32 button = 0;
-	u32List emptyList;
-	u32Iterator selected;
-
-	ret = System::GetEmptyIosIdSlots(emptyList);
-	if (ret < 0) goto final;
-
-	emptyList.push_back(0);
-	selected = emptyList.begin();
-
-	printf("Select the Slot you would like to install this IOS in.\n");
-	printf("[%s|%s] Change Selection [B] Cancel [Home] Return To Loader\n", LeftArrow, RightArrow);
-
-	while (System::State == SystemState::Running)
-	{
-		Console::ClearLine();
-		gcprintf("%s<<%s %s", AnsiYellowBoldFG, AnsiNormal, AnsiSelection);
-
-		if (*selected == 0) Console::PrintCenterGC(10, "Cancel");
-		else Console::PrintCenterGC(10, "IOS%u", *selected);
-		
-		Console::ResetColors();
-		gcprintf(" %s>>%s", AnsiYellowBoldFG, AnsiNormal);
-
-		while (Controller::ScanPads(&button))
-		{
-			if (button == WPAD_BUTTON_HOME) System::Exit();
-			if (System::State != SystemState::Running) goto final;
-
-			if (button == WPAD_BUTTON_B)
-			{
-				ret = (int)TitleError::Cancelled;
-				goto final;
-			}
-
-			/* 
-			Because the list is in reverse we need to make sure left is
-			going up the vector and right is going down
-			*/
-			if (button == WPAD_BUTTON_LEFT)
-			{
-				if (selected == emptyList.end()-1) selected = emptyList.begin();
-				else ++selected;
-			}
-
-			if (button == WPAD_BUTTON_RIGHT)
-			{
-				if (selected == emptyList.begin()) selected = emptyList.end()-1;
-				else --selected;
-			}
-
-
-			if (button == WPAD_BUTTON_A)
-			{
-				ret = *selected;
-				goto final;
-			}
-			
-			if (button) break;
-		}
-	}
-
-final:
-	emptyList.clear();
-	return ret;
-}
 
 int Title::Install(IosRevisionIterator iosRevision, signed_blob *storedTMD, bool useAltSlot)
 {
 	Title* title = new Title(iosRevision->TitleId);
 	int ret = -1;
 	int altSlot = 0;
-	
-	if (useAltSlot)
-	{
-		altSlot = GetAlternateIosSlot();
-		gprintf("Alt Slot = %d\n", altSlot);
-		gcprintf("\n\n");
-		if (altSlot == (int)TitleError::Cancelled || altSlot == 0)
-		{
-			ret = (int)TitleError::Cancelled; // incase altSlot = 0
-			goto error;
-		}
-		if (altSlot < 0) 
-		{
-			gcprintf(">> ERROR! Failed to retrieve the empty IOS slots. Error (%d)\n", ret);
-			ret = altSlot;
-			goto final;
-		}
-	}
+
 	
 	if (storedTMD)
 	{
@@ -1638,8 +1426,8 @@ int Title::Install(IosRevisionIterator iosRevision, signed_blob *storedTMD, bool
 	
 	ret = title->InstallIOS(iosRevision, altSlot);
 
-error:
-	DisplayInstallStatus(ret, title);
+/*error:
+	DisplayInstallStatus(ret, title);*/
 
 final:
 	delete title; title = NULL;
@@ -1677,36 +1465,4 @@ void Title::DisplayInstallStatus(int status, Title *title)
 		gcprintf("\nInstallation Completed\n");
 	else 
 		gcprintf("\nERROR! Installer returned error code (%d)\n", status);
-}
-
-void Title::ChangeTicketTitleId(u64 titleId)
-{
-	static u8 iv[16] ATTRIBUTE_ALIGN(32);
-	static u8 keyin[16] ATTRIBUTE_ALIGN(32);
-	static u8 keyout[16] ATTRIBUTE_ALIGN(32);
-
-	tik *ptik = (tik*)SIGNATURE_PAYLOAD(this->Ticket);
-	u8 *enckey = (u8*)ptik->cipher_title_key;
-
-	memcpy(keyin, enckey, sizeof(keyin));
-	memcpy(iv, &ptik->titleid, sizeof(ptik->titleid));
-
-	aes_set_key((u8*)AesCommonKey);
-	aes_decrypt(iv, keyin, keyout, sizeof(keyin));
-	ptik->titleid = titleId;
-
-	memset(iv, 0, sizeof(iv));
-	memcpy(iv, &ptik->titleid, sizeof(ptik->titleid));
-
-	aes_encrypt(iv, keyout, keyin, sizeof(keyout));
-	memcpy(enckey, keyin, sizeof(keyin));
-
-	memset(iv, 0, sizeof(iv));
-	memset(keyin, 0, sizeof(keyin));
-	memset(keyout, 0, sizeof(keyout));
-}
-
-void Title::ChangeTmdTitleId(u64 titleId)
-{
-	((tmd*)SIGNATURE_PAYLOAD(this->Tmd))->title_id = titleId;
 }
