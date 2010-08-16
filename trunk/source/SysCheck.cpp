@@ -12,9 +12,9 @@
 #include "Error.h"
 #include "SU_ticket_dat.h"
 #include "SysCheck.h"
-#include "tools.h"
-#include "nand.h"
-#include "gecko.h"
+#include "Tools.h"
+#include "Nand.h"
+#include "Gecko.h"
 #include "Global.h"
 #include "System.h"
 

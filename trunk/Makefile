@@ -107,8 +107,9 @@ UNAME := $(shell uname)
 
 $(BUILD):
 ifeq ($(UNAME),Linux)
-	chmod 555 ./tools/MakeSvnRev.sh
-	chmod +x ./tools/MakeSvnRev.sh
+	chmod 777 ./tools/MakeSvnRev.sh
+	chmod 777 ./tools/BuildType.sh
+	chmod 777 ./*Build.sh
 	./tools/MakeSvnRev.sh
 else
 	SubWCRev.exe "." "./templates/svnrev_template.h" "./include/svnrev.h"
@@ -122,8 +123,9 @@ endif
 #---------------------------------------------------------------------------------
 debug:
 ifeq ($(UNAME),Linux)
-	chmod 555 ./tools/MakeSvnRev.sh
-	chmod +x ./tools/MakeSvnRev.sh
+	chmod 777 ./tools/MakeSvnRev.sh
+	chmod 777 ./tools/BuildType.sh
+	chmod 777 ./*Build.sh
 	./tools/MakeSvnRev.sh
 else
 	SubWCRev.exe "." "./templates/svnrev_template.h" "./include/svnrev.h"

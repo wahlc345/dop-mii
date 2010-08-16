@@ -2,7 +2,7 @@
 #define _MAIN_H_
 
 #include "SysMenuMatrix.h"
-#include "IosMatrix.h"
+#include "IOSMatrix.h"
 #include "ChannelMatrix.h"
 
 using namespace Titles;

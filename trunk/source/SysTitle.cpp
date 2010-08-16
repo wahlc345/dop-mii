@@ -5,9 +5,9 @@
 #include <gccore.h>
 
 #include "SysTitle.h"
-#include "gecko.h"
-#include "tools.h"
-#include "nand.h"
+#include "Gecko.h"
+#include "Tools.h"
+#include "Nand.h"
 #include "Error.h"
 
 using namespace IO;

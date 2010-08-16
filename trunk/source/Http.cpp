@@ -7,9 +7,9 @@
 #include <sys/errno.h>
 #include <fcntl.h>
 
-#include "http.h"
-#include "tools.h"
-#include "gecko.h"
+#include "Http.h"
+#include "Tools.h"
+#include "Gecko.h"
 
 HTTP::HTTP()
 {

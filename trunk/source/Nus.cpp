@@ -4,11 +4,11 @@
 #include <ogc/es.h>
 #include <unistd.h>
 
-#include "nus.h"
-#include "http.h"
-#include "tools.h"
-#include "network.h"
-#include "gecko.h"
+#include "Nus.h"
+#include "Http.h"
+#include "Tools.h"
+#include "Network.h"
+#include "Gecko.h"
 #include "FileSystem.h"
 #include "Settings.h"
 

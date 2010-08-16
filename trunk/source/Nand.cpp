@@ -5,10 +5,10 @@
 #include <ogcsys.h>
 #include <algorithm>
 
-#include "nand.h"
-#include "gecko.h"
+#include "Nand.h"
+#include "Gecko.h"
 #include "Error.h"
-#include "tools.h"
+#include "Tools.h"
 
 using namespace std;
 using namespace IO;
