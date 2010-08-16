@@ -6,10 +6,10 @@
 #include <unistd.h>
 #include <sdcard/wiisd_io.h>
 #include <fat.h>
-#include "usbstorage.h"
+#include "UsbStorage.h"
 #include "FileSystem.h"
-#include "tools.h"
-#include "gecko.h"
+#include "Tools.h"
+#include "Gecko.h"
 
 #define CACHE 32
 #define SECTORS 64

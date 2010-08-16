@@ -1,7 +1,7 @@
 #ifndef _WAD_H_
 #define _WAD_H_
 
-#include "title.h"
+#include "Title.h"
 
 /* 'WAD Header' structure */
 typedef struct WadHeader

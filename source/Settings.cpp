@@ -4,7 +4,7 @@
 
 #include "Settings.h"
 #include "FileSystem.h"
-#include "gecko.h"
+#include "Gecko.h"
 #include "Global.h"
 
 using namespace IO;

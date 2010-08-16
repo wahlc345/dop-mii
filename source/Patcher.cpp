@@ -3,7 +3,7 @@
 #include <string.h>
 #include <gccore.h>
 
-#include "gecko.h"
+#include "Gecko.h"
 #include "Patcher.h"
 #include "sha1.h"
 

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "gctypes.h"
-#include "gecko.h"
+#include "Gecko.h"
 #include "Error.h"
 #include "Identify.h"
 

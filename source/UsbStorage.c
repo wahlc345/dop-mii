@@ -40,8 +40,8 @@ distribution.
 #include <ogc/machine/processor.h>
 #include <ogc/disc_io.h>
 
-#include "usbstorage.h"
-#include "gecko.h"
+#include "UsbStorage.h"
+#include "Gecko.h"
 
 #define ROUNDDOWN32(v)				(((u32)(v)-0x1f)&~0x1f)
 

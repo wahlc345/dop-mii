@@ -3,11 +3,11 @@
 #include <wiiuse/wpad.h>
 #include <ogc/pad.h>
 
-#include "controller.h"
-#include "tools.h"
+#include "Controller.h"
+#include "Tools.h"
 //#include "Main.h"
 #include "System.h"
-#include "gecko.h"
+#include "Gecko.h"
 
 int Controller::ScanPads(u32 *button)
 {
