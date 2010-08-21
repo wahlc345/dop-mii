@@ -1516,7 +1516,16 @@ void Main::ShowInitialMenu()
 						VIDEO_WaitVSync();
 						Console::ClearScreen();
 						printf("Are you sure you want to exit?\n");
-						if (Console::PromptYesNo()) System::Exit();
+					        gcprintf("[A] Yes    [B] No    [Home] Exit to Priiloader (if installed)\n");
+						
+					        u32 button;
+					        while (Controller::ScanPads(&button))
+					        {
+					                if (System::State != SystemState::Running) break;
+					                if (button == WPAD_BUTTON_HOME) System::ExitToPriiloader();
+					                if (button == WPAD_BUTTON_A) System::Exit();
+					                if (button == WPAD_BUTTON_B) break;
+					        }
 						break;				
 				} // End Switch
 			} // End If
