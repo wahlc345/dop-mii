@@ -40,6 +40,7 @@ public: // Methods
 	static void Initialize();
 	static void Exit() { Exit(false); }
 	static void Exit(bool forceExit);
+	static void ExitToPriiloader();
 	static int  ReloadIOS(IosMatrixIterator item) { return ReloadIOS(item->Id, true); }
 	static int  ReloadIOS(IosMatrixIterator item, bool initWPAD) { return ReloadIOS(item->Id, initWPAD); }
 	static int  ReloadIOS(u32 version) { return ReloadIOS(version, true); }
