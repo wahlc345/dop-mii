@@ -5,13 +5,13 @@
 #include <string.h>
 
 #include "Error.h"
-#include "gecko.h"
+#include "Gecko.h"
 #include "Boot2.h"
-#include "tools.h"
-#include "wad.h"
+#include "Tools.h"
+#include "Wad.h"
 #include "rijndael.h"
 #include "sha1.h"
-#include "title.h"
+#include "Title.h"
 
 #define ALIGN(a,b) ((((a)+(b)-1)/(b))*(b))
 

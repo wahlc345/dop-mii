@@ -5,8 +5,8 @@
 #include <ogcsys.h>
 #include <network.h>
 
-#include "network.h"
-#include "tools.h"
+#include "Network.h"
+#include "Tools.h"
 #include "System.h"
 
 bool Network::Initialized = false;

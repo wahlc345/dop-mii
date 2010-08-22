@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <ogcsys.h>
 #include "DiscLight.h"
-#include "gecko.h"
+#include "Gecko.h"
 
 #define DISC_SLOT_LED 0x20;
 const bool On = true;
