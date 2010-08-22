@@ -36,6 +36,9 @@ distribution.
 #include <string>
 #include <algorithm>
 #include <sstream>
+extern "C" {
+  #include "RuntimeIOSPatch.h"
+}
 
 #include "Global.h"
 #include "Controller.h"
@@ -52,6 +55,9 @@ distribution.
 #include "Settings.h"
 #include "Main.h"
 
+#define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
+
+
 using namespace IO;
 using namespace Titles;
 
@@ -61,6 +67,11 @@ I say we use latest installed so we can possibly get SDHC support
 */
 extern "C" s32 __IOS_LoadStartupIOS() 
 {
+	if (HAVE_AHBPROT)
+	{
+		/* Let's not muck up our privs */
+		return 0;
+	}
 	int ret = 0;
 
 	ret = __ES_Init();
@@ -1410,6 +1421,8 @@ void Main::ShowInitialMenu()
 	u32Iterator menuIOS;
 	u8 maxMenu = 3;
 
+	bool isAHBPROT = HAVE_AHBPROT;
+
 	/* Get IOS versions */
 	System::GetInstalledIosIdList(iosList);
 
@@ -1433,8 +1446,15 @@ void Main::ShowInitialMenu()
 		VIDEO_WaitVSync();
 		Console::ClearScreen();
 		printf("Which IOS would you like to use to install other IOSes?\n");
-		printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
-		printf("%sInstall IOS36 (v%d) w/FakeSign%s\n", (selection == 1 ? AnsiSelection : ""), IOS36Version, AnsiNormal);
+		if (!isAHBPROT)
+		{
+			printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
+			printf("%sInstall IOS36 (v%d) w/FakeSign%s\n", (selection == 1 ? AnsiSelection : ""), IOS36Version, AnsiNormal);
+		}
+		else
+		{
+			printf("%sUse IOS58 + AHBPROT%s\n", (selection == 0 ? AnsiSelection : ""), AnsiNormal);
+		}
 		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
 		printf("%sExit%s", (selection == 3 ? AnsiSelection : ""), AnsiNormal);	
 
@@ -1442,7 +1462,7 @@ void Main::ShowInitialMenu()
 		Console::PrintSolidLine();
 		printf("[%s][%s] Change Selection\n", UpArrow, DownArrow);
 		
-		if (selection == 0) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
+		if (selection == 0 && !isAHBPROT) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
 		else printf("\n");
 
 		printf("[Home] Exit");
@@ -1459,10 +1479,16 @@ void Main::ShowInitialMenu()
 			if (button == WPAD_BUTTON_UP) selection--;
 			if (button == WPAD_BUTTON_DOWN) selection++;
 
+			if (isAHBPROT)
+			{ // Let's skip out that
+				if (button == WPAD_BUTTON_UP && selection == 1) selection--;
+				if (button == WPAD_BUTTON_DOWN && selection == 1) selection++;
+			}
+
 			if (selection < 0) selection = maxMenu;
 			if (selection > maxMenu) selection = 0;
 
-			if (selection == 0)
+			if (selection == 0 && !isAHBPROT)
 			{
 				if (button == WPAD_BUTTON_LEFT && menuIOS != iosList.begin()) --menuIOS;
 				if (button == WPAD_BUTTON_RIGHT && menuIOS != iosList.end()-1) ++menuIOS;
@@ -1473,13 +1499,28 @@ void Main::ShowInitialMenu()
 				switch (selection)
 				{
 					case 0:
-						gprintf("Loading IOS\n");
-						VIDEO_WaitVSync();
-						Console::ClearScreen();
-						printf("Loading selected IOS...\n");
-													
-						CurrentIOS = IosMatrix->Item(*menuIOS);
-						System::ReloadIOS(CurrentIOS);
+						if (isAHBPROT) {
+							CurrentIOS = IosMatrix->Item((u32)58);
+							// Should do patchy?
+							if (!SysCheck::CheckFakeSign()) {
+								// Do patchy
+								Console::ClearScreen();
+								printf("One moment... Applying patches...\n");
+								Console::PrintSolidLine();
+								Spinner::Start();
+								IOSPATCH_Apply();
+								Spinner::Stop();
+								printf("\n\n...COMPLETE");
+							}
+						} else {
+							gprintf("Loading IOS\n");
+							VIDEO_WaitVSync();
+							Console::ClearScreen();
+							printf("Loading selected IOS...\n");
+														
+							CurrentIOS = IosMatrix->Item(*menuIOS);
+							System::ReloadIOS(CurrentIOS);
+						}
 
 						if (!SysCheck::CheckFakeSign())
 						{
@@ -1516,7 +1557,11 @@ void Main::ShowInitialMenu()
 						VIDEO_WaitVSync();
 						Console::ClearScreen();
 						printf("Are you sure you want to exit?\n");
-					        gcprintf("[A] Yes    [B] No    [Home] Exit to Priiloader (if installed)\n");
+						if (Tools::IsPriiloaderInstalled()) {
+						        gcprintf("[A] Yes    [B] No    [Home] Exit to Priiloader\n");
+						} else {
+							gcprintf("[A] Yes    [B] No    [Home] Exit to System Menu\n");
+						}
 						
 					        u32 button;
 					        while (Controller::ScanPads(&button))
