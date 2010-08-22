@@ -5,7 +5,7 @@
 
 #include "Titles_xml.h"
 #include "SysMenuMatrix.h"
-#include "gecko.h"
+#include "Gecko.h"
 
 using namespace Titles;
 

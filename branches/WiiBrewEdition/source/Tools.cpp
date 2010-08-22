@@ -6,9 +6,9 @@
 #include <algorithm>
 
 #include "Error.h"
-#include "tools.h"
+#include "Tools.h"
 #include "System.h"
-#include "gecko.h"
+#include "Gecko.h"
 #include "SysTitle.h"
 #include "Nand.h"
 #include "WiiMote.h"

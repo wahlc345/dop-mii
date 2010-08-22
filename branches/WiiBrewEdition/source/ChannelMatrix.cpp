@@ -1,9 +1,9 @@
 #include "ChannelMatrix.h"
 
-#include "gecko.h"
+#include "Gecko.h"
 #include "Global.h"
 #include "Titles_xml.h"
-#include "tools.h"
+#include "Tools.h"
 
 using namespace std;
 using namespace Titles;

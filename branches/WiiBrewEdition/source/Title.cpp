@@ -9,25 +9,27 @@
 #include <sstream>
 #include <iomanip>
 
-#include "title.h"
-#include "controller.h"
+#include "Title.h"
+#include "Controller.h"
 #include "Error.h"
 #include "FileSystem.h"
-#include "gecko.h"
+#include "Gecko.h"
 #include "Global.h"
 #include "rijndael.h"
 #include "sha1.h"
 #include "System.h"
 #include "Nand.h"
-#include "nus.h"
-#include "video.h"
-#include "tools.h"
+#include "Nus.h"
+#include "Video.h"
+#include "Tools.h"
 #include "Titles_xml.h"
-#include "title.h"
-#include "wad.h"
+#include "Title.h"
+#include "Wad.h"
 #include "SysMenuMatrix.h"
 #include "SysTitle.h"
 #include "SysCheck.h"
+
+#define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
 
 using namespace std;
 using namespace IO;
@@ -258,7 +260,13 @@ int Title::DowngradeTmdRevision()
 	s32 file = 0;
 	u32 stmdSize = 0;
 	u8 *ttmd = NULL;
-	const char* tmdPath = "/tmp/title.tmd";
+	char* tmdPath = (char*)"/tmp/title.tmd";
+
+	bool editDirectly = (SysCheck::CheckNandPermissions() && HAVE_AHBPROT);
+	if (editDirectly) {
+		sprintf(tmdPath, "/title/%08x/%08x/content/title.tmd", TITLEID1(this->TitleId), TITLEID2(this->TitleId));
+		gcprintf("Detected NAND permissions, and AHBPROT is enabled... Editing TMD directly!");
+	}
 
 	gcprintf("Loading Stored TMD...");
 
@@ -287,7 +295,8 @@ int Title::DowngradeTmdRevision()
 	}
 
 	gcprintf("\nSetting existing TMD revision to 0...");
-	ret = ES_AddTitleStart(stmd, stmdSize, System::Cert, System::Cert.Size, NULL, 0);
+	if (!editDirectly)
+		ret = ES_AddTitleStart(stmd, stmdSize, System::Cert, System::Cert.Size, NULL, 0);
 	if (ret < 0) 
 	{
 		gcprintf("\n>> ERROR! ES_AddTitleStart: %s\n", EsError::ToString(ret));
@@ -300,7 +309,8 @@ int Title::DowngradeTmdRevision()
 	if (ret < 0) 
 	{
 		gcprintf("\n>> ERROR! Nand::Startup: %s\n", NandError::ToString(ret));
-		ES_AddTitleCancel();
+		if (!editDirectly)
+			ES_AddTitleCancel();
 		goto end;
 	}
 	
@@ -308,7 +318,8 @@ int Title::DowngradeTmdRevision()
     if (ret < 0)
     {
         gcprintf(">> Nand::Delete = %s\n", NandError::ToString(ret));
-        ES_AddTitleCancel();
+	if (!editDirectly)
+	        ES_AddTitleCancel();
         goto end;
     }
 
@@ -316,7 +327,8 @@ int Title::DowngradeTmdRevision()
     if (ret < 0)
     {
         gcprintf(">> Nand::CreateFile = %s\n", NandError::ToString(ret));
-        ES_AddTitleCancel();
+	if (!editDirectly)
+	        ES_AddTitleCancel();
         goto end;
     }
 	
@@ -324,7 +336,8 @@ int Title::DowngradeTmdRevision()
 	if (file < 0) 
 	{
 		gcprintf("\n>> ERROR! Nand::OpenReadWrite: %s\n", NandError::ToString(file));
-		ES_AddTitleCancel();
+		if (!editDirectly)
+			ES_AddTitleCancel();
 		goto end;
 	}
 	
@@ -337,11 +350,13 @@ int Title::DowngradeTmdRevision()
 	{
 		gcprintf("\n>> ERROR! Nand::Write: %s\n", NandError::ToString(ret));
 		Nand::Close(file);
-		ES_AddTitleCancel();
+		if (!editDirectly)
+			ES_AddTitleCancel();
 		goto end;
 	}	
 	Nand::Close(file);
-	gprintf("\n>> ES_AddTitleFinish = %s\n", EsError::ToString(ES_AddTitleFinish()));	
+	if (!editDirectly)
+		gprintf("\n>> ES_AddTitleFinish = %s\n", EsError::ToString(ES_AddTitleFinish()));	
 end:
 	delete stmd; stmd = NULL;
 	return ret;
@@ -957,12 +972,11 @@ int Title::Uninstall(const u32 titleId1, const u32 titleId2)
 		return -1;
 	}
 
-	if (titleId1 == 1 && titleId2 == 2)
+/*	if (titleId1 == 1 && titleId2 == 2)
 	{
 		gcprintf("\n>> ERROR! System Menu cannot be uninstalled!\n");
 		return -1;
-	}
-
+	}*/
 	Title *title = new Title(titleId1, titleId2);
 
 	if (titleId1 == 1 && title->Type == TitleType::IOS)

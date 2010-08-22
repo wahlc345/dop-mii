@@ -131,6 +131,16 @@ void System::Exit(bool forceExit)
 	if (forceExit) System::Shutdown();
 }
 
+void System::ExitToPriiloader()
+{
+	// Set the magic word
+	*(vu32*)0x8132FFFB = 0x4461636f;
+	// Going down...
+	SYS_ResetSystem(SYS_RESTART,0,0);
+	// Wait for next frame
+	VIDEO_WaitVSync();
+}
+
 int System::ReloadIOS(u32 version, bool initWPAD)
 {
 	// The following needs to be shutdown before reload	

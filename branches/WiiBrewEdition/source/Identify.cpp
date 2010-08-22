@@ -1,9 +1,9 @@
 #include <gccore.h>
 #include "Identify.h"
-#include "nand.h"
-#include "tools.h"
+#include "Nand.h"
+#include "Tools.h"
 #include "Error.h"
-#include "gecko.h"
+#include "Gecko.h"
 #include "System.h"
 #include "SysTitle.h"
 #include "SM_ticket_dat.h"
