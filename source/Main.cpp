@@ -1453,7 +1453,7 @@ void Main::ShowInitialMenu()
 		}
 		else
 		{
-			printf("%sUse IOS58 + AHBPROT%s\n", (selection == 0 ? AnsiSelection : ""), AnsiNormal);
+			printf("%sUse IOS%d + AHBPROT%s\n", (selection == 0 ? AnsiSelection : ""), IOS_GetVersion(), AnsiNormal);
 		}
 		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
 		printf("%sExit%s", (selection == 3 ? AnsiSelection : ""), AnsiNormal);	
@@ -1500,7 +1500,7 @@ void Main::ShowInitialMenu()
 				{
 					case 0:
 						if (isAHBPROT) {
-							CurrentIOS = IosMatrix->Item((u32)58);
+							CurrentIOS = IosMatrix->Item((u32)IOS_GetVersion());
 							// Should do patchy?
 							if (!SysCheck::CheckFakeSign()) {
 								// Do patchy
