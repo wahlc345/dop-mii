@@ -60,12 +60,12 @@
     <revision id="482" regionId="2" region="E" />
     <revision id="486" regionId="4" region="K" />
   </title>
-  <!--<title name="System Menu 4.3" type="SYSMENU" id="0000000100000002" iosRequired="80" iosRevision="6943">
+  <title name="System Menu 4.3" type="SYSMENU" id="0000000100000002" iosRequired="80" iosRevision="6943">
     <revision id="512" regionId="0" region="J" />
     <revision id="513" regionId="1" region="U" />
     <revision id="514" regionId="2" region="E" />
     <revision id="518" regionId="4" region="K" />
-  </title>-->
+  </title>
 
   <!-- Special IOSES -->
   <title name="BC" type="IOS" id="0000000100000100"
