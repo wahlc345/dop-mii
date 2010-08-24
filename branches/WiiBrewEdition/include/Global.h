@@ -11,7 +11,7 @@
 using namespace std;
 
 /* Constants */
-#define ProgramVersion "13.1 Beta"
+#define ProgramVersion "13.1 Beta 2"
 #define DEFAULT_IOS 36
 #define IOS36Version 3351
 

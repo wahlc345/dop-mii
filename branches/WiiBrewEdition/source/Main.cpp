@@ -160,7 +160,7 @@ void Main::ShowBoot2Menu()
 		if (version == 0)
 		{
 			printf("There was a problem getting the Boot2 version.\n");
-			printf("Please Exit DOP and try again\n");
+			printf("Please Exit WiInstall and try again\n");
 		}
 		else if (version < MaxBoot2Version)
 		{
@@ -327,18 +327,15 @@ void Main::ShowWelcomeScreen()
 	VIDEO_WaitVSync();
 	Console::ClearScreen();
 	printf("Welcome to WiInstall!\n\n");
+	printf("WiInstall is based on DOP-Mii. Version numbers correspond.\n\n");
 	printf("If you have paid for this software, you have been scammed.\n\n");
 	printf("If misused, this software WILL brick your Wii.\n");
 	printf("The authors of WiInstall are not responsible if your Wii is bricked.\n\n");
 	printf("Website       : http://dop-mii.googlecode.com\n");
 	printf("Forums        : http://groups.google.com/group/dop-mii\n");
 	printf("Blog          : http://arikadosblog.blogspot.com\n");
-	printf("Developers    : Lunatik, Arikado (& lukegb kinda)\n");
+	printf("Developers    : Lunatik, Arikado (& lukegb & Steveice1 kinda)\n");
 	printf("Other Credits : giantpune, SifJar, PheonixTank, Bushing\n\n");
-	Console::PrintSolidLine(false);
-	printf("This is the WIIBREW BUILD of DOP-Mii. As such, certain functions\n");
-	printf("may be missing or disabled. For more details, see the website (URL above)\n");
-	printf("and http://hackmii.com/2010/08/the-usb2-release/\n\n");
 	Console::PrintSolidLine(false);
 	printf("Press A to continue. Press [Home] to exit.");		
 	VIDEO_WaitVSync();
@@ -424,7 +421,7 @@ void Main::ShowIosMenu()
 		Console::ClearScreen();
 
 		Console::SetColors(Color::Blue, Bold::Off, Color::White, Bold::On);
-		Console::PrintCenter((Console::Cols/2)-1, "Select the IOS to DOP.");
+		Console::PrintCenter((Console::Cols/2)-1, "Select the IOS to install.");
 		Console::ResetColors();
 
 		Console::SetColPosition(Console::Cols / 2); printf("\xB3");
@@ -693,7 +690,7 @@ void Main::ShowChannelsMenu()
 		Console::ClearScreen();		
 
 		Console::SetColors(Color::Blue, Bold::Off, Color::White, Bold::On);
-		Console::PrintCenter((Console::Cols/2)-1, "Select the Channel to DOP.");
+		Console::PrintCenter((Console::Cols/2)-1, "Select the Channel to install.");
 		Console::ResetColors();
 
 		Console::SetColPosition(Console::Cols / 2); printf("\xB3");
@@ -929,7 +926,7 @@ void Main::ShowSysMenusMenu()
 		Console::ClearScreen();
 
 		Console::SetColors(Color::Blue, Bold::Off, Color::White, Bold::On);
-		Console::PrintCenter((Console::Cols/2)-1, "Select the System Menu to DOP.");
+		Console::PrintCenter((Console::Cols/2)-1, "Select the System Menu to install.");
 		Console::ResetColors();
 
 		Console::SetColPosition(Console::Cols / 2); printf("\xB3");
