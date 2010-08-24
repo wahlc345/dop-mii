@@ -1,5 +1,4 @@
-set REV=`svnversion -n ./`
-echo $REV
+REV=`svnversion -n ./`
 touch ./include/svnrev.h
 cat > ./include/svnrev.h <<EOF
 #define SVN_REV $REV

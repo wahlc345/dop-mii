@@ -4,6 +4,7 @@
 #include <gccore.h>
 #include <ogc/machine/processor.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "RuntimeIOSPatch.h"
 

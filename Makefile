@@ -39,7 +39,7 @@ LIBS	:= -lwiiuse -lfat -lbte -logc -lm -lmxml
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= /home/lukegb/dopmiibrew/libs/mxml
+LIBDIRS	:= /opt/devkitpro/mxml
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -64,7 +64,6 @@ sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 XMLFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.xml)))
-WADFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.wad)))
 PNGFILES	:=  $(foreach dir,%(DATA),$(notdir $(wildcard $(dir)/*.png)))
 
 #---------------------------------------------------------------------------------
@@ -79,7 +78,6 @@ endif
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(PNGFILES:.png=.png.o) \
 					$(XMLFILES:.xml=.xml.o) \
-					$(WADFILES:.wad=.wad.o) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o)
 
@@ -144,16 +142,17 @@ clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 #---------------------------------------------------------------------------------
-run:
+run: debug
 	wiiload $(TARGET).dol		
 
-runelf:
+runelf: debug
 	wiiload $(TARGET).elf
 
 release:
 	make clean
 	make
-	cp -f $(OUTPUT).dol "./hbc/apps/DOP-Mii/boot.dol"
+	cp -f $(OUTPUT).dol "./hbc/apps/WiInstall/boot.dol"
+	make -C hbc makezip
 	
 #---------------------------------------------------------------------------------
 else
@@ -169,10 +168,6 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .xxx extension
 #---------------------------------------------------------------------------------
-%.wad.o	:	%.wad
-	@echo $(notdir $<)
-	$(bin2o)
-
 %.certs.o : %.certs
 	@echo $(notdir $<)
 	$(bin2o)
