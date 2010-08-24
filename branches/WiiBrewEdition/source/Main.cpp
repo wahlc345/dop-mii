@@ -1,8 +1,9 @@
 ﻿/*-------------------------------------------------------------
 
-DOP-Mii - by Lunatik, Arikado
+WiInstall - by Lunatik, Arikado
 Supported Developers: giantpune, Lunatik, SifJar, and PhoenixTank
 
+Based on DOP-Mii
 Based on Dop-IOS - install and patch any IOS by marc
 Based on tona's shop installer (C) 2008 tona
 
@@ -167,7 +168,7 @@ void Main::ShowBoot2Menu()
 			printf("\n\n");
 #if 1
 			printf("However, due to issues involving the inclusion of the Boot2v4 WAD\n");
-			printf("this version of Dop-Mii cannot install Boot2v4, until it has been\n");
+			printf("this version of WiInstall cannot install Boot2v4, until it has been\n");
 			printf("recoded to download said file from the Nintendo Update Service.\n\n");
 #else
 			Console::SetFgColor(Color::Yellow, Bold::On);
@@ -325,17 +326,17 @@ void Main::ShowWelcomeScreen()
 	//Basic scam warning, brick warning, and credits by Arikado
 	VIDEO_WaitVSync();
 	Console::ClearScreen();
-	printf("Welcome to DOP-Mii!\n\n");
+	printf("Welcome to WiInstall!\n\n");
 	printf("If you have paid for this software, you have been scammed.\n\n");
 	printf("If misused, this software WILL brick your Wii.\n");
-	printf("The authors of DOP-Mii are not responsible if your Wii is bricked.\n\n");
+	printf("The authors of WiInstall are not responsible if your Wii is bricked.\n\n");
 	printf("Website       : http://dop-mii.googlecode.com\n");
 	printf("Forums        : http://groups.google.com/group/dop-mii\n");
 	printf("Blog          : http://arikadosblog.blogspot.com\n");
 	printf("Developers    : Lunatik, Arikado (& lukegb kinda)\n");
 	printf("Other Credits : giantpune, SifJar, PheonixTank, Bushing\n\n");
 	Console::PrintSolidLine(false);
-	printf("This is the WIIBREW BUILD of Dop-Mii. As such, certain functions\n");
+	printf("This is the WIIBREW BUILD of DOP-Mii. As such, certain functions\n");
 	printf("may be missing or disabled. For more details, see the website (URL above)\n");
 	printf("and http://hackmii.com/2010/08/the-usb2-release/\n\n");
 	Console::PrintSolidLine(false);
@@ -1084,7 +1085,7 @@ void Main::RunSysCheck()
 
 	if (System::State != SystemState::Running) goto final;
 
-	os << "\"DOP-Mii Report\"\n";
+	os << "\"WiInstall Report\"\n";
 	os << "\"Region\", " << Tools::GetRegionString(CONF_GetRegion()) << endl;
 	os << "\"Hollywood Version\", 0x" << hex << SYS_GetHollywoodRevision() << endl;
 	os << "\"Wii Unique DeviceID\", " << dec << deviceId << endl << endl;	
@@ -1162,8 +1163,8 @@ void Main::RunSysCheck()
 		{
 			if (SD::Mount())
 			{
-				printf("\nCreating report to sd:/DOP-Mii-Report.csv...\n\n");
-				FILE *logFile = fopen("sd:/DOP-Mii-Report.csv", "wb");
+				printf("\nCreating report to sd:/WiInstall-Report.csv...\n\n");
+				FILE *logFile = fopen("sd:/WiInstall-Report.csv", "wb");
 				fwrite(os.str().c_str(), 1, os.str().size(), logFile);
 				fclose(logFile);
 				printf("All done, you can find the report on the root of your SD Card\n\n");
@@ -1180,8 +1181,8 @@ void Main::RunSysCheck()
 		{		
 			if (USB::Mount())
 			{
-				printf("\nCreating report to usb:/DOP-Mii-Report.csv\n\n");
-				FILE *logFile = fopen("usb:/DOP-Mii-Report.csv", "wb");
+				printf("\nCreating report to usb:/WiInstall-Report.csv\n\n");
+				FILE *logFile = fopen("usb:/WiInstall-Report.csv", "wb");
 				fwrite(os.str().c_str(), 1, os.str().size(), logFile);
 				fclose(logFile);
 				printf("All done, you can find the report on the root of your USB Device\n\n");
