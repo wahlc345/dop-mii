@@ -140,7 +140,7 @@ remake:
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol $(OUTPUT).*.zip
 #---------------------------------------------------------------------------------
 run: debug
 	wiiload $(TARGET).dol		
