@@ -111,7 +111,7 @@ void System::Initialize()
 {
     /* Initialize video subsytem */
 	InitGecko(); 
-	gprintf("\n\nWiInstall (r%s)\n", SVN_REV_STR);
+	gprintf("\n\nDOP-Mii: WiiBrew Edition (r%s)\n", SVN_REV_STR);
 	gprintf("Initializing Wii\n");
 	gprintf("VideoInit\n"); Video::Initialize();
     gprintf("PAD_Init\n"); PAD_Init();

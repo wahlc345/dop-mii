@@ -219,7 +219,7 @@ void Video::Initialize()
 	printf("%*s", Console::Cols, " ");
 
 	char text[Console::Cols];
-	sprintf(text, "WiInstall v%s (SVN r%s)", ProgramVersion, SVN_REV_STR);
+	sprintf(text, "DOP-Mii: WiiBrew Edition v%s (SVN r%s)", ProgramVersion, SVN_REV_STR);
 	Console::PrintCenter(Console::Cols, text);
 
 	printf("%*s", Console::Cols, " ");	
