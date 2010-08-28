@@ -151,7 +151,7 @@ runelf: debug
 release:
 	make clean
 	make
-	cp -f $(OUTPUT).dol "./hbc/apps/WiInstall/boot.dol"
+	cp -f $(OUTPUT).dol "./hbc/apps/DOP-Mii/boot.dol"
 	make -C hbc makezip
 	
 #---------------------------------------------------------------------------------

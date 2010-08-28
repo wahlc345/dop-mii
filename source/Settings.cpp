@@ -41,7 +41,7 @@ void Settings::Load()
 
 	if (!SD::Mount()) return;	
 	
-	file = File::OpenBinary("sd:/config/WiInstall.cfg");
+	file = File::OpenBinary("sd:/config/DOP-Mii.cfg");
 	if (!file) goto final;
 
 	xTop = mxmlLoadFile(NULL, file, MXML_NO_CALLBACK);
