@@ -15,6 +15,7 @@
 #include "svnrev.h"
 #include "FileSystem.h"
 #include "Global.h"
+#include "BuildType.h"
 #include "Settings.h"
 
 using namespace IO;
@@ -45,28 +46,32 @@ System::CertProperty::operator signed_blob*()
 
 void System::ShutdownDevices()
 {		
-	//gprintf("Shutting Down WPAD\n"); 
+	//printf("Shutting Down WPAD\n"); 
 	WPAD_Flush(0);
 	WPAD_Disconnect(0);
 	WPAD_Shutdown();
+	
+#ifdef NETDEBUG
+	net_print_shutdown();
+#endif
 
-	//gprintf("Shutting Down Network\n"); 
+	//printf("Shutting Down Network\n"); 
 	Network::ShutDown();
 
-	//gprintf("\nShutting Down SD\n"); 
+	//printf("\nShutting Down SD\n"); 
 	SD::Unmount();
 
-	//gprintf("Shutting Down USB\n"); 
+	//printf("Shutting Down USB\n"); 
 	USB::Shutdown();
 
-	//gprintf("Shutting Down ISFS\n");
+	//printf("Shutting Down ISFS\n");
 	Nand::Shutdown();
 }
 
 void System::Shutdown()
 {	
 	gprintf("\nSystem::ShutDown()\n");
-	ShutdownDevices();
+	System::ShutdownDevices();
 	if (System::State == SystemState::PowerOff)
 	{		
 		gprintf("Powering Off Console\n");
@@ -110,12 +115,22 @@ void* System::PowerCallback()
 void System::Initialize()
 {
     /* Initialize video subsytem */
+#ifdef NETDEBUG // Pickle here, NETDEBUG won't work until Video inited... SO INIT IT FIRST!
+	Video::Initialize();
+	VIDEO_WaitVSync();
+	PAD_Init();
+	WPAD_Init();
+	Network::Startup();
+	VIDEO_WaitVSync();
+#endif
 	InitGecko(); 
 	gprintf("\n\nDOP-Mii: WiiBrew Edition (r%s)\n", SVN_REV_STR);
 	gprintf("Initializing Wii\n");
+#ifndef NETDEBUG
 	gprintf("VideoInit\n"); Video::Initialize();
-    gprintf("PAD_Init\n"); PAD_Init();
+	gprintf("PAD_Init\n"); PAD_Init();
 	gprintf("WPAD_Init\n"); WPAD_Init();	
+#endif
 	USB::Startup(); // Wake Up USB Drive
 	Settings::Instance().Load();
 
@@ -144,15 +159,20 @@ void System::ExitToPriiloader()
 int System::ReloadIOS(u32 version, bool initWPAD)
 {
 	// The following needs to be shutdown before reload	
-	ShutdownDevices();
+	System::ShutdownDevices();
 	gprintf("Reloading IOS%d\n", version);		
-	usleep(5000);
+	usleep(5000); // 5000 1/1000000th of a second, so half a second
 	int ret = IOS_ReloadIOS(version);
 	usleep(5000);
 	if (initWPAD) 
 	{
 		gprintf("Reinitializing WPAD\n");
 		WPAD_Init();
+#ifdef NETDEBUG
+		// Reinitialize network debugging
+		Network::Startup();
+		InitGecko();
+#endif
 	}
 	return ret;
 }

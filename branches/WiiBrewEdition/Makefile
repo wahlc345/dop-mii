@@ -28,7 +28,8 @@ INCLUDES	:=  include
 CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
 CXXFLAGS = $(CFLAGS) -std=gnu++0x
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003F00
+#LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003F00
+LDFLAGS        =       -g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -39,7 +40,7 @@ LIBS	:= -lwiiuse -lfat -lbte -logc -lm -lmxml
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= /opt/devkitpro/mxml
+LIBDIRS	:= $(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -134,15 +135,30 @@ endif
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
 	@./PostBuild.sh $(OUTPUT)
 #---------------------------------------------------------------------------------
+netdebug:
+ifeq ($(UNAME),Linux)
+	chmod 777 ./tools/MakeSvnRev.sh
+	chmod 777 ./tools/BuildType.sh
+	chmod 777 ./*Build.sh
+	./tools/MakeSvnRev.sh
+else
+	SubWCRev.exe "." "./templates/svnrev_template.h" "./include/svnrev.h"
+endif
+	@[ -d build ] || mkdir -p build
+	./tools/BuildType.sh DEBUG NETDEBUG
+	@./PreBuild.sh
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@./PostBuild.sh $(OUTPUT)
+#---------------------------------------------------------------------------------
 remake:
 	@[ -d build ] || mkdir -p build		
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol $(OUTPUT).*.zip
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol $(OUTPUT).*.zip include/BuildType.h
 #---------------------------------------------------------------------------------
-run: debug
+run:
 	wiiload $(TARGET).dol		
 
 runelf: debug
@@ -153,6 +169,7 @@ release:
 	make
 	cp -f $(OUTPUT).dol "./hbc/apps/DOP-Mii/boot.dol"
 	make -C hbc makezip
+
 	
 #---------------------------------------------------------------------------------
 else
