@@ -4,11 +4,15 @@ if [ ! -z "$1" ];
 then
 	if [ ! -s include/BuildType.h ];
 	then
-		echo "#define $1" > include/BuildType.h
+		echo > include/BuildType.h
+		for currentdefine in "$@"; do
+			echo "defining $currentdefine"
+			echo "#define $currentdefine" >> include/BuildType.h
+		done
 	fi
 else
 	if [[ ! -f include/BuildType.h || -s include/BuildType.h ]];
 	then
-		cp /dev/null include/BuildType.h
+		echo "" > include/BuildType.h
 	fi 
 fi 

@@ -9,6 +9,7 @@
 #include "Tools.h"
 #include "System.h"
 #include "svnrev.h"
+#include "BuildType.h"
 
 u32* Video::FrontBuffer = NULL;
 GXRModeObj *Video::VMode = NULL;
@@ -219,7 +220,17 @@ void Video::Initialize()
 	printf("%*s", Console::Cols, " ");
 
 	char text[Console::Cols];
-	sprintf(text, "DOP-Mii: WiiBrew Edition v%s (SVN r%s)", ProgramVersion, SVN_REV_STR);
+	char debugflags[3];
+#ifdef DEBUG
+#ifdef NETDEBUG
+	sprintf(debugflags, " ND");
+#else /* NETDEBUG */
+	sprintf(debugflags, " -D");
+#endif /* NETDEBUG */
+#else /* DEBUG */
+	sprintf(debugflags, "");
+#endif /* DEBUG */
+	sprintf(text, "DOP-Mii: WiiBrew Edition v%s (SVN r%s)%s", ProgramVersion, SVN_REV_STR, debugflags);
 	Console::PrintCenter(Console::Cols, text);
 
 	printf("%*s", Console::Cols, " ");	

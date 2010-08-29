@@ -36,10 +36,8 @@ distribution.
 #include <string>
 #include <algorithm>
 #include <sstream>
-extern "C" {
-  #include "RuntimeIOSPatch.h"
-}
 
+#include "RuntimeIOSPatch.h"
 #include "Global.h"
 #include "Controller.h"
 #include "FileSystem.h"
@@ -55,43 +53,13 @@ extern "C" {
 #include "Settings.h"
 #include "Main.h"
 
+#include <ogc/ios.h>
+
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
 
 
 using namespace IO;
 using namespace Titles;
-
-/* 
-libOGC wants to default to IOS36. 
-I say we use latest installed so we can possibly get SDHC support
-*/
-extern "C" s32 __IOS_LoadStartupIOS() 
-{
-	if (HAVE_AHBPROT)
-	{
-		/* Let's not muck up our privs */
-		return 0;
-	}
-	int ret = 0;
-
-	ret = __ES_Init();
-	if(ret < 0) return ret;
-
-	u32List list;
-	System::GetInstalledIosIdList(list);
-	sort(list.rbegin(), list.rend());	
-	for (u32Iterator version = list.begin(); version < list.end(); ++version)
-	{
-		if (*version < 81) // Currently latest IOS starts at 80
-		{
-			ret = __IOS_LaunchNewIOS(*version);
-			if (ret > -1) break;
-		}
-	}
-	list.clear();
-	if (ret < 0) return ret;
-	return 0;
-}
 
 
 int Main::InstallIOS(IosMatrixIterator ios, IosRevisionIterator revision) 
@@ -147,6 +115,15 @@ void Main::ShowBoot2Menu()
 		Console::ClearScreen();
 		u32 version = 0;
 		int ret = ES_GetBoot2Version(&version);
+		
+#ifdef DEBUG
+		// DEBUG ONLY DEBUG ONLY
+		ret = 700;
+		version = 1;
+		// DEBUG ONLY DEBUG ONLY
+#endif
+		
+		
 		if (ret < 0)
 		{
 			printf("ERROR! ES_GetBoot2Version: %s", EsError::ToString(ret));
@@ -154,6 +131,17 @@ void Main::ShowBoot2Menu()
 			printf("It's possible your Wii is a boot2v4+ Wii, maybe not.");
 		} 
 		else printf("Your Boot2 version is: %u", version);
+		
+#ifdef DEBUG
+		if (ret == 700)
+		{
+			Console::SetFgColor(Color::Yellow, Bold::On);
+			printf("CAUTION: THE BOOT2 VERSION IS SET TO A TEMPORARY DEBUGGING VALUE\n");
+			printf("PROCEED NO FURTHER AND REPORT THIS IMMEDIATELY TO THE DOP-MII WEBSITE");
+			Console::ResetColors();
+		}
+#endif
+
 		Console::PrintSolidLine();
 
 		if (version == 0)
@@ -163,13 +151,8 @@ void Main::ShowBoot2Menu()
 		}
 		else if (version < MaxBoot2Version)
 		{
-			printf("Your Boot2 is eligable to be upgraded to v%d.", MaxBoot2Version);
+			printf("Your Boot2 is eligible to be upgraded to v%d.", MaxBoot2Version);
 			printf("\n\n");
-#if 1
-			printf("However, due to issues involving the inclusion of the Boot2v4 WAD\n");
-			printf("this version of DOP-Mii cannot install Boot2v4, until it has been\n");
-			printf("recoded to download said file from the Nintendo Update Service.\n\n");
-#else
 			Console::SetFgColor(Color::Yellow, Bold::On);
 			printf("!!! IMPORTANT READ BELOW VERY CAREFULLY!!!\n");
 			Console::ResetColors();
@@ -186,7 +169,8 @@ void Main::ShowBoot2Menu()
 			printf("\n");
 			printf("As a safety precaution, when you start the upgrade process you will be\n");
 			printf("prompted 4 times to confirm that you truely want to upgrade your Boot2.\n");
-#endif
+			printf("Additionally, you are required to have ");Console::SetFgColor(Color::White, Bold::On);printf("Boot2v4.wad");Console::ResetColors();printf(" saved on a storage device\n");
+			printf("either under the /wad/ directory, or on the root of the device.\n");
 		} 
 		else if (version == MaxBoot2Version)
 		{
@@ -214,19 +198,16 @@ void Main::ShowBoot2Menu()
 			if (System::State != SystemState::Running) return;
 			if (button == WPAD_BUTTON_B) return;
 
-#if 0
 			if (button == WPAD_BUTTON_PLUS && version && version < MaxBoot2Version) 
 			{
 				if (UpgradeBoot2() > -1) ES_GetBoot2Version(&version);				
 			}
-#endif
 
 			if (button) break;
 		}
 	}
 }
 
-#if 0
 int Main::UpgradeBoot2()
 {
 	int ret = 0;
@@ -267,7 +248,6 @@ int Main::UpgradeBoot2()
 	
 	return ret;
 }
-#endif
 
 void Main::BuildSysCheckTable()
 {
@@ -299,7 +279,7 @@ void Main::BuildSysCheckTable()
 			u16 titleVersion = ptmd->title_version;
 			delete ptmd; ptmd = NULL;
 					
-			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);		
+			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);
 			if (revision)
 			{
 				if (revision->IsStub) { delete revision; revision = NULL; continue; }
@@ -335,7 +315,7 @@ void Main::ShowWelcomeScreen()
 	printf("Developers    : Lunatik, Arikado, lukegb\n");
 	printf("Other Credits : giantpune, SifJar, PheonixTank, Bushing\n\n");
 	Console::PrintSolidLine(false);
-	printf("Press A to continue. Press [Home] to exit.");		
+	printf("Press A to continue. Press [Home] to exit.\n");
 	VIDEO_WaitVSync();
 
 	u32 button;
@@ -1101,8 +1081,10 @@ void Main::RunSysCheck()
 		bool hasFlashAccess = false;
 
 		VIDEO_WaitVSync();
+		gprintf("Reloading to IOS %-3u\n", *ios);
 		System::ReloadIOS(*ios, false);
-		char iosString[50] = "";				
+		gprintf("IOS reload completed.\n");
+		char iosString[50] = "";
 		sprintf(iosString, "%-3u (v%d)", *ios, IOS_GetRevision());
 		gprintf("\nTesting IOS %s\n", iosString);
 		printf("%-13s ", iosString);
@@ -1137,8 +1119,8 @@ void Main::RunSysCheck()
 
 		iosTestCnt++;
 	}
-	
-	System::ReloadIOS(CurrentIOS->Id);
+	VIDEO_WaitVSync();
+	System::ReloadIOS(IOS_GetPreferredVersion()); // reload to "favourite" IOS
 		
 	if (System::State != SystemState::Running) goto final;
 
@@ -1201,9 +1183,7 @@ void Main::ShowInitialMenu()
 	int selection = 0;
 	u32List iosList;
 	u32Iterator menuIOS;
-	u8 maxMenu = 2;
-
-	bool isAHBPROT = HAVE_AHBPROT;
+	u8 maxMenu = 3;
 
 	/* Get IOS versions */
 	System::GetInstalledIosIdList(iosList);
@@ -1220,30 +1200,29 @@ void Main::ShowInitialMenu()
 			break;
 		}
 
-		if ((int)*menuIOS == IOS_GetVersion()) CurrentIOS = IosMatrix->Item(*menuIOS);		
+		if ((int)*menuIOS == IOS_GetVersion()) CurrentIOS = IosMatrix->Item(*menuIOS);
 	}
+	if (HAVE_AHBPROT)
+		CurrentIOS = IosMatrix->Item((u32)IOS_GetVersion());
+	else
+		selection = 1;
 
 	while (System::State == SystemState::Running) 
 	{		
 		VIDEO_WaitVSync();
 		Console::ClearScreen();
                 printf("Which IOS would you like to use to install other IOSes?\n");
-                if (!isAHBPROT)
-                {
-                        printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
-                }
-                else
-                {
+		if (HAVE_AHBPROT)
                         printf("%sUse IOS%d + AHBPROT%s\n", (selection == 0 ? AnsiSelection : ""), IOS_GetVersion(), AnsiNormal);
-                }
-		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 1 ? AnsiSelection : ""), AnsiNormal);
-		printf("%sExit%s", (selection == 2 ? AnsiSelection : ""), AnsiNormal);	
+		printf("%sIOS: %u%s\n", (selection == 1 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
+		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sExit%s", (selection ==  3 ? AnsiSelection : ""), AnsiNormal);	
 
 		Console::SetRowPosition(Console::Rows-7);
 		Console::PrintSolidLine();
 		printf("[%s][%s] Change Selection\n", UpArrow, DownArrow);
 		
-		if (selection == 0 && !isAHBPROT) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
+		if (selection == 0 && !HAVE_AHBPROT) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
 		else printf("\n");
 
 		printf("[Home] Exit");
@@ -1260,10 +1239,10 @@ void Main::ShowInitialMenu()
 			if (button == WPAD_BUTTON_UP) selection--;
 			if (button == WPAD_BUTTON_DOWN) selection++;
 
-			if (selection < 0) selection = maxMenu;
-			if (selection > maxMenu) selection = 0;
+			if ((!HAVE_AHBPROT && selection < 1) || (HAVE_AHBPROT && selection < 0)) selection = maxMenu;
+			if (selection > maxMenu) selection = (HAVE_AHBPROT) ? 0 : 1;
 
-			if (selection == 0 && !isAHBPROT)
+			if (selection == 1)
 			{
 				if (button == WPAD_BUTTON_LEFT && menuIOS != iosList.begin()) --menuIOS;
 				if (button == WPAD_BUTTON_RIGHT && menuIOS != iosList.end()-1) ++menuIOS;
@@ -1274,27 +1253,27 @@ void Main::ShowInitialMenu()
 				switch (selection)
 				{
 					case 0:
-						if (isAHBPROT) {
+						if (HAVE_AHBPROT) {
 							CurrentIOS = IosMatrix->Item((u32)IOS_GetVersion());
 							// Should do patchy?
 							if (!SysCheck::CheckFakeSign()) {
 								// Do patchy
 								Console::ClearScreen();
-								printf("One moment... Applying patches...\n");
+								printf("Applying patches to IOS:\n");
 								Console::PrintSolidLine();
-								Spinner::Start();
-								IOSPATCH_Apply();
-								Spinner::Stop();
-								printf("\n\n...COMPLETE");
+								RuntimeIOSPatch::Apply();
+								printf("\n\nPress A to continue, or Home to quit.");
+								bool keepscanning = true;
+								while (Controller::ScanPads(&button) && keepscanning)
+								{
+									if (button == WPAD_BUTTON_HOME) System::Exit();
+									if (System::State != SystemState::Running) return;
+									if (button == WPAD_BUTTON_A) keepscanning = false;
+								}
 							}
 						} else {
-							gprintf("Loading IOS\n");
-							VIDEO_WaitVSync();
-							Console::ClearScreen();
-							printf("Loading selected IOS...\n");
-														
-							CurrentIOS = IosMatrix->Item(*menuIOS);
-							System::ReloadIOS(CurrentIOS);
+							// oops...
+							// just.. don't do anything.
 						}
 
 						ShowMainMenu(); 
@@ -1302,9 +1281,21 @@ void Main::ShowInitialMenu()
 						selection = 0;
 						break;
 					case 1:
-						RunSysCheck(); 
+					  	gprintf("Loading IOS\n");
+						VIDEO_WaitVSync();
+						Console::ClearScreen();
+						printf("Loading selected IOS...\n");
+														
+						CurrentIOS = IosMatrix->Item(*menuIOS);
+						System::ReloadIOS(CurrentIOS);
+						ShowMainMenu(); 
+						if (System::State != SystemState::Running) goto end;
+						selection = 1;
 						break;
 					case 2:
+						RunSysCheck(); 
+						break;
+					case 3:
 						VIDEO_WaitVSync();
 						Console::ClearScreen();
 						printf("Are you sure you want to exit?\n");
