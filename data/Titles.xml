@@ -111,6 +111,7 @@
     <revision id="12" />
     <revision id="269" />
     <revision id="525" />
+    <revision id="526" downgradeBlocked="true" />
   </title>
   <title name="IOS13" type="IOS" id="000000010000000D" 
          description="Used by the 'All Regions' titles for News, Weather, &amp; Photo 1.0 Channels">
@@ -119,6 +120,7 @@
     <revision id="16" />
     <revision id="273" />
     <revision id="1031" downgradeBlocked="true" />    
+    <revision id="1032" downgradeBlocked="true" />
   </title>
   <title name="IOS14" type="IOS" id="000000010000000E">
     <revision id="257" nus="false" />
@@ -126,6 +128,7 @@
     <revision id="263" />
     <revision id="520" />
     <revision id="1031" downgradeBlocked="true" />
+    <revision id="1032" downgradeBlocked="true" />
   </title>
   <title name="IOS15" type="IOS" id="000000010000000F">
     <revision id="257" />
@@ -136,6 +139,7 @@
     <revision id="266" />
     <revision id="523" />
     <revision id="1031" downgradeBlocked="true" />
+    <revision id="1032" downgradeBlocked="true" />
   </title>
   <title name="IOS16" type="IOS" id="0000000100000010" description="Piracy prevention stub, useless.">
     <revision id="257" nus="false" />
@@ -147,6 +151,7 @@
     <revision id="518" />
     <revision id="775" />
     <revision id="1031" downgradeBlocked="true" />
+    <revision id="1032" downgradeBlocked="true" />
   </title>
   <title name="IOS20" type="IOS" id="0000000100000014" description="Used only by System Menu 2.2.">
     <revision id="12"><note value="FakeSign, ES_Identify, Nand Permissions Already Exists." /></revision>
@@ -210,6 +215,7 @@
     <revision id="3092" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3349" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3608" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS33" type="IOS" id="0000000100000021">
     <revision id="1040">
@@ -228,6 +234,7 @@
     <revision id="3091" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3348" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3608" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS35" type="IOS" id="0000000100000023"
          description="Used by various games including Super Mario Galaxy, Call Of Duty, Wii Music.">
@@ -238,6 +245,7 @@
     <revision id="3092" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3349" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3608" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS36" type="IOS" id="0000000100000024" description="Used by: Smash Bros. Brawl, Mario Kart Wii.">
     <revision id="1042">
@@ -247,6 +255,7 @@
     <revision id="3094" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3351" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3608" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS37" type="IOS" id="0000000100000025" description="Used mostly by music games like Guitar/Band Hero and Rock Band.">
     <revision id="2070" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
@@ -254,12 +263,14 @@
     <revision id="3612" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3869" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5662" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="5663" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS38" type="IOS" id="0000000100000026" description="Used by some modern titles (Animal Crossing).">
     <revision id="3609" nus="false" description="First release (Comes with Animal Crosing)"/>
     <revision id="3610" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3867" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="4123" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
+    <revision id="4124" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
   </title>
   <title name="IOS40" type="IOS" id="0000000100000028" description="Present in Korean system.">
     <revision id="2321" nus="false" />
@@ -272,6 +283,7 @@
     <revision id="3091" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3348" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3606" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS43" type="IOS" id="000000010000002B" description="Present in Korean system">
     <revision id="2320" nus="false" />
@@ -279,6 +291,7 @@
     <revision id="3091" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3348" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3606" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS45" type="IOS" id="000000010000002D" description="Present in Korean system">
     <revision id="2320" nus="false"/>
@@ -286,6 +299,7 @@
     <revision id="3091" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3348" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3606" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS46" type="IOS" id="000000010000002E" description="Present in 'Need for Speed Undercover' and in 'Shin Chuukadaisen' Korean.">
     <revision id="2322" nus="false" />
@@ -293,9 +307,11 @@
     <revision id="3093" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3350" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="3606" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="3607" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS48" type="IOS" id="0000000100000030" description="Included with Korean System Menu 4.3 rather randomly.">
     <revision id="4123" canPatchFakeSign="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="4124" canPatchFakeSign="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS50" type="IOS" id="0000000100000032" description="v4889 is Used by System Menu 3.4. v5120 is a stub IOS.">
     <revision id="4889" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
@@ -314,27 +330,32 @@
     <revision id="5149" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5406" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5662" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="5663" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS55" type="IOS" id="0000000100000037" description="Used by some modern games and channels and some WiiWare titles.">
     <revision id="4633" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5149" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5406" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5662" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="5663" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
-  <title name="IOS56" type="IOS" id="0000000100000038" description="Used by Wii Speak Channel and some newer WiiWare">
+  <title name="IOS56" type="IOS" id="0000000100000038" description="Used by Wii Speak Channel and some newer WiiWare, as well as Shop Channel v20">
     <revision id="4890" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5146" nus="false" />
     <revision id="5405" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5661" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="5662" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" description="This version is required by the Shop Channel v20" />
   </title>
   <title name="IOS57" type="IOS" id="0000000100000039" description="Contains some new USB &amp; Ethernet Modules. Unknown Usage at this time.">
     <revision id="5404" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5661" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5918" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="5919" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS58" type="IOS" id="000000010000003A" description="Comes with the game 'Your Shape' to allow the USB camera to work.">
     <revision id="5918" nus="false" />
     <revision id="6175" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="6176" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS60" type="IOS" id="000000010000003C" description="Used by System Menu 4.0 and 4.1.">
     <revision id="6174" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
@@ -344,6 +365,7 @@
     <revision id="4890" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5405" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5661" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="5662" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS70" type="IOS" id="0000000100000046" description="Used by System Menu 4.2.">
     <revision id="6687" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
@@ -351,6 +373,7 @@
   </title>
   <title name="IOS80" type="IOS" id="0000000100000050" description="Used by System Menu 4.3.">
     <revision id="6943" canPatchFakeSign="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="6944" canPatchFakeSign="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS202" type="IOS" id="00000001000000CA" 
          description="Commonly used by a Custom IOS to enable USB 2.0 support for MPlayer CE. &#xA;This IOS is not offically supported by Nintendo." />

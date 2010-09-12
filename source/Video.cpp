@@ -163,6 +163,30 @@ bool Console::PromptContinue()
 	return PromptYesNo();
 }
 
+void Console::WaitForA(bool canReturn)
+{
+	if (canReturn) {
+	        gcprintf("[A] Continue    [Home] Return To Loader\n");
+	} else {
+		gcprintf("[A] Continue\n");
+	}
+
+        u32 button;
+        while (Controller::ScanPads(&button))
+        {
+                if (System::State != SystemState::Running && canReturn) return;
+                if (button == WPAD_BUTTON_HOME && canReturn) System::Exit(true);
+                if (button == WPAD_BUTTON_A) return;
+        }
+
+        return;
+}
+
+void Console::WaitForA()
+{
+	WaitForA(true);
+}
+
 void Console::PrintSolidLine()
 {
 	PrintSolidLine(true);
@@ -228,7 +252,8 @@ void Video::Initialize()
 	sprintf(debugflags, " -D");
 #endif /* NETDEBUG */
 #else /* DEBUG */
-	sprintf(debugflags, "");
+	//strcpy(debugflags, "");
+	debugflags[0] = '\0';
 #endif /* DEBUG */
 	sprintf(text, "DOP-Mii: WiiBrew Edition v%s (SVN r%s)%s", ProgramVersion, SVN_REV_STR, debugflags);
 	Console::PrintCenter(Console::Cols, text);

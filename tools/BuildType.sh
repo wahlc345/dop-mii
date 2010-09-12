@@ -6,7 +6,6 @@ then
 	then
 		echo > include/BuildType.h
 		for currentdefine in "$@"; do
-			echo "defining $currentdefine"
 			echo "#define $currentdefine" >> include/BuildType.h
 		done
 	fi
