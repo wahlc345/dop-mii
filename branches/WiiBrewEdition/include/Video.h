@@ -55,6 +55,8 @@ public:
 	static void ResetColors();
 	static bool PromptYesNo();
 	static bool PromptContinue();
+	static void WaitForA(bool canReturn);
+	static void WaitForA();
 };
 
 class Video

@@ -104,7 +104,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 UNAME := $(shell uname)
 #and now make the build list
 
-$(BUILD):
+build:
 ifeq ($(UNAME),Linux)
 	chmod 777 ./tools/MakeSvnRev.sh
 	chmod 777 ./tools/BuildType.sh
@@ -156,18 +156,18 @@ remake:
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol $(OUTPUT).*.zip include/BuildType.h
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol *.zip include/BuildType.h include/svnrev.h
 #---------------------------------------------------------------------------------
 run:
-	wiiload $(TARGET).dol		
+	/usr/bin/wiiload $(TARGET).dol		
 
 runelf: debug
-	wiiload $(TARGET).elf
+	/usr/bin/wiiload $(TARGET).elf
 
 release:
 	make clean
 	make
-	cp -f $(OUTPUT).dol "./hbc/apps/DOP-Mii/boot.dol"
+	cp -f $(OUTPUT).dol "./hbc/apps/DOP-Mii: WiiBrew Edition/boot.dol"
 	make -C hbc makezip
 
 	
@@ -185,34 +185,33 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .xxx extension
 #---------------------------------------------------------------------------------
-%.certs.o : %.certs
-	@echo $(notdir $<)
-	$(bin2o)
-	
-%.sys.o : %.sys
-	@echo $(notdir $<)
-	$(bin2o)
-	
-%.dat.o : %.dat
+%.certs.o: %.certs
 	@echo $(notdir $<)
 	$(bin2o)
 
-%.tmd.o : %.tmd
+%.sys.o: %.sys
 	@echo $(notdir $<)
 	$(bin2o)
 
-%.tik.o : %.tik
+%.dat.o: %.dat
 	@echo $(notdir $<)
 	$(bin2o)
-	
-%.xml.o : %.xml
-	@echo $(notdir $<)
-	$(bin2o)		
 
-%.png.o : %.png
+%.tmd.o: %.tmd
 	@echo $(notdir $<)
-	$(bin2o)		
+	$(bin2o)
 
+%.tik.o: %.tik
+	@echo $(notdir $<)
+	$(bin2o)
+
+%.xml.o: %.xml
+	@echo $(notdir $<)
+	$(bin2o)
+
+%.png.o: %.png
+	@echo $(notdir $<)
+	$(bin2o)
 #---------------------------------------------------------------------------------
 
 -include $(DEPENDS)
