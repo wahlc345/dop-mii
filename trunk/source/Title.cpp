@@ -29,7 +29,6 @@
 #include "SysMenuMatrix.h"
 #include "SysTitle.h"
 #include "SysCheck.h"
-#include "Boot2v4_wad.h"
 
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
 
