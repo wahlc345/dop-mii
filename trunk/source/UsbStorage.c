@@ -464,7 +464,7 @@ end:
 	return retval;
 }
 
-s32 USBStorage_Open(usbstorage_handle *dev, const char *bus, u16 vid, u16 pid)
+s32 DMUSBStorage_Open(usbstorage_handle *dev, const char *bus, u16 vid, u16 pid)
 {
 	s32 retval = -1;
 	u8 conf,*max_lun = NULL;
@@ -485,7 +485,7 @@ s32 USBStorage_Open(usbstorage_handle *dev, const char *bus, u16 vid, u16 pid)
 	if(SYS_CreateAlarm(&dev->alarm)<0)
 		goto free_and_return;
 
-	retval = USB_OpenDevice(bus, vid, pid, &dev->usb_fd);
+	retval = USB_OpenDevice((s32)bus, vid, pid, &dev->usb_fd);
 	if(retval < 0)
 		goto free_and_return;
 
@@ -750,10 +750,13 @@ static bool __usbstorage_Startup(void)
 
 static bool __usbstorage_IsInserted(void)
 {
+
+	usb_device_entry *ourusb;
+	ourusb->device_id = USB_OH0_DEVICE_ID;
 	u8 *buffer;
 	u8 dummy;
 	u8 i, j;
-	u16 vid, pid;
+	//u16 vid, pid;
 	s32 maxLun;
 	s32 retval;
 
@@ -771,7 +774,7 @@ static bool __usbstorage_IsInserted(void)
 		return false;
 	memset(buffer, 0, DEVLIST_MAXSIZE << 3);
 
-	if(USB_GetDeviceList("/dev/usb/oh0", buffer, DEVLIST_MAXSIZE, 0, &dummy) < 0)
+	if(USB_GetDeviceList(ourusb, DEVLIST_MAXSIZE, 0, &dummy) < 0)
 	{
 		if(__vid!=0 || __pid!=0)
 		{
@@ -793,11 +796,11 @@ static bool __usbstorage_IsInserted(void)
 	{
 		for(i = 0; i < DEVLIST_MAXSIZE; i++)
 		{
-			memcpy(&vid, (buffer + (i << 3) + 4), 2);
-			memcpy(&pid, (buffer + (i << 3) + 6), 2);
-			if(vid != 0 || pid != 0)
+			memcpy(ourusb->vid, (buffer + (i << 3) + 4), 2);
+			memcpy(ourusb->pid, (buffer + (i << 3) + 6), 2);
+			if(ourusb->vid != 0 || ourusb->pid != 0)
 			{
-				if( (vid == __vid) && (pid == __pid))
+				if( (ourusb->vid == __vid) && (ourusb->pid == __pid))
 				{
 					__mounted = 1;
 					__lwp_heap_free(&__heap,buffer);
@@ -816,12 +819,12 @@ static bool __usbstorage_IsInserted(void)
 
 	for(i = 0; i < DEVLIST_MAXSIZE; i++)
 	{
-		memcpy(&vid, (buffer + (i << 3) + 4), 2);
-		memcpy(&pid, (buffer + (i << 3) + 6), 2);
-		if(vid == 0 || pid == 0)
+		memcpy(ourusb->vid, (buffer + (i << 3) + 4), 2);
+		memcpy(ourusb->pid, (buffer + (i << 3) + 6), 2);
+		if(ourusb->vid == 0 || ourusb->pid == 0)
 			continue;
 
-		if(USBStorage_Open(&__usbfd, "oh0", vid, pid) < 0)
+		if(DMUSBStorage_Open(&__usbfd, "oh0", ourusb->vid, ourusb->pid) < 0)
 			continue;
 
 		maxLun = USBStorage_GetMaxLUN(&__usbfd);
@@ -836,8 +839,8 @@ static bool __usbstorage_IsInserted(void)
 
 			__mounted = 1;
 			__lun = j;
-			__vid = vid;
-			__pid = pid;
+			__vid = ourusb->vid;
+			__pid = ourusb->pid;
 			i = DEVLIST_MAXSIZE;
 			break;
 		}

@@ -5,6 +5,7 @@
 #include <ogc/machine/processor.h>
 #include <string.h>
 
+#include "Gecko.h"
 #include "RuntimeIOSPatch.h"
 
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
