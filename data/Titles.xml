@@ -351,6 +351,7 @@
     <revision id="5146" nus="false" />
     <revision id="5405" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
     <revision id="5661" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
+    <revision id="5662" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" downgradeBlocked="true" />
   </title>
   <title name="IOS57" type="IOS" id="0000000100000039" description="Contains some new USB &amp; Ethernet Modules. Unknown Usage at this time.">
     <revision id="5404" canPatchFakeSign="true" canPatchEsIdentify="true" canPatchNandPermissions="true" />
