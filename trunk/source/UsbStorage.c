@@ -485,7 +485,8 @@ s32 DMUSBStorage_Open(usbstorage_handle *dev, const char *bus, u16 vid, u16 pid)
 	if(SYS_CreateAlarm(&dev->alarm)<0)
 		goto free_and_return;
 
-	retval = USB_OpenDevice((s32)bus, vid, pid, &dev->usb_fd);
+	//retval = USB_OpenDevice((s32)bus, vid, pid, &dev->usb_fd);
+	retval = -1;
 	if(retval < 0)
 		goto free_and_return;
 
@@ -750,6 +751,8 @@ static bool __usbstorage_Startup(void)
 
 static bool __usbstorage_IsInserted(void)
 {
+
+	return false;
 
 	usb_device_entry *ourusb;
 	ourusb->device_id = USB_OH0_DEVICE_ID;
