@@ -39,7 +39,7 @@ LIBS	:= -lwiiuse -lfat -lbte -logc -lm -lmxml
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= ../libs/mxml
+LIBDIRS	:= $(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -106,6 +106,7 @@ UNAME := $(shell uname)
 #and now make the build list
 
 $(BUILD):
+	echo $(PORTLIBS)
 ifeq ($(UNAME),Linux)
 	chmod 777 ./tools/MakeSvnRev.sh
 	chmod 777 ./tools/BuildType.sh

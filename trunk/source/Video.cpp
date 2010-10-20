@@ -162,6 +162,30 @@ bool Console::PromptContinue()
 	return PromptYesNo();
 }
 
+void Console::WaitForA(bool canReturn)
+{
+	if (canReturn) {
+	        gcprintf("[A] Continue    [Home] Return To Loader\n");
+	} else {
+		gcprintf("[A] Continue\n");
+	}
+
+        u32 button;
+        while (Controller::ScanPads(&button))
+        {
+                if (System::State != SystemState::Running && canReturn) return;
+                if (button == WPAD_BUTTON_HOME && canReturn) System::Exit(true);
+                if (button == WPAD_BUTTON_A) return;
+        }
+
+        return;
+}
+
+void Console::WaitForA()
+{
+	WaitForA(true);
+}
+
 void Console::PrintSolidLine()
 {
 	PrintSolidLine(true);
