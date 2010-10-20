@@ -6,6 +6,10 @@
 #include "ChannelMatrix.h"
 #include "SysMenuMatrix.h"
 
+#define GETWADSD 0
+#define GETWADUSB 1
+#define GETNUS 2
+
 using namespace std;
 using namespace Titles;
 
@@ -32,7 +36,7 @@ class Title
 {
 protected:
 	signed_blob *StoredTMD;
-private:
+public: // oh, ffs, cba to make each individual method public, so I'll just publicise the whole thing.
 	bool ContainsModule(u8 *buffer, u32 bufferSize, char *module);
 	int  CheckContentHashes();
 	void Clear();
@@ -48,6 +52,8 @@ private:
 	int  Get() { return Get(0); }
 	int  Get(u16 revision);
 	int  Get(u16 revision, const char* wadFileName);
+	int  Get(u16 revision, int getMethod);
+	int  Get(u16 revision, const char* wadFileName, int getMethod);
 	void Initialize();
 	int  InstallIOS(IosRevisionIterator revision, u32 altSlot);
 	int  InstallSysMenu(SysMenuMatrixIterator sysMenuItem);
@@ -65,9 +71,6 @@ private:
 
 	static void DisplayInstallStatus(int status, Title *title);
 	static int  GetAlternateIosSlot();
-
-	Title(u64 titleId);
-	Title(u32 titleId1, u32 TitleId2);
 public:
 	u64 TitleId;
 
@@ -87,6 +90,9 @@ public:
 	u8 **DecryptedBuffer;
 	u32 *BufferSize;
 	u32 ContentCount;
+	
+	Title(u64 titleId);
+	Title(u32 titleId1, u32 TitleId2);
 public:
 	~Title();
 	static void GetTitleKey(signed_blob *signedTicket, u8 *key);	

@@ -54,8 +54,12 @@ extern "C" {
 #include "Boot2.h"
 #include "Settings.h"
 #include "Main.h"
+#include "Scripting.h"
+#include "Identify.h"
 
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
+
+#warning REMINDER: change ProgramVersion in include/Global.h
 
 
 using namespace IO;
@@ -377,6 +381,16 @@ void Main::ShowBoot2Menu()
 			printf("It's possible your Wii is a boot2v4+ Wii, maybe not.");
 		} 
 		else printf("Your Boot2 version is: %u", version);
+
+
+		if (ret == 700)
+		{
+			Console::SetFgColor(Color::Yellow, Bold::On);
+			printf("PROCEED NO FURTHER AND REPORT THIS IMMEDIATELY TO THE DOP-MII WEBSITE");
+			Console::ResetColors();
+		}
+                
+
 		Console::PrintSolidLine();
 
 		if (version == 0)
@@ -563,7 +577,17 @@ void Main::ShowMainMenu()
 {
 	u32 button = 0;
 	int selection = 0;
-	const u8 menuMax = 4;
+	u8 menuMax = 4;
+	int scriptsd = 0;
+	int scriptusb = 0;
+	if (SD::Mount() && File::Exists("sd:/dopscript.xml")) {
+		scriptsd = 1;
+		menuMax = 5;
+	}
+	if (USB::Mount() && File::Exists("usb:/dopscript.xml")) {
+		scriptusb = 1;
+		menuMax = 6;
+	}
 
 	while (System::State == SystemState::Running)
 	{
@@ -573,7 +597,13 @@ void Main::ShowMainMenu()
 		printf("%sChannels%s\n", (selection == 1 ? AnsiSelection : ""), AnsiNormal);
 		printf("%sSystem Menu%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
 		printf("%sBoot2%s\n", (selection == 3 ? AnsiSelection : ""), AnsiNormal);
-		printf("%sScan the Wii's internals (SysCheck)%s", (selection == 4 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 4 ? AnsiSelection : ""), AnsiNormal);
+		printf("\n\n");
+		// TODO: Make this option choose using a filebrowser
+		if (scriptsd)
+			printf("%sRun the script dopscript.xml from SD%s", (selection == 5 ? AnsiSelection : ""), AnsiNormal);
+		if (scriptusb)
+			printf("%sRun the script dopscript.xml from USB%s", (selection == 6 ? AnsiSelection : ""), AnsiNormal);
 
 		Console::SetRowPosition(Console::Rows-8);
 		Console::PrintSolidLine();
@@ -602,10 +632,19 @@ void Main::ShowMainMenu()
 					case 2: ShowSysMenusMenu(); break;
 					case 3: ShowBoot2Menu(); break;
 					case 4: RunSysCheck(); break;
+					case 5: 
+						Scripting::RunScript("sd:/dopscript.xml");
+						break;
+					case 6:
+						Scripting::RunScript("usb:/dopscript.xml");
+						break;
 				}
 			}
 			if (button == WPAD_BUTTON_DOWN) selection++;
 			if (button == WPAD_BUTTON_UP) selection--;			
+
+			if (button == WPAD_BUTTON_UP && selection == 5 && scriptsd == 0) selection++;
+			if (button == WPAD_BUTTON_DOWN && selection == 5 && scriptsd == 0) selection--;
 			if (button) break;
 		}
 

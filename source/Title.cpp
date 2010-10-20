@@ -263,10 +263,10 @@ int Title::DowngradeTmdRevision()
 	u8 *ttmd = NULL;
 	char* tmdPath = (char*)"/tmp/title.tmd";
 
-	bool editDirectly = (SysCheck::CheckNandPermissions() && HAVE_AHBPROT);
+	bool editDirectly = (HAVE_AHBPROT);
 	if (editDirectly) {
 		sprintf(tmdPath, "/title/%08x/%08x/content/title.tmd", TITLEID1(this->TitleId), TITLEID2(this->TitleId));
-		gcprintf("Detected NAND permissions, and AHBPROT is enabled... Editing TMD directly!");
+		gcprintf("Detected NAND permissions, and AHBPROT is enabled... Editing TMD directly!\n");
 	}
 
 	gcprintf("Loading Stored TMD...");
@@ -484,13 +484,65 @@ int Title::Get(u16 revision)
 	return ret;
 }
 
-int Title::Get(u16 revision, const char* wadFileName) 
+int Title::Get(u16 revision, int getMethod)
+{
+	char wadFileName[256];
+
+	if (Type == TitleType::IOS) sprintf(wadFileName, "%s-64-v%u.wad", Name.c_str(), revision);
+	if (Type == TitleType::SYSMENU) sprintf(wadFileName, "System Menu-NUS-v%u.wad", revision);
+
+	int ret = Get(revision, wadFileName, getMethod);	
+	memset(wadFileName, 0, 256);
+	return ret;
+}
+
+int Title::Get(u16 revision, const char* wadFileName, int getMethod)
 {
 	char filename[512];
+	int ret;
+	if (getMethod == GETWADSD) 
+	{			
+		if (SD::Mount() < 0) 
+		{
+			gcprintf("Could not load SD Card\n");
+			sleep(2);
+			return -1;
+		}
+		sprintf(filename, "sd:/wad/%s", wadFileName);
+		ret = LoadFromWad(revision, filename);
+		if (ret < 0) 
+		{
+			sprintf(filename, "sd:/%s", wadFileName);
+			ret = LoadFromWad(revision, filename);
+		}
+		return ret;
+	}
+	if (getMethod == GETWADUSB) 
+	{
+		if (USB::Mount() < 0) 
+		{
+			gcprintf("Could not load USB Drive\n");
+			sleep(2);
+			return -1;
+		}
+		sprintf(filename, "usb:/wad/%s", wadFileName);
+		ret = LoadFromWad(revision, filename);
+		if (ret < 0) 
+		{
+			sprintf(filename, "usb:/%s", wadFileName);
+			ret = LoadFromWad(revision, filename);
+		}
+		return ret;
+	}
+	if (getMethod == GETNUS) return Download(revision);
+	return -1;
+}
+
+int Title::Get(u16 revision, const char* wadFileName) 
+{
 	u32 button;
 
 	int selection = 2;
-	int ret;
 	const char* optionstring[4] = {"Load WAD from SD Card", "Load WAD from USB Storage", "Download from NUS", "Cancel"};
 
 	this->Clear();
@@ -523,44 +575,7 @@ int Title::Get(u16 revision, const char* wadFileName)
 			if (button == WPAD_BUTTON_A)
 			{
 				printf("\n");
-				if (selection == 0) 
-				{			
-					if (SD::Mount() < 0) 
-					{
-						gcprintf("Could not load SD Card\n");
-						sleep(2);
-						break;
-					}
-					sprintf(filename, "sd:/wad/%s", wadFileName);
-					ret = LoadFromWad(revision, filename);
-					if (ret < 0) 
-					{
-						sprintf(filename, "sd:/%s", wadFileName);
-						ret = LoadFromWad(revision, filename);
-					}
-					return ret;
-				}
-
-				if (selection == 1) 
-				{
-					if (USB::Mount() < 0) 
-					{
-						gcprintf("Could not load USB Drive\n");
-						sleep(2);
-						break;
-					}
-					sprintf(filename, "usb:/wad/%s", wadFileName);
-					ret = LoadFromWad(revision, filename);
-					if (ret < 0) 
-					{
-						sprintf(filename, "usb:/%s", wadFileName);
-						ret = LoadFromWad(revision, filename);
-					}
-					return ret;
-				}
-
-				if (selection == 2) return Download(revision);
-
+				if (selection > 0 && selection < 3) return Get(revision, wadFileName, selection);
 				if (selection == 3) return (int)TitleError::Cancelled;
 			}
 			if (button) break;
