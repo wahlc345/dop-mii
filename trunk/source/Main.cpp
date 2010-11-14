@@ -529,7 +529,7 @@ void Main::BuildSysCheckTable()
 			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);		
 			if (revision)
 			{
-				if (revision->IsStub) { delete revision; revision = NULL; continue; }
+				if (revision->IsStub || revision->Id < 1000) { delete revision; revision = NULL; continue; }
 			}
 			else 
 			{
@@ -1395,7 +1395,7 @@ void Main::RunSysCheck()
 		iosTestCnt++;
 	}
 	
-	System::ReloadIOS(CurrentIOS->Id);
+	System::ReloadIOS(CurrentIOS->Id, true);
 		
 	if (System::State != SystemState::Running) goto final;
 
