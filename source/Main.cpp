@@ -366,7 +366,7 @@ void Main::RefreshIosMatrix()
 	CurrentIOS = IosMatrix->Item(tmpCurrentIOS);
 }
 
-int Main::ShowAHBPROTMenu()
+bool Main::ShowAHBPROTMenu()
 {
 
     while (System::State == SystemState::Running)
@@ -376,7 +376,7 @@ int Main::ShowAHBPROTMenu()
 		
 		printf("\nYou have AHBPROT available for use.\n\n");
 		printf("To continue using AHBPROT press A\n");
-		printf("To use your selected IOS instead press B\n");
+		printf("To proceed with your selected option instead press B\n");
 		
 		VIDEO_WaitVSync();
 
@@ -406,7 +406,7 @@ int Main::ShowAHBPROTMenu()
 	
 	gprintf("\nIf you are reading this, something is seriously broken.");
 	
-    return -1;
+    return 0;
 	
 }
 
@@ -1529,15 +1529,9 @@ void Main::ShowInitialMenu()
 		VIDEO_WaitVSync();
 		Console::ClearScreen();
 		printf("Which IOS would you like to use to install other IOSes?\n");
-		if (!isAHBPROT)
-		{
-			printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
-			printf("%sInstall IOS36 (v%d) w/FakeSign%s\n", (selection == 1 ? AnsiSelection : ""), IOS36Version, AnsiNormal);
-		}
-		else
-		{
-			printf("%sUse IOS%d + AHBPROT%s\n", (selection == 0 ? AnsiSelection : ""), IOS_GetVersion(), AnsiNormal);
-		}
+		
+		printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
+		printf("%sInstall IOS36 (v%d) w/FakeSign%s\n", (selection == 1 ? AnsiSelection : ""), IOS36Version, AnsiNormal);
 		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
 		printf("%sExit%s", (selection == 3 ? AnsiSelection : ""), AnsiNormal);	
 
@@ -1545,7 +1539,7 @@ void Main::ShowInitialMenu()
 		Console::PrintSolidLine();
 		printf("[%s][%s] Change Selection\n", UpArrow, DownArrow);
 		
-		if (selection == 0 && !isAHBPROT) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
+		if (selection == 0) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
 		else printf("\n");
 
 		printf("[Home] Exit");
@@ -1562,16 +1556,10 @@ void Main::ShowInitialMenu()
 			if (button == WPAD_BUTTON_UP) selection--;
 			if (button == WPAD_BUTTON_DOWN) selection++;
 
-			if (isAHBPROT)
-			{ // Let's skip out that
-				if (button == WPAD_BUTTON_UP && selection == 1) selection--;
-				if (button == WPAD_BUTTON_DOWN && selection == 1) selection++;
-			}
-
 			if (selection < 0) selection = maxMenu;
 			if (selection > maxMenu) selection = 0;
 
-			if (selection == 0 && !isAHBPROT)
+			if (selection == 0)
 			{
 				if (button == WPAD_BUTTON_LEFT && menuIOS != iosList.begin()) --menuIOS;
 				if (button == WPAD_BUTTON_RIGHT && menuIOS != iosList.end()-1) ++menuIOS;
@@ -1582,7 +1570,11 @@ void Main::ShowInitialMenu()
 				switch (selection)
 				{
 					case 0:
-						if (isAHBPROT) {
+					
+					    if (isAHBPROT) isAHBPROT = ShowAHBPROTMenu();
+						
+						if (isAHBPROT) 
+						{
 							CurrentIOS = IosMatrix->Item((u32)IOS_GetVersion());
 							// Should do patchy?
 							if (!SysCheck::CheckFakeSign()) {
@@ -1634,7 +1626,10 @@ void Main::ShowInitialMenu()
 						if (InstallFakeSignIOS36() > -1) selection = 0;
 						break;
 					case 2:
-						RunSysCheck(); 
+					    if (isAHBPROT) 
+						   isAHBPROT = ShowAHBPROTMenu();
+						if (!isAHBPROT)
+						   RunSysCheck(); 
 						break;
 					case 3:
 						VIDEO_WaitVSync();
