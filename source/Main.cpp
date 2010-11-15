@@ -366,6 +366,50 @@ void Main::RefreshIosMatrix()
 	CurrentIOS = IosMatrix->Item(tmpCurrentIOS);
 }
 
+int Main::ShowAHBPROTMenu()
+{
+
+    while (System::State == SystemState::Running)
+	{
+		VIDEO_WaitVSync();
+		Console::ClearScreen();
+		
+		printf("\nYou have AHBPROT available for use.\n\n");
+		printf("To continue using AHBPROT press A\n");
+		printf("To use your selected IOS instead press B\n");
+		
+		VIDEO_WaitVSync();
+
+		u32 button = 0;
+		while (Controller::ScanPads(&button))
+		{
+		
+			if (button == WPAD_BUTTON_HOME || WPAD_CLASSIC_BUTTON_HOME || PAD_TRIGGER_Z) System::Exit();
+			
+			if (button == WPAD_BUTTON_B || WPAD_CLASSIC_BUTTON_B || PAD_BUTTON_B)
+            {  
+			
+               gprintf("\nUsing IOS instead of AHBPROT"); 
+               return 0;
+			   
+			}
+			
+			if (button == WPAD_BUTTON_A || WPAD_CLASSIC_BUTTON_A || PAD_BUTTON_A) 
+			{
+			
+			   gprintf("\nUsing AHBPROT instead of reloading IOS");
+			   return 1;
+			   
+			}	
+		}
+	}
+	
+	gprintf("\nIf you are reading this, something is seriously broken.");
+	
+    return -1;
+	
+}
+
 void Main::ShowBoot2Menu()
 {
 	while (System::State == SystemState::Running)
