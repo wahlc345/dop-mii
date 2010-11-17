@@ -105,6 +105,56 @@ int Main::InstallFakeSignIOS36()
     
     int iosVersion = 0;
 	int iosToUse = 0;
+	bool isAHBPROT = HAVE_AHBPROT;
+	
+	//First try to install via AHBPROT
+	
+	if(isAHBPROT)
+	{
+	   gcprintf("Trying to install via AHBPROT...\n");
+	   
+	   //Patch current IOS via AHBPROT if not already patched
+	   CurrentIOS = IosMatrix->Item((u32)IOS_GetVersion());
+	   gprintf("Checking to see if patching current IOS via AHBPROT is necessary\n");
+	   if (!SysCheck::CheckFakeSign()) 
+	   {
+		   gcprintf("Patching current IOS via AHBPROT...\n");
+		   Console::PrintSolidLine();
+		   Spinner::Start();
+		   IOSPATCH_Apply();
+		   Spinner::Stop();
+		   gcprintf("\n\n...COMPLETE\n");
+	   }
+	   
+       IosMatrixIterator IOS;
+	   
+       IOS->Id = 0x100000024ull;
+	   rev->Id = 1024;
+		
+	   //Delete IOS 36
+	   gcprintf("Removing IOS 36...\n");
+	   ret = UninstallIOS(IOS);
+	   if (ret < 0)
+	   {
+	      gcprintf("\n>> ERROR! Failed To Remove IOS 36\n");
+		  goto error;
+	   }
+	   gcprintf("...COMPLETE!\n");
+	   
+	   //Install lower version of IOS 36 that has fakesigning
+	   gcprintf("Installing an older IOS 36 with fakesignig...\n");
+	   ret = InstallIOS(IOS, rev);
+	   if (ret < 0)
+	   {
+	      gcprintf("\n>> ERROR! Failed To Remove IOS 36\n");
+		  goto error;
+	   }
+	   gcprintf("...COMPLETE!\n");
+	   gprintf("Fakesign ios installed via AHBPROT successfully!\n");
+	   
+	   goto final;
+	
+	}
 
     // Check to see if IOS 41 | 43 | 45 | 46 is currently installed
     // If it is installed see if it is a version that is supported, if so move on
