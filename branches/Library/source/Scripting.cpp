@@ -15,10 +15,28 @@
 #include "sysconf.h"
 #include "Tools.h"
 #include "Identify.h"
-#include "Main.h"
+
+#define REGIONS_LEN		(int)(sizeof(Regions) / sizeof(Region))
+#define REGIONS_LO		(int)0
+#define REGIONS_HI		(int)REGIONS_LEN - 1
 
 using namespace IO;
 using namespace Titles;
+
+typedef struct Region
+{
+	u32 id;
+	const char Name[30];
+	const char Char;
+} ATTRIBUTE_PACKED Region;
+
+const struct Region Regions[] = 
+{
+	{0, "North America (U)", 'U'},
+	{1, "Europe (E)", 'E'},
+	{2, "Japan (J)", 'J'},
+	{3, "Korea (K)", 'K'}
+};
 
 template <class T>
 const char *to_string(T t, std::ios_base & (*f)(std::ios_base&))
