@@ -19,7 +19,7 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data  
-INCLUDES	:=  include
+INCLUDES	:=  include/dopmii
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -39,7 +39,7 @@ LIBS	:= -lwiiuse -lfat -lbte -logc -lm -lmxml
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS)
+LIBDIRS	:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -63,9 +63,6 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
-XMLFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.xml)))
-WADFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.wad)))
-PNGFILES	:=  $(foreach dir,%(DATA),$(notdir $(wildcard $(dir)/*.png)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -77,9 +74,6 @@ else
 endif
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-					$(PNGFILES:.png=.png.o) \
-					$(XMLFILES:.xml=.xml.o) \
-					$(WADFILES:.wad=.wad.o) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o)
 
@@ -101,61 +95,33 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
-#lets see what OS we are on and then create svnref file
-UNAME := $(shell uname)
-#and now make the build list
-
 $(BUILD):
-	echo $(PORTLIBS)
-ifeq ($(UNAME),Linux)
-	chmod 777 ./tools/MakeSvnRev.sh
-	chmod 777 ./tools/BuildType.sh
-	chmod 777 ./*Build.sh
-	./tools/MakeSvnRev.sh
-else
-	SubWCRev.exe "." "./templates/svnrev_template.h" "./include/svnrev.h"
-endif
 	@[ -d $@ ] || mkdir -p $@
-	@./tools/BuildType.sh
-	@./PreBuild.sh
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
-	@./PostBuild.sh $(OUTPUT)
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
-#---------------------------------------------------------------------------------
-debug:
-ifeq ($(UNAME),Linux)
-	chmod 777 ./tools/MakeSvnRev.sh
-	chmod 777 ./tools/BuildType.sh
-	chmod 777 ./*Build.sh
-	./tools/MakeSvnRev.sh
-else
-	SubWCRev.exe "." "./templates/svnrev_template.h" "./include/svnrev.h"
-endif
-	@[ -d build ] || mkdir -p build
-	@./tools/BuildType.sh DEBUG
-	@./PreBuild.sh
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
-	@./PostBuild.sh $(OUTPUT)
-#---------------------------------------------------------------------------------
-remake:
-	@[ -d build ] || mkdir -p build		
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 #---------------------------------------------------------------------------------
+
+install:
+	@mkdir -p lib
+	@mkdir -p include
+	@cp $(OUTPUT).a lib/dopmii.a
+	@cp source/*.h include/
+realinstall:
+	@cp $(OUTPUT).a $(LIBOGC_LIB)/dopmii.a
+	@cp source/*.h $(LIBOGC_INC)
+
+#---------------------------------------------------------------------------------
 run:
-	wiiload $(TARGET).dol		
+	wiiload $(TARGET).dol
 
-runelf:
-	wiiload $(TARGET).elf
-
-release:
-	make clean
-	make
-	cp -f $(OUTPUT).dol "./hbc/apps/DOP-Mii/boot.dol"
-	
+#---------------------------------------------------------------------------------
+%.a:
+	@echo linking to lib ... $(notdir $@)
+	@$(AR) -rc $@ $^
 #---------------------------------------------------------------------------------
 else
 
@@ -164,8 +130,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(OUTPUT).dol: $(OUTPUT).elf
-$(OUTPUT).elf: $(OFILES)
+$(OUTPUT).a: $(OFILES)
 
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .xxx extension
@@ -200,10 +165,8 @@ $(OUTPUT).elf: $(OFILES)
 
 %.png.o : %.png
 	@echo $(notdir $<)
-	$(bin2o)		
-
-#---------------------------------------------------------------------------------
-
+	$(bin2o)
+	
 -include $(DEPENDS)
 
 #---------------------------------------------------------------------------------
