@@ -36,9 +36,6 @@ distribution.
 #include <string>
 #include <algorithm>
 #include <sstream>
-extern "C" {
-  #include "RuntimeIOSPatch.h"
-}
 
 #include "Global.h"
 #include "Controller.h"
@@ -56,6 +53,7 @@ extern "C" {
 #include "Main.h"
 #include "Scripting.h"
 #include "Identify.h"
+#include "RuntimeIOSPatch.h"
 
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
 
@@ -120,17 +118,20 @@ int Main::InstallFakeSignIOS36()
 	   {
 		   gcprintf("Patching current IOS via AHBPROT...\n");
 		   Console::PrintSolidLine();
-		   Spinner::Start();
-		   IOSPATCH_Apply();
-		   Spinner::Stop();
+		   RuntimeIOSPatch::Apply();
 		   gcprintf("\n\n...COMPLETE\n");
 	   }
 	   
        IosMatrixIterator IOS;
 	   
-       IOS->Id = 0x100000024ull;
-	   rev->Id = 1024;
+/*       IOS->Id = 0x100000024ull;
+	   rev->Id = 1024;*/
+        IOS = IosMatrix->Item(36u);
+	rev = IOS->Revisions.Item(3351);
 		
+	iosVersion = SysTitle::GetVersion(0x100000036ull);
+        if (iosVersion != 0)
+        {
 	   //Delete IOS 36
 	   gcprintf("Removing IOS 36...\n");
 	   ret = UninstallIOS(IOS);
@@ -140,6 +141,9 @@ int Main::InstallFakeSignIOS36()
 		  goto error;
 	   }
 	   gcprintf("...COMPLETE!\n");
+        } else {
+           gcprintf("You do not have IOS 36 already installed.\n");
+        }
 	   
 	   //Install lower version of IOS 36 that has fakesigning
 	   gcprintf("Installing an older IOS 36 with fakesignig...\n");
@@ -434,9 +438,9 @@ bool Main::ShowAHBPROTMenu()
 		while (Controller::ScanPads(&button))
 		{
 		
-			if (button == WPAD_BUTTON_HOME || WPAD_CLASSIC_BUTTON_HOME || PAD_TRIGGER_Z) System::Exit();
+			if (button == WPAD_BUTTON_HOME || button == WPAD_CLASSIC_BUTTON_HOME || button == PAD_TRIGGER_Z) System::Exit();
 			
-			if (button == WPAD_BUTTON_B || WPAD_CLASSIC_BUTTON_B || PAD_BUTTON_B)
+			if (button == WPAD_BUTTON_B || button == WPAD_CLASSIC_BUTTON_B || button == PAD_BUTTON_B)
             {  
 			
                gprintf("\nUsing IOS instead of AHBPROT"); 
@@ -444,7 +448,7 @@ bool Main::ShowAHBPROTMenu()
 			   
 			}
 			
-			if (button == WPAD_BUTTON_A || WPAD_CLASSIC_BUTTON_A || PAD_BUTTON_A) 
+			if (button == WPAD_BUTTON_A || button == WPAD_CLASSIC_BUTTON_A || button == PAD_BUTTON_A) 
 			{
 			
 			   gprintf("\nUsing AHBPROT instead of reloading IOS");
@@ -1579,6 +1583,8 @@ void Main::ShowInitialMenu()
 		VIDEO_WaitVSync();
 		Console::ClearScreen();
 		printf("Which IOS would you like to use to install other IOSes?\n");
+		if (isAHBPROT)
+			printf("Note: choosing the first or third options will result in an AHBPROT usage prompt.");
 		
 		printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
 		printf("%sInstall IOS36 (v%d) w/FakeSign%s\n", (selection == 1 ? AnsiSelection : ""), IOS36Version, AnsiNormal);
@@ -1632,9 +1638,7 @@ void Main::ShowInitialMenu()
 								Console::ClearScreen();
 								printf("One moment... Applying patches...\n");
 								Console::PrintSolidLine();
-								Spinner::Start();
-								IOSPATCH_Apply();
-								Spinner::Stop();
+								RuntimeIOSPatch::Apply();
 								printf("\n\n...COMPLETE");
 							}
 						} else {
@@ -1680,6 +1684,7 @@ void Main::ShowInitialMenu()
 						   isAHBPROT = ShowAHBPROTMenu();
 						if (!isAHBPROT)
 						   RunSysCheck(); 
+						isAHBPROT = HAVE_AHBPROT;
 						break;
 					case 3:
 						VIDEO_WaitVSync();
