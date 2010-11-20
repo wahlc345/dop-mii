@@ -1,0 +1,18 @@
+Installation and usage for the DOP-Mii Library
+
+Installation:
+
+Place include/dopmii.h into libogc/include
+Place include/dop-mii into libogc/include
+Place the output library into libogc/lib/wii/dopmii.a
+
+Usage:
+
+In your makefile under LIBS add -ldopmii
+In your source code #include <dopmii.h> to include the entire DOP-Mii library
+Or in your source code #include <dopmii/specifcpart.h> to include only some of DOP-Mii in your program
+
+Feedback:
+
+We are constantly looking for feedback to help make this developer library as useful as it can be.
+Please e-mail castlevania7689@yahoo.com with your feedback.
