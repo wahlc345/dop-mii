@@ -109,6 +109,50 @@ void Main::RefreshIosMatrix()
 	CurrentIOS = IosMatrix->Item(tmpCurrentIOS);
 }
 
+bool Main::ShowAHBPROTMenu()
+{
+
+    while (System::State == SystemState::Running)
+	{
+		VIDEO_WaitVSync();
+		Console::ClearScreen();
+		
+		printf("\nYou have AHBPROT available for use.\n\n");
+		printf("To continue using AHBPROT press A\n");
+		printf("To proceed with your selected option instead press B\n");
+		
+		VIDEO_WaitVSync();
+
+		u32 button = 0;
+		while (Controller::ScanPads(&button))
+		{
+		
+			if (button == WPAD_BUTTON_HOME || button == WPAD_CLASSIC_BUTTON_HOME || button == PAD_TRIGGER_Z) System::Exit();
+			
+			if (button == WPAD_BUTTON_B || button == WPAD_CLASSIC_BUTTON_B || button == PAD_BUTTON_B)
+            {  
+			
+               gprintf("\nUsing IOS instead of AHBPROT"); 
+               return 0;
+			   
+			}
+			
+			if (button == WPAD_BUTTON_A || button == WPAD_CLASSIC_BUTTON_A || button == PAD_BUTTON_A) 
+			{
+			
+			   gprintf("\nUsing AHBPROT instead of reloading IOS");
+			   return 1;
+			   
+			}	
+		}
+	}
+	
+	gprintf("\nIf you are reading this, something is seriously broken.");
+	
+    return 0;
+	
+}
+
 void Main::ShowBoot2Menu()
 {
 	while (System::State == SystemState::Running)
@@ -282,7 +326,7 @@ void Main::BuildSysCheckTable()
 			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);
 			if (revision)
 			{
-				if (revision->IsStub) { delete revision; revision = NULL; continue; }
+				if (revision->IsStub || revision->Id < 1000) { delete revision; revision = NULL; continue; }
 			}
 			else 
 			{
@@ -1146,7 +1190,7 @@ void Main::RunSysCheck()
 		iosTestCnt++;
 	}
 	VIDEO_WaitVSync();
-	System::ReloadIOS(IOS_GetPreferredVersion()); // reload to "favourite" IOS
+	System::ReloadIOS(CurrentIOS->Id, true);
 		
 	if (System::State != SystemState::Running) goto final;
 
@@ -1209,7 +1253,7 @@ void Main::ShowInitialMenu()
 	int selection = 0;
 	u32List iosList;
 	u32Iterator menuIOS;
-	u8 maxMenu = 3;
+	bool isAHBPROT = HAVE_AHBPROT;
 
 	/* Get IOS versions */
 	System::GetInstalledIosIdList(iosList);
@@ -1228,27 +1272,23 @@ void Main::ShowInitialMenu()
 
 		if ((int)*menuIOS == IOS_GetVersion()) CurrentIOS = IosMatrix->Item(*menuIOS);
 	}
-	if (HAVE_AHBPROT)
+	if (isAHBPROT)
 		CurrentIOS = IosMatrix->Item((u32)IOS_GetVersion());
-	else
-		selection = 1;
 
 	while (System::State == SystemState::Running) 
 	{		
 		VIDEO_WaitVSync();
 		Console::ClearScreen();
                 printf("Which IOS would you like to use to install other IOSes?\n");
-		if (HAVE_AHBPROT)
-                        printf("%sUse IOS%d + AHBPROT%s\n", (selection == 0 ? AnsiSelection : ""), IOS_GetVersion(), AnsiNormal);
-		printf("%sIOS: %u%s\n", (selection == 1 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
-		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 2 ? AnsiSelection : ""), AnsiNormal);
-		printf("%sExit%s", (selection ==  3 ? AnsiSelection : ""), AnsiNormal);	
+		printf("%sIOS: %u%s\n", (selection == 0 ? AnsiSelection : ""), *menuIOS, AnsiNormal);
+		printf("%sScan the Wii's internals (SysCheck)%s\n", (selection == 1 ? AnsiSelection : ""), AnsiNormal);
+		printf("%sExit%s", (selection ==  2 ? AnsiSelection : ""), AnsiNormal);	
 
 		Console::SetRowPosition(Console::Rows-7);
 		Console::PrintSolidLine();
 		printf("[%s][%s] Change Selection\n", UpArrow, DownArrow);
 		
-		if (selection == 0 && !HAVE_AHBPROT) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
+		if (selection == 0) printf("[%s][%s] Change IOS\n", LeftArrow, RightArrow);
 		else printf("\n");
 
 		printf("[Home] Exit");
@@ -1264,11 +1304,11 @@ void Main::ShowInitialMenu()
 
 			if (button == WPAD_BUTTON_UP) selection--;
 			if (button == WPAD_BUTTON_DOWN) selection++;
+			if (selection > 2) selection = 0;
+			if (selection < 0) selection = 2;
 
-			if ((!HAVE_AHBPROT && selection < 1) || (HAVE_AHBPROT && selection < 0)) selection = maxMenu;
-			if (selection > maxMenu) selection = (HAVE_AHBPROT) ? 0 : 1;
 
-			if (selection == 1)
+			if (selection == 0)
 			{
 				if (button == WPAD_BUTTON_LEFT && menuIOS != iosList.begin()) --menuIOS;
 				if (button == WPAD_BUTTON_RIGHT && menuIOS != iosList.end()-1) ++menuIOS;
@@ -1279,7 +1319,8 @@ void Main::ShowInitialMenu()
 				switch (selection)
 				{
 					case 0:
-						if (HAVE_AHBPROT) {
+						if (isAHBPROT) isAHBPROT = ShowAHBPROTMenu();
+						if (isAHBPROT) {
 							CurrentIOS = IosMatrix->Item((u32)IOS_GetVersion());
 							// Should do patchy?
 							if (!SysCheck::CheckFakeSign()) {
@@ -1298,8 +1339,10 @@ void Main::ShowInitialMenu()
 								}
 							}
 						} else {
-							// oops...
-							// just.. don't do anything.
+							VIDEO_WaitVSync();
+							Console::ClearScreen();
+					                System::ReloadIOS(CurrentIOS);
+							Identify::AsSystemMenu();
 						}
 
 						ShowMainMenu(); 
@@ -1307,22 +1350,13 @@ void Main::ShowInitialMenu()
 						selection = 0;
 						break;
 					case 1:
-					  	gprintf("Loading IOS\n");
-						VIDEO_WaitVSync();
-						Console::ClearScreen();
-						printf("Loading selected IOS...\n");
-														
-						CurrentIOS = IosMatrix->Item(*menuIOS);
-						System::ReloadIOS(CurrentIOS);
-						Identify::AsSystemMenu();
-						ShowMainMenu(); 
-						if (System::State != SystemState::Running) goto end;
-						selection = 1;
+					    if (isAHBPROT) 
+						   isAHBPROT = ShowAHBPROTMenu();
+						if (!isAHBPROT)
+						   RunSysCheck(); 
+						isAHBPROT = HAVE_AHBPROT;
 						break;
 					case 2:
-						RunSysCheck(); 
-						break;
-					case 3:
 						VIDEO_WaitVSync();
 						Console::ClearScreen();
 						printf("Are you sure you want to exit?\n");

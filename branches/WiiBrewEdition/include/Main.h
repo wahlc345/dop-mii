@@ -59,6 +59,7 @@ private:
 	void ShowBoot2Menu();
 	int  UpgradeBoot2();
 	
+	bool ShowAHBPROTMenu();
 	void ShowInitialMenu();
 	void ShowMainMenu();	
 	void ShowWelcomeScreen();		
