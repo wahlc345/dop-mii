@@ -6,8 +6,8 @@
 #include <unistd.h>
 #include <sdcard/wiisd_io.h>
 #include <fat.h>
+//#include "UsbStorage.h"
 #include "FileSystem.h"
-#include "UsbStorage.h"
 #include "Tools.h"
 #include "Gecko.h"
 
@@ -77,7 +77,6 @@ namespace IO
 	{
 		if (!isMounted) return;
 		fatUnmount("usb:/");
-		USBStorage_Shutdown();
 		isMounted = false;
 	}
 
