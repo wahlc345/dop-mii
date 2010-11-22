@@ -627,7 +627,7 @@ void Main::BuildSysCheckTable()
 			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);		
 			if (revision)
 			{
-				if (revision->IsStub || revision->Id < 1000) { delete revision; revision = NULL; continue; }
+				if (revision->IsStub || revision->Id < 1000 || revision->TitleId == 0x1000000ECull) { delete revision; revision = NULL; continue; }
 			}
 			else 
 			{
