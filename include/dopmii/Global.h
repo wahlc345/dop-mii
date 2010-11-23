@@ -11,7 +11,7 @@
 using namespace std;
 
 /* Constants */
-#define DOPMIIVersion "2"
+#define DOPMIIVersion "1.2"
 #define DEFAULT_IOS 36
 #define IOS36Version 3351
 
