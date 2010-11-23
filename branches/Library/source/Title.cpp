@@ -575,7 +575,7 @@ int Title::Get(u16 revision, const char* wadFileName)
 			if (button == WPAD_BUTTON_A)
 			{
 				printf("\n");
-				if (selection > 0 && selection < 3) return Get(revision, wadFileName, selection);
+				if (selection >= 0 && selection < 3) return Get(revision, wadFileName, selection);
 				if (selection == 3) return (int)TitleError::Cancelled;
 			}
 			if (button) break;
