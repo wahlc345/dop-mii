@@ -156,7 +156,7 @@ remake:
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol *.zip include/BuildType.h include/svnrev.h
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol *.zip include/BuildType.h include/svnrev.h include/__wpads.h
 #---------------------------------------------------------------------------------
 run:
 	/usr/bin/wiiload $(TARGET).dol		

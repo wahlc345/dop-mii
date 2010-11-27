@@ -26,6 +26,7 @@ public:
 	static int  RestorePriiloader();
 	static void StringReplaceI(string &str, const char* from, const char* to);
 	static bool StringStartsWithI(string &str, const char* value);
+	static bool NewerVersionAvailable();
 };
 
 
