@@ -14,6 +14,9 @@
 #include "WiiMote.h"
 #include "DiscLight.h"
 #include "Settings.h"
+#include "Network.h"
+
+#include "svnrev.h"
 
 using namespace std;
 using namespace IO;
@@ -342,4 +345,10 @@ bool Tools::StringStartsWithI(std::string &str, const char* value)
 	valueStr.clear();
 	lowerStr.clear();
 	return result;
+}
+
+bool Tools::NewerVersionAvailable()
+{
+	int curversion = SVN_REV;
+	int newversion;
 }
