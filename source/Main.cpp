@@ -36,6 +36,7 @@ distribution.
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <vector>
 
 #include "Global.h"
 #include "Controller.h"
@@ -594,54 +595,145 @@ int Main::UpgradeBoot2()
 	return ret;
 }
 
-void Main::BuildSysCheckTable()
+vector<u64> Main::BuildSysCheckTable(vector<u64> titles)
 {
-	int ret = 0;
-	u32 titlesCount;
-	u64 *titles = NULL;
+	// thanks to Double_A
+	int i;
+	int countIOS = 0; // Number of IOS
+	int countStubs = 0; // Number of IOS Stubs
+	int countBCMIOS = 0; //Number of BC and MIOS. Should be 2.
+	u32 titleID;
+	s32 nbTitles = titles.size();
 
-	SysCheckTable.clear();
+	s32 infoRevision[nbTitles];
+	bool infoStub[nbTitles];	
 
-	ret = ES_GetNumTitles(&titlesCount);
-	titles = (u64*)Tools::AllocateMemory(sizeof(u64) * titlesCount);
-	ret = ES_GetTitles(titles, titlesCount);
- 
-	for (u32 i = 0; i < titlesCount; i++)
+	// For each titles found
+	for (i = 0; i < nbTitles; i++)
 	{
-		u64 titleId = titles[i];
-		u32 titleId1 = TITLEID1(titleId);
-		u32 titleId2 = TITLEID2(titleId);
+		// Skip non-system titles
+		if (titles[i] >> 32 != 1) continue;
 
-		if (titleId1 != 1) continue; // skip non-system titles
+		// Skip the system menu
+		titleID = titles[i] & 0xFFFFFFFF;
+
+		if (titleID == 2) continue;
+
+		// Skip BC, MIOS and possible other non-IOS titles
+		if (titleID > 0xFF && titleID != 256 && titleID != 257) continue;
+
+		// Skip the running IOS
+		if (titleID == 0) continue;
+
+		// Check if this title is an IOS stub
+		u32 tmdSize;
+		tmd *iosTMD ATTRIBUTE_ALIGN(32);
+
+		// Get the stored TMD size for the title
+		if (ES_GetStoredTMDSize(0x0000000100000000ULL | titleID, &tmdSize) < 0)
+		{
+			sleep(5);
+			return titles;
+		}
+
+		signed_blob *iosTMDBuffer = (signed_blob *)memalign(32, (tmdSize+32)&(~31));
+		memset(iosTMDBuffer, 0, tmdSize);
+
+		// Get the stored TMD for the title
+		if (ES_GetStoredTMD(0x0000000100000000ULL | titleID, iosTMDBuffer, tmdSize) < 0)
+		{
+			sleep(5);
+			return titles;
+		}
+
+		iosTMD = (tmd *)SIGNATURE_PAYLOAD(iosTMDBuffer);
 		
-		// skip system menu, BC, MIOS and possible other non-IOS titles
-		if (titleId2 < 4 || titleId2 > 255) continue;
+		free(iosTMDBuffer);
+
+		// Get the title version
+		u8 noVersion = iosTMD->title_version;
+		bool isStub = false;
 		
-		{ // check if this is just a stub
-			tmd *ptmd = NULL;
-			SysTitle::GetTMD(titleId, &ptmd);
-			u16 numContents = ptmd->num_contents;
-			u16 titleVersion = ptmd->title_version;
-			delete ptmd; ptmd = NULL;
-					
-			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);		
-			if (revision)
-			{
-				if (revision->IsStub || revision->Id < 1000) { delete revision; revision = NULL; continue; }
-			}
-			else 
-			{
-				if (numContents == 1) continue; // Is A Stub
-				if (numContents == 3) continue; // May be a stub so skip to be safe
-			}
-		} // END CHECK
-				
-		SysCheckTable.push_back(titleId2);
+		// Check if this is an IOS stub (according to WiiBrew.org)
+		if (SysCheck::IsKnownStub(titleID, iosTMD->title_version))
+			isStub = true;
+		else
+		{
+			// If the version is 00, it's probably a stub
+			//
+			// Stubs have these things in common:
+			//	- Title version is mostly 65280, or even better, the last 2 hexadecimal digits are 0;
+			// 	- Stub have one app of their own (type 0x1) and 2 shared apps (type 0x8001).
+			if (noVersion == 0)
+				isStub = ((iosTMD->num_contents == 3) && (iosTMD->contents[0].type == 1 && iosTMD->contents[1].type == 0x8001 && iosTMD->contents[2].type == 0x8001));
+			else		
+				isStub = false;
+		}
+		if (isStub) {
+			printf("WOAH! IOS %llx v %i looks like a stub to me! Missing it out...", titleID, iosTMD->title_version);
+			sleep(1);
+			continue; // weeeee
+		}
+
+		// Add to IOS list
+		titles[countIOS] = titles[i];
+		infoRevision[countIOS] = iosTMD->title_version;
+		infoStub[countIOS] = isStub;
+
+
+		countIOS++;
+		if (titleID == 256 || titleID == 257) countBCMIOS++;
+
+		if (isStub && !(iosTMD->title_version == 31338) && !(iosTMD->title_version == 65281)) countStubs++;
 	}
-	delete titles; titles = NULL;
-	
-	sort(SysCheckTable.rbegin(), SysCheckTable.rend());
-	gprintf("IOSES Found = %d\n", SysCheckTable.size()-1);	
+
+
+//	printf("countIOS is: %i - u64 size is: %i", countIOS, sizeof(u64));
+
+	// now resort:
+//	titles = realloc(titles, countIOS*sizeof(u64));
+	titles.resize(countIOS);
+	u32 countTitles = nbTitles;
+	nbTitles = countIOS;
+
+	u64 lowestTitle;
+	s32 lowestRevision;
+	bool lowestStub;
+	int lowestID;
+	int j;
+
+	for (i = 0; i < nbTitles; i++)
+	{
+		lowestTitle = titles[i];
+		lowestRevision = infoRevision[i];
+		lowestStub = infoStub[i];
+		lowestID = i;
+		
+		for (j = i+1; j < nbTitles; j++)
+		{
+			if (titles[j] < lowestTitle)
+			{
+				lowestTitle = titles[j];
+				lowestRevision = infoRevision[j];
+				lowestStub = infoStub[j];
+				lowestID = j;
+			}
+		}
+
+		// Swap IOS title
+		titles[lowestID] = titles[i];
+		titles[i] = lowestTitle;
+
+		// Swap IOS revision
+		infoRevision[lowestID] = infoRevision[i];
+		infoRevision[i] = lowestRevision;
+
+		// Swap IOS stub
+		infoStub[lowestID] = infoStub[i];
+		infoStub[i] = lowestStub;
+	}
+	// end thanks ;)
+	return titles;
 }
 
 
@@ -1405,6 +1497,9 @@ void Main::RunSysCheck()
 	u32 deviceId = 0;
 	ostringstream os;
 	int iosTestCnt = 1;
+	u32 i = 0;
+	u32 curTitleID;
+	int iosReloadReturn = 0;
 	
 	SysCheck::RemoveBogusTicket();
 	SysCheck::RemoveBogusTitle();
@@ -1416,21 +1511,43 @@ void Main::RunSysCheck()
 	printf("[*] Region: %s\n", Tools::GetRegionString(CONF_GetRegion()));
 	printf("[*] Device ID: %u\n", deviceId);
 	printf("[*] Hollywood Version: 0x%x\n", SYS_GetHollywoodRevision());
+	printf("[*] Current System Menu Version: (%d) - %3.1f\n", SysCheck::GetSysMenuVersion(), SysCheck::GetSysMenuFriendlyVersion());
 	printf("[*] Getting certs.sys from the NAND...");
 	printf("%s\n", (System::Cert) ? "[DONE]" : "[FAIL]");
 	printf("\n");
 
-	BuildSysCheckTable();	
-	if (SysCheckTable.size() == 0)
+	// thanks, Double_A
+	u32 nbTitles;
+	vector<u64> titles(1);
+	u64 *tempTitles;
+	if (ES_GetNumTitles(&nbTitles) < 0) 
 	{
-		printf(">> ERROR! This IOS cannot retrive an IOS list.\n");
+		printf(">> ERROR! This IOS cannot retrieve an IOS list.\n");
 		printf(">> ERROR! Please use a different IOS to run SysCheck\n\n");
 		printf("Press any key to return to the menu\n");
 		Controller::WaitAnyKey();
 		goto final;
-	}	
+	}
+	titles.resize(nbTitles);
+	tempTitles = new u64[nbTitles];
+	if (ES_GetTitles(tempTitles, nbTitles) < 0)
+	{
+		printf(">> ERROR! This IOS cannot retrieve an IOS list.\n");
+		printf(">> ERROR! Please use a different IOS to run SysCheck\n\n");
+		printf("Press any key to return to the menu\n");
+		Controller::WaitAnyKey();
+		goto final;
+	}
+	for (i = 0; i < nbTitles; i++)
+	{
+		titles[i] = tempTitles[i];
+	}
+	delete [] tempTitles;
+	// end thanks
+	titles = BuildSysCheckTable(titles);
+	nbTitles = titles.size();
 	
-	printf("[*] Found %i IOSes that are safe to test.\n\n", SysCheckTable.size()-1);
+	printf("[*] Found %i IOSes that are safe to test.\n\n", nbTitles);
 	sleep(5);
 
 	if (System::State != SystemState::Running) goto final;
@@ -1446,7 +1563,9 @@ void Main::RunSysCheck()
 	printf("%-13s %-10s %-11s %-10s %-10s\n", "IOS Version", "FakeSign", "ES_Identify", "NAND", "Flash");
 	Console::ResetColors();
 
-	for (u32Iterator ios = SysCheckTable.begin(); ios < SysCheckTable.end(); ++ios)
+
+	//for (u32Iterator ios = SysCheckTable.begin(); ios < SysCheckTable.end(); ++ios)
+	for (i = 0; i < nbTitles; i++)
 	{	
 		if (System::State != SystemState::Running) goto final;
 
@@ -1455,12 +1574,22 @@ void Main::RunSysCheck()
 		bool hasNandPermissions = false;
 		bool hasFlashAccess = false;
 
+		curTitleID = (titles[i] & 0xFFFFFFFF);
+		printf("IOS no. %i - %llx: %x: ", i, titles[i], curTitleID);
+
 		VIDEO_WaitVSync();
-		System::ReloadIOS(*ios, false);
+		if (i == 0)
+			System::ShutdownDevices();
+//		System::ReloadIOS(curTitleID, false);
+		iosReloadReturn = IOS_ReloadIOS(curTitleID);
+		printf("Ret: %i - ", iosReloadReturn);
+		sleep(1);
+
 		char iosString[50] = "";				
-		sprintf(iosString, "%-3u (v%d)", *ios, IOS_GetRevision());
+		sprintf(iosString, "%-3u (v%d)", curTitleID, IOS_GetRevision());
 		gprintf("\nTesting IOS %s\n", iosString);
 		printf("%-13s ", iosString);
+		printf("\n"); continue;
 		printf("%-10s ", (hasFakeSign = SysCheck::CheckFakeSign()) ? "Enabled" : "Disabled");
 		printf("%-11s ", (hasEsIdentify = SysCheck::CheckEsIdentify()) ? "Enabled" : "Disabled");
 		printf("%-10s ", (hasNandPermissions = SysCheck::CheckNandPermissions()) ? "Enabled" : "Disabled");
@@ -1493,7 +1622,9 @@ void Main::RunSysCheck()
 		iosTestCnt++;
 	}
 	
-	System::ReloadIOS(CurrentIOS->Id, true);
+//	System::ReloadIOS(titles[i-1], true);
+	IOS_ReloadIOS(titles[i-1]);
+	WPAD_Init();
 		
 	if (System::State != SystemState::Running) goto final;
 
