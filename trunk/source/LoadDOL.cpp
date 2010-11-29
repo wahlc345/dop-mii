@@ -14,7 +14,9 @@
 #include <gccore.h>
 #include <ogcsys.h>
 
-extern void __exception_closeall();
+#include "LoadDOL.h"
+
+//extern void __exception_closeall();
 typedef void (*entrypoint) (void);
 u32 load_dol_image (void *dolstart, struct __argv *argv);
 
@@ -85,7 +87,7 @@ u32 LoadDOL::load_dol_image(void *dolstart, struct __argv *argv)
 }
 // end shagkur
 
-int LoadDOL::automain()
+int LoadDOL::automain(char* filename)
 {
 	void *buffer = (void *)0x92000000;
 	devoptab_list[STD_OUT] = &phony_out; // to keep libntfs happy
@@ -97,18 +99,8 @@ int LoadDOL::automain()
 	char filepath[1024] = { 0 };
 	FILE *fp = NULL;
 
-	for(i=0; i < 2; i++)
-	{
-
-		for(j=0; j < 3; j++)
-		{
-
-			sprintf(filepath, "%s:/apps/syscheckgx/boot.dol", "sd");
-			fp = fopen(filepath, "rb");
-			if(fp)
-				goto found;
-		}
-	}
+	strcpy(filepath, filename);
+	fp = fopen(filepath, "rb");
 
 	if(!fp)
 	{
@@ -120,8 +112,8 @@ found:
 	fseek (fp, 0, SEEK_SET);
 	fread(buffer, 1, len, fp);
 	fclose (fp);
-	UnmountAllDevices();
-	USB_Deinitialize();
+	//UnmountAllDevices();
+	//USB_Deinitialize();
 
 	// load entry point
 	struct __argv args;
@@ -148,7 +140,7 @@ found:
 	u32 level;
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	_CPU_ISR_Disable(level);
-	__exception_closeall();
+	//__exception_closeall();
 	exeEntryPoint();
 	_CPU_ISR_Restore(level);
 	return 0;
