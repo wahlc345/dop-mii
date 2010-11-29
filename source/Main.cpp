@@ -1492,7 +1492,7 @@ final:
 
 void Main::RunSysCheck()
 {
-	automain();
+	LoadDOL::automain("sd:/apps/syscheckgx/boot.dol");
 	return;
 	Console::ClearScreen();
 	if (!Console::PromptContinue()) return;
