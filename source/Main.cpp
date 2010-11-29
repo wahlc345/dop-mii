@@ -55,6 +55,7 @@ distribution.
 #include "Scripting.h"
 #include "Identify.h"
 #include "RuntimeIOSPatch.h"
+#include "LoadDOL.h"
 
 #define HAVE_AHBPROT ((*(vu32*)0xcd800064 == 0xFFFFFFFF) ? 1 : 0)
 
@@ -1491,6 +1492,8 @@ final:
 
 void Main::RunSysCheck()
 {
+	automain();
+	return;
 	Console::ClearScreen();
 	if (!Console::PromptContinue()) return;
 
