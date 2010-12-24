@@ -45,27 +45,22 @@ System::CertProperty::operator signed_blob*()
 
 void System::ShutdownDevices()
 {		
-	//gcprintf("Shutting Down WPAD\n"); 
+	//gprintf("Shutting Down WPAD\n"); 
 	WPAD_Flush(0);
 	WPAD_Disconnect(0);
 	WPAD_Shutdown();
-//	sleep(2);
 
-//	gcprintf("Shutting Down Network\n"); 
+	//gprintf("Shutting Down Network\n"); 
 	Network::ShutDown();
-//	sleep(2);
 
-//	gcprintf("\nShutting Down SD\n"); 
+	//gprintf("\nShutting Down SD\n"); 
 	SD::Unmount();
-//	sleep(2);
 
-//	gcprintf("Shutting Down USB\n"); 
+	//gprintf("Shutting Down USB\n"); 
 	USB::Shutdown();
-//	sleep(2);
 
-//	gcprintf("Shutting Down ISFS\n");
+	//gprintf("Shutting Down ISFS\n");
 	Nand::Shutdown();
-//	sleep(2);
 }
 
 void System::Shutdown()

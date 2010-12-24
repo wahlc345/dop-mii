@@ -10,10 +10,6 @@ public:
 	static bool CheckNandPermissions();
 	static int  RemoveBogusTicket();
 	static int  RemoveBogusTitle();
-	static u32  GetSysMenuVersion();
-	static float GetSysMenuFriendlyVersion();
-	static bool IsKnownStub(u32, s32 );
-
 };
 
 #endif

@@ -53,7 +53,7 @@ private:
 	void ShowSysMenusMenu();
 	SysMenuMatrix* InitSysMenuMatrix();
 
-	vector<u64> BuildSysCheckTable(vector<u64>);
+	void BuildSysCheckTable();
 	void RunSysCheck();
 
 	void ShowBoot2Menu();
