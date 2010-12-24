@@ -14,6 +14,9 @@
 #include "WiiMote.h"
 #include "DiscLight.h"
 #include "Settings.h"
+#include "Network.h"
+
+#include "svnrev.h"
 
 using namespace std;
 using namespace IO;
