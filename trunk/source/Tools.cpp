@@ -46,9 +46,9 @@ void *Spinner::Execute(void *args)
 			led += ledDir;
 			if (!led || led > 2) ledDir = -ledDir;
 			WiiMote::SetLeds(WPAD_CHAN_0, WIIMOTE_LED_1 << led);
-			WiiMote::SetLeds(WPAD_CHAN_1, WIIMOTE_LED_1 << led);
-			WiiMote::SetLeds(WPAD_CHAN_2, WIIMOTE_LED_1 << led);
-			WiiMote::SetLeds(WPAD_CHAN_3, WIIMOTE_LED_1 << led);
+			//WiiMote::SetLeds(WPAD_CHAN_1, WIIMOTE_LED_1 << led);
+			//WiiMote::SetLeds(WPAD_CHAN_2, WIIMOTE_LED_1 << led);
+			//WiiMote::SetLeds(WPAD_CHAN_3, WIIMOTE_LED_1 << led);
 		}		
 		if (settings.FlashWiiLeds) DiscLight::Toggle();
 		if (!Running) break;
