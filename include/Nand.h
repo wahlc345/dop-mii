@@ -19,7 +19,7 @@ namespace IO
 		static int CreateDir(const char *path);
 		static int CreateDir(string path);
 		static int CreateFile(u64 titleId, const char *filename);
-		static int CreateFile(const char *filepath, u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm);
+		static int CreateFile(const char *filepath, u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm, u32 uid=0, u16 gid=0);
 		static int CopyFile(string from, string to);
 		static int CopyFile(const char *from, const char *to);
 

@@ -53,7 +53,17 @@ int Nand::CreateDir(string path)
 int Nand::CreateDir(const char* path)
 {
 	Startup();
-	return ISFS_CreateDir(path, 0, ISFS_OPEN_RW, ISFS_OPEN_RW, ISFS_OPEN_RW);
+	
+	s32 ret;
+	
+	ret = ISFS_CreateDir(path, 0, ISFS_OPEN_RW, ISFS_OPEN_RW, ISFS_OPEN_RW);
+	
+	if (ret <= -1)
+	   return ret;
+	   
+	ret = ISFS_SetAttr(path, 0, 0, 0, ISFS_OPEN_RW, ISFS_OPEN_RW, ISFS_OPEN_RW);
+	
+	return ret;
 }
 
 int Nand::CreateFile(u64 titleId, const char *filename) 
@@ -65,13 +75,32 @@ int Nand::CreateFile(u64 titleId, const char *filename)
     sprintf(filepath, BASE_PATH "/%08x/%s", (u32)(titleId & 0xFFFFFFFF), filename);
 
     /* Create file */
-    return ISFS_CreateFile(filepath, 0, ISFS_OPEN_RW, ISFS_OPEN_RW, ISFS_OPEN_RW);
+	s32 ret = 0;
+	
+    ret = ISFS_CreateFile(filepath, 0, ISFS_OPEN_RW, ISFS_OPEN_RW, ISFS_OPEN_RW);
+	
+	if (ret <= -1)
+	   return ret;
+	   
+	ret = ISFS_SetAttr(filepath, 0, 0, 0, ISFS_OPEN_RW, ISFS_OPEN_RW, 0);
+	
+	return ret;
 }
 
-int Nand::CreateFile(const char *filepath, u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm)
+int Nand::CreateFile(const char *filepath, u8 attributes, u8 ownerPerm, u8 groupPerm, u8 otherPerm, u32 uid, u16 gid)
 {
 	Startup();
-	return ISFS_CreateFile(filepath, attributes, ownerPerm, groupPerm, otherPerm);
+	
+	s32 ret = 0;
+	
+	ret = ISFS_CreateFile(filepath, attributes, ownerPerm, groupPerm, otherPerm);
+	
+	if (ret <= -1)
+	   return ret;
+	
+	ret = ISFS_SetAttr(filepath, uid, gid, attributes, ownerPerm, groupPerm, otherPerm);
+	
+	return ret;
 }
 
 int Nand::OpenFile(u64 titleId, const char *filename, u8 mode) 
@@ -150,6 +179,7 @@ end:
 int Nand::Write(int file, u8 *buffer, u32 length) 
 {
 	Startup();
+	
     return ISFS_Write(file, buffer, length);
 }
 
@@ -302,6 +332,17 @@ int Nand::CopyFile(const char *from, const char *to)
 {
 	u8 *buffer = NULL;
 	int ret = 0;
+	
+	u32 ownerID;
+	u16 groupID;
+	u8  attributes;
+	u8  ownerperm;
+	u8  groupperm;
+	u8  otherperm;
+	
+	ISFS_GetAttr(from, &ownerID, &groupID, &attributes, &ownerperm, &groupperm, &otherperm);
+
+    ISFS_SetAttr(to, ownerID, groupID, attributes, ownerperm, groupperm, otherperm);
 
 	int size = Nand::Read(from, &buffer);
 	if (size < 0) {ret = size; goto end;}
