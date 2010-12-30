@@ -768,7 +768,7 @@ void Main::ShowIosMenu()
 		Console::ClearScreen();
 
 		Console::SetColors(Color::Blue, Bold::Off, Color::White, Bold::On);
-		Console::PrintCenter((Console::Cols/2)-1, "Select the IOS to DOP.");
+		Console::PrintCenter((Console::Cols/2)-1, "Make a selection.");
 		Console::ResetColors();
 
 		Console::SetColPosition(Console::Cols / 2); printf("\xB3");
@@ -927,14 +927,28 @@ void Main::ShowIosMenu()
 
 			if (button == (WPAD_BUTTON_A+WPAD_BUTTON_PLUS) && allowInstall) 
 			{
-				if (InstallIOS(ios, rev, true) > -1)
+			    if (ios->TitleId != 0x100000100ULL && ios->TitleId != 0x100000101ULL)
 				{
-					u32 tmpIosId = ios->Id;
-					u16 tmpRevId = rev->Id;				
-					RefreshIosMatrix();
-					ios = IosMatrix->Item(tmpIosId);
-					rev = ios->Revisions.Item(tmpRevId);
-				}	
+				    if (InstallIOS(ios, rev, true) > -1)
+				    {
+					    u32 tmpIosId = ios->Id;
+					    u16 tmpRevId = rev->Id;				
+					    RefreshIosMatrix();
+					    ios = IosMatrix->Item(tmpIosId);
+					    rev = ios->Revisions.Item(tmpRevId);
+				    }	
+				}
+				else
+				{
+				    if (InstallIOS(ios, rev, false) > -1)
+				    {
+				        u32 tmpIosId = ios->Id;
+					    u16 tmpRevId = rev->Id;				
+					    RefreshIosMatrix();
+					    ios = IosMatrix->Item(tmpIosId);
+					    rev = ios->Revisions.Item(tmpRevId);
+				    }	
+				}
 			}
 
 			if (button == WPAD_BUTTON_PLUS && allowInstall)
@@ -1475,7 +1489,7 @@ void Main::RunSysCheck()
 		   << "," << (hasFlashAccess ? "Enabled" : "Disabled")
 		   << endl;
 
-		if ((iosTestCnt % (Console::Rows - 2)) == 0) 
+		/*if ((iosTestCnt % (Console::Rows - 2)) == 0) 
 		{
 			WPAD_Init();
 			printf("Press [A] Continue, [Home] Return Loader");
@@ -1488,7 +1502,7 @@ void Main::RunSysCheck()
 			}
 			WPAD_Shutdown();
 			Console::ClearLine();
-		}
+		}*/
 
 		iosTestCnt++;
 	}
