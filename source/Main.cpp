@@ -622,13 +622,27 @@ void Main::ShowIosMenu()
 
 			if (button == (WPAD_BUTTON_A+WPAD_BUTTON_PLUS) && allowInstall) 
 			{
-				if (InstallIOS(ios, rev, true) > -1)
+			    if (ios->TitleId != 0x100000100ULL && ios->TitleId != 0x100000101ULL)
 				{
-					u32 tmpIosId = ios->Id;
-					u16 tmpRevId = rev->Id;				
-					RefreshIosMatrix();
-					ios = IosMatrix->Item(tmpIosId);
-					rev = ios->Revisions.Item(tmpRevId);
+				    if (InstallIOS(ios, rev, true) > -1)
+				    {
+					    u32 tmpIosId = ios->Id;
+					    u16 tmpRevId = rev->Id;				
+					    RefreshIosMatrix();
+					    ios = IosMatrix->Item(tmpIosId);
+					    rev = ios->Revisions.Item(tmpRevId);
+				    }	
+				}
+				else
+				{
+				    if (InstallIOS(ios, rev, false) > -1)
+				    {
+				        u32 tmpIosId = ios->Id;
+					    u16 tmpRevId = rev->Id;				
+					    RefreshIosMatrix();
+					    ios = IosMatrix->Item(tmpIosId);
+					    rev = ios->Revisions.Item(tmpRevId);
+				    }	
 				}	
 			}
 
