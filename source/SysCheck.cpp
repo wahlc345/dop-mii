@@ -115,7 +115,8 @@ end:
 		if (ret < 0) gprintf("\n>> ERROR! Nand::Delete: %s\n", NandError::ToString(ret));
 	}
 
-	delete viewdata; viewdata = NULL;
+	free(viewdata); viewdata = NULL;
+	
 	return ret;
 }
 
