@@ -594,57 +594,6 @@ int Main::UpgradeBoot2()
 	return ret;
 }
 
-void Main::BuildSysCheckTable()
-{
-	int ret = 0;
-	u32 titlesCount;
-	u64 *titles = NULL;
-
-	SysCheckTable.clear();
-
-	ret = ES_GetNumTitles(&titlesCount);
-	titles = (u64*)Tools::AllocateMemory(sizeof(u64) * titlesCount);
-	ret = ES_GetTitles(titles, titlesCount);
- 
-	for (u32 i = 0; i < titlesCount; i++)
-	{
-		u64 titleId = titles[i];
-		u32 titleId1 = TITLEID1(titleId);
-		u32 titleId2 = TITLEID2(titleId);
-
-		if (titleId1 != 1) continue; // skip non-system titles
-		
-		// skip system menu, BC, MIOS and possible other non-IOS titles
-		if (titleId2 < 4 || titleId2 > 255) continue;
-		
-		{ // check if this is just a stub
-			tmd *ptmd = NULL;
-			SysTitle::GetTMD(titleId, &ptmd);
-			u16 numContents = ptmd->num_contents;
-			u16 titleVersion = ptmd->title_version;
-			delete ptmd; ptmd = NULL;
-					
-			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);		
-			if (revision)
-			{
-				if (revision->IsStub || revision->Id < 1000) { delete revision; revision = NULL; continue; }
-			}
-			else 
-			{
-				if (numContents == 1) continue; // Is A Stub
-				if (numContents == 3) continue; // May be a stub so skip to be safe
-			}
-		} // END CHECK
-				
-		SysCheckTable.push_back(titleId2);
-	}
-	delete titles; titles = NULL;
-	
-	sort(SysCheckTable.rbegin(), SysCheckTable.rend());
-	gprintf("IOSES Found = %d\n", SysCheckTable.size()-1);	
-}
-
-
 void Main::ShowWelcomeScreen()
 {
 	//Basic scam warning, brick warning, and credits by Arikado
@@ -1434,7 +1383,59 @@ void Main::RunSysCheck()
 	printf("%s\n", (System::Cert) ? "[DONE]" : "[FAIL]");
 	printf("\n");
 
-	BuildSysCheckTable();	
+	int ret = 0;
+	u32 titlesCount;
+	u64 *titles = NULL;
+
+	SysCheckTable.clear();
+
+	ret = ES_GetNumTitles(&titlesCount);
+	if(ret < 0)
+		exit(0);
+		
+	titles = (u64*)memalign(32, titlesCount*sizeof(u64));
+	
+	ret = ES_GetTitles(titles, titlesCount);
+	if(ret < 0)
+		exit(0);
+ 
+	for (u32 i = 0; i < titlesCount; i++)
+	{
+		u64 titleId = titles[i];
+		u32 titleId1 = TITLEID1(titleId);
+		u32 titleId2 = TITLEID2(titleId);
+
+		if (titleId1 != 1) continue; // skip non-system titles
+		
+		// skip system menu, BC, MIOS and possible other non-IOS titles
+		if (titleId2 < 4 || titleId2 > 255) continue;
+		
+		{ // check if this is just a stub
+			tmd *ptmd = NULL;
+			SysTitle::GetTMD(titleId, &ptmd);
+			u16 numContents = ptmd->num_contents;
+			u16 titleVersion = ptmd->title_version;
+			delete ptmd; ptmd = NULL;
+					
+			IosRevision *revision = IosMatrix::GetIosRevision(titleId2, titleVersion);		
+			if (revision)
+			{
+				if (revision->IsStub /*|| revision->Id < 1000*/) { delete revision; revision = NULL; continue; }
+			}
+			else 
+			{
+				if (numContents == 1) continue; // Is A Stub
+				if (numContents == 3) continue; // May be a stub so skip to be safe
+			}
+		} // END CHECK
+				
+		SysCheckTable.push_back(titleId2);
+	}
+	delete titles; titles = NULL;
+	
+	sort(SysCheckTable.rbegin(), SysCheckTable.rend());
+	gprintf("IOSES Found = %d\n", SysCheckTable.size()-1);	
+	
 	if (SysCheckTable.size() == 0)
 	{
 		printf(">> ERROR! This IOS cannot retrive an IOS list.\n");
@@ -1460,7 +1461,7 @@ void Main::RunSysCheck()
 	printf("%-13s %-10s %-11s %-10s %-10s\n", "IOS Version", "FakeSign", "ES_Identify", "NAND", "Flash");
 	Console::ResetColors();
 
-	for (u32Iterator ios = SysCheckTable.begin(); ios < SysCheckTable.end(); ++ios)
+	for (u32Iterator ios = SysCheckTable.begin(); ios < SysCheckTable.end(); ios++)
 	{	
 		if (System::State != SystemState::Running) goto final;
 

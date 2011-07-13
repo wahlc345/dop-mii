@@ -52,8 +52,7 @@ private:
 	
 	void ShowSysMenusMenu();
 	SysMenuMatrix* InitSysMenuMatrix();
-
-	void BuildSysCheckTable();
+	
 	void RunSysCheck();
 
 	void ShowBoot2Menu();
