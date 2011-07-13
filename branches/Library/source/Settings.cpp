@@ -44,7 +44,7 @@ void Settings::Load()
 	
 	file = File::OpenBinary("sd:/config/DOP-Mii.cfg");
 	if (!file)
-    file = File::OpenBinary("sd:/apps/DOP-Mi/DOP-Mii.cfg"); 
+    file = File::OpenBinary("sd:/apps/DOP-Mii/DOP-Mii.cfg"); 
 	if (!file)
 	file = File::OpenBinary("usb:/config/DOP-Mii.cfg");
 	if (!file)
