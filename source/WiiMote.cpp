@@ -18,7 +18,7 @@
 
 void WiiMote::SetLeds(int chan, int wiimote_led_x)
 {
-	int level;
+	/*int level;
 	_CPU_ISR_Disable(level);
 	struct wiimote_t **__wpads = *((struct wiimote_t***)__WPADS_ADDR);
 	struct wiimote_t *wm = __wpads[chan];
@@ -26,6 +26,6 @@ void WiiMote::SetLeds(int chan, int wiimote_led_x)
 	int status = WPAD_Probe(chan, 0);
 	if (status == WPAD_ERR_NONE && wm->leds != 0) wiiuse_set_leds(wm, wiimote_led_x, NULL);
 	else if (status == WPAD_ERR_NO_CONTROLLER) wm->leds = 0;
-	_CPU_ISR_Restore(level);	
+	_CPU_ISR_Restore(level);*/
 	
 }
