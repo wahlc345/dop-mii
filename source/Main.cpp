@@ -302,8 +302,14 @@ void Main::BuildSysCheckTable()
 	SysCheckTable.clear();
 
 	ret = ES_GetNumTitles(&titlesCount);
+	if(ret < 0)
+		exit(0);
+	
 	titles = (u64*)Tools::AllocateMemory(sizeof(u64) * titlesCount);
+	
 	ret = ES_GetTitles(titles, titlesCount);
+	if(ret < 0)
+		exit(0);
  
 	for (u32 i = 0; i < titlesCount; i++)
 	{
